@@ -1,4 +1,4 @@
-.#!/usr/bin/env bash
+#!/usr/bin/env bash
 ./update
 name=${PWD##*/}
 go get -u all

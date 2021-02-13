@@ -7,14 +7,12 @@ import (
 	"os"
 )
 
-const version = "2021.1.2.9"
+const version = "2021.1.2.13"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=Zps05..... dbname=version3 host=localhost port=5432 sslmode=disable"
 
 type program struct{}
-
-
 
 func main() {
 	logInfo("MAIN", serviceName+" ["+version+"] starting...")
@@ -69,5 +67,3 @@ func (p *program) run() {
 	}
 	logInfo("MAIN", serviceName+" ["+version+"] running")
 }
-
-
