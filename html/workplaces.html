@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="../css/metro-all.min.css">
+    <link rel="stylesheet" href="../css/metro-icons.min.css">
+    <script src="../js/core.js" defer></script>
+    <script src="../js/charts.js" defer></script>
+    <script src="../js/metro.min.js" defer></script>
+    <meta charset="UTF-8">
+    <title>{{.Version}}</title>
+</head>
+<body class="h-vh-100">
+<div data-role="navview" data-toggle="#paneToggle" data-expanded="xxl" data-compact="sm" data-active-state="true">
+    <div class="navview-pane" >
+        <div class="d-flex flex-align-center">
+            <button class="pull-button m-0" style="height: 52px">
+                <span class="mif-menu"></span>
+            </button>
+        </div>
+        <ul class="navview-menu">
+            <li class="item-separator"></li>
+            <li >
+                <a href="index">
+                    <span class="icon"><span class="mif-home"></span></span>
+                    <span class="caption" style="text-transform: uppercase">{{.MenuOverview}}</span>
+                </a>
+            </li>
+            <li class="active">
+                <a href="workplaces">
+                    <span class="icon"><span class="mif-dashboard"></span></span>
+                    <span class="caption" style="text-transform: uppercase">{{.MenuWorkplaces}}</span>
+                </a>
+            </li>
+            <li>
+                <a href="charts">
+                    <span class="icon"><span class="mif-chart-dots"></span></span>
+                    <span class="caption" style="text-transform: uppercase">{{.MenuCharts}}</span>
+                </a>
+            </li>
+            <li>
+                <a href="statistics">
+                    <span class="icon"><span class="mif-chart-bars"></span></span>
+                    <span class="caption" style="text-transform: uppercase">{{.MenuStatistics}}</span>
+                </a>
+            </li>
+            <li>
+                <a href="data">
+                    <span class="icon"><span class="mif-table"></span></span>
+                    <span class="caption" style="text-transform: uppercase">{{.MenuData}}</span>
+                </a>
+            </li>
+            <li>
+                <a href="settings">
+                    <span class="icon"><span class="mif-cogs"></span></span>
+                    <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
+                </a>
+            </li>
+        </ul>
+        <div class="w-100 text-center text-small data-box p-2 border-top" style="position: absolute; bottom: 0">
+            <div>&copy; 2021 <a href="mailto:petr.jahoda@me.com" class="text-muted fg-black no-decor">Petr Jahoda&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+            </div>
+            <div>Created with <a href="https://metroui.org.ua" class="text-muted fg-black no-decor">Metro 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+            </div>
+            <div>Version {{.Version}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+        </div>
+    </div>
+    <div class="navview-content">
+        <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
+            <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
+            <div class="app-bar-container ml-auto">
+                <a href="#" class="app-bar-item">
+                    <span class="mif-bell"></span>
+                    <span class="badge bg-orange fg-white mt-2 mr-1">{{.Alarms}}</span>
+                </a>
+                <div class="app-bar-container">
+                    <a href="#" class="app-bar-item">
+                        <span class="ml-2 app-bar-name">Petr Jahoda</span>
+                    </a>
+                </div>
+                <p class="m-0" style="padding-right: 20px;padding-left: 10px;">{{.Company}}</p>
+            </div>
+        </div>
+        <div id="content-wrapper" class="content-inner h-100" style="padding-top: 76px;padding-left: 10px">
+            <p class="pl-3">data</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>
