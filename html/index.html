@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="../css/metro-all.min.css">
+    <link rel="stylesheet" href="../css/metro-all.css">
     <link rel="stylesheet" href="../css/metro-icons.min.css">
     <script src="../js/core.js" defer></script>
     <script src="../js/charts.js" defer></script>
@@ -12,8 +12,8 @@
     <title>{{.Version}}</title>
 </head>
 <body class="h-vh-100">
-<div data-role="navview" data-toggle="#paneToggle" data-expanded="xxl" data-compact="sm">
-    <div class="navview-pane">
+<div data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm">
+    <div class="navview-pane" style="z-index: 999">
         <div class="d-flex flex-align-center">
             <button class="pull-button m-0" style="height: 52px">
                 <span class="mif-menu"></span>
@@ -83,8 +83,149 @@
                 <p class="m-0" style="padding-right: 20px;padding-left: 10px;">{{.Company}}</p>
             </div>
         </div>
-        <div id="content-wrapper" class="content-inner h-100" style="padding-top: 76px;padding-left: 10px">
-            <p class="pl-3">data</p>
+        <div id="content-wrapper" class="content-inner h-100"
+             style="padding-top: 76px;padding-left: 20px;padding-right: 20px">
+            <div data-role="panel" data-title-caption="Group 1" data-collapsible="true">
+                <div class="row flex-justify-center">
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-green fg-white">
+                            <div class="icon"><span class="mif-play"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkGreen"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-orange fg-white">
+                            <div class="icon"><span class="mif-pause"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkOrange"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-red fg-white">
+                            <div class="icon"><span class="mif-stop"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkRed"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-orange fg-white">
+                            <div class="icon"><span class="mif-calendar"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkOrange"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <div data-role="panel" data-title-caption="Group 1" data-collapsible="true">
+                <div class="row flex-justify-center">
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-green fg-white">
+                            <div class="icon"><span class="mif-play"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkGreen"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-orange fg-white">
+                            <div class="icon"><span class="mif-pause"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkOrange"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-red fg-white">
+                            <div class="icon"><span class="mif-stop"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkRed"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box bg-orange fg-white">
+                            <div class="icon"><span class="mif-calendar"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">EVENTS</div>
+                                    <div>41,400</div>
+                                </div>
+
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="75" data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="bg-darkOrange"></div>
+                                    <span class="text-small">70% Increase in 30 Days</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
