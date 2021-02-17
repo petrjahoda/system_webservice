@@ -1,27 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="../css/metro-all.min.css">
+    <script src="../js/metro.min.js" defer></script>
+    <script src="../js/menu.js" defer></script>
+    <script src="../js/workplaces.js" defer></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link rel="stylesheet" href="../css/metro-all.min.css">
-    <link rel="stylesheet" href="../css/metro-icons.min.css">
-    <script src="../js/core.js" defer></script>
-    <script src="../js/charts.js" defer></script>
-    <script src="../js/metro.min.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
-<body class="h-vh-100">
-<div data-role="navview" data-toggle="#paneToggle" data-expanded="xxl" data-compact="sm" data-active-state="true">
-    <div class="navview-pane" >
+<body class="m4-cloak h-vh-100">
+<div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm"
+     class="{{.Compacted}}">
+    <div class="navview-pane" style="z-index: 999">
         <div class="d-flex flex-align-center">
-            <button class="pull-button m-0" style="height: 52px">
+            <button class="pull-button m-0" style="height: 52px" id="menu">
                 <span class="mif-menu"></span>
             </button>
         </div>
         <ul class="navview-menu">
             <li class="item-separator"></li>
-            <li >
+            <li>
                 <a href="index">
                     <span class="icon"><span class="mif-home"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuOverview}}</span>
@@ -82,8 +82,37 @@
                 <p class="m-0" style="padding-right: 20px;padding-left: 10px;">{{.Company}}</p>
             </div>
         </div>
-        <div id="content-wrapper" class="content-inner h-100" style="padding-top: 76px;padding-left: 10px">
-            <p class="pl-3">data</p>
+        <div id="content-wrapper" class="content-inner h-100"
+             style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+            {{range .WorkplaceSections}}
+            <div data-role="panel" data-title-caption="{{.SectionName}}" data-collapsible="true"
+                 data-title-icon="<span class='mif-dashboard'></span>"
+                 data-on-collapse="dataCollapse"
+                 data-on-expand="dataExpand"
+                 style="{{.PanelCompacted}}">
+                <div class="row">
+                    {{range .Workplaces}}
+                    <div class="cell-lg-3 cell-sm-6">
+                        <div class="icon-box {{.WorkplaceColor}} fg-white">
+                            <div class="icon"><span class="{{.WorkplaceState}}"></span></div>
+                            <div class="content">
+                                <div class="p-2">
+                                    <div class="text-bold text-leader">{{.WorkplaceName}}</div>
+                                    <div>{{.WorkplaceStateDuration}}</div>
+                                </div>
+                                <div class="pl-2 pr-2">
+                                    <div data-role="progress" data-value="{{.WorkplaceProductivityToday}}"
+                                         data-small="true" data-cls-bar="bg-white"
+                                         data-cls-back="{{.WorkplaceProductivityColor}}"></div>
+                                    <span class="text-small">{{.Information}}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            <br>
+            {{end}}
         </div>
     </div>
 </div>

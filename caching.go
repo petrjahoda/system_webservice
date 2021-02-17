@@ -10,11 +10,22 @@ import (
 )
 
 var cachedUsers = map[string]database.User{}
+var cachedUserSettings = map[string]userSettings{}
 var cachedLocales = map[string]database.Locale{}
 var cachedCompanyName string
 var cachedUsersSync sync.Mutex
+var cachedUserSettingsSync sync.Mutex
 var cachedLocalesSync sync.Mutex
 var cachedCompanyNameSync sync.Mutex
+
+type userSettings struct {
+	menuState     string
+	sectionStates []sectionState
+}
+type sectionState struct {
+	section string
+	state   string
+}
 
 func cacheUsers() {
 	for {
@@ -27,10 +38,17 @@ func cacheUsers() {
 		var users []database.User
 		db.Where("email is not null").Find(&users)
 		cachedUsersSync.Lock()
+		cachedUserSettingsSync.Lock()
 		for _, user := range users {
 			cachedUsers[user.Email] = user
+			_, userCached := cachedUserSettings[user.Email]
+			if !userCached {
+				var userSettings userSettings
+				cachedUserSettings[user.Email] = userSettings
+			}
 		}
 		cachedUsersSync.Unlock()
+		cachedUserSettingsSync.Unlock()
 		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedUsers))+" users")
 		_ = sqlDB.Close()
 		time.Sleep(1 * time.Minute)

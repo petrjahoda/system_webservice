@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const version = "2021.1.2.13"
+const version = "2021.1.2.17"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=Zps05..... dbname=version3 host=localhost port=5432 sslmode=disable"
@@ -57,6 +57,7 @@ func (p *program) run() {
 	router.GET("/statistics", basicAuth(statistics))
 	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
+	router.POST("/update_user_settings", updateUserSettings)
 	go cacheUsers()
 	go cacheCompanyName()
 	go cacheLocales()
