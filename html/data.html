@@ -6,11 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="../js/menu.js" defer></script>
     <script src="../js/metro.min.js" defer></script>
+    <script src="../js/data.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
 <body class="m4-cloak h-vh-100">
-<div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm" class="{{.Compacted}}">
+<div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm"
+     class="{{.Compacted}}">
     <div class="navview-pane" style="z-index: 999">
         <div class="d-flex flex-align-center">
             <button class="pull-button m-0" style="height: 52px" id="menu">
@@ -25,19 +27,19 @@
                     <span class="caption" style="text-transform: uppercase">{{.MenuOverview}}</span>
                 </a>
             </li>
-            <li >
+            <li>
                 <a href="workplaces">
                     <span class="icon"><span class="mif-dashboard"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuWorkplaces}}</span>
                 </a>
             </li>
-            <li >
+            <li>
                 <a href="charts">
                     <span class="icon"><span class="mif-chart-dots"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuCharts}}</span>
                 </a>
             </li>
-            <li >
+            <li>
                 <a href="statistics">
                     <span class="icon"><span class="mif-chart-bars"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuStatistics}}</span>
@@ -49,7 +51,7 @@
                     <span class="caption" style="text-transform: uppercase">{{.MenuData}}</span>
                 </a>
             </li>
-            <li >
+            <li>
                 <a href="settings">
                     <span class="icon"><span class="mif-cogs"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
@@ -57,6 +59,14 @@
             </li>
         </ul>
         <div class="w-100 text-center text-small data-box p-2 border-top" style="position: absolute; bottom: 0">
+            <button class="button square m-1">
+                <span class="mif-bell"></span>
+                <span class="badge bg-red fg-white">4</span>
+            </button>
+            <h6 class="m-0">User @ {{.Company}}</h6>
+            <br>
+            <hr>
+            <br>
             <div>&copy; 2021 <a href="mailto:petr.jahoda@me.com" class="text-muted fg-black no-decor">Petr Jahoda&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
             </div>
             <div>Created with <a href="https://metroui.org.ua" class="text-muted fg-black no-decor">Metro 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
@@ -67,21 +77,57 @@
     <div class="navview-content">
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
-            <div class="app-bar-container ml-auto">
-                <a href="#" class="app-bar-item">
-                    <span class="mif-bell"></span>
-                    <span class="badge bg-orange fg-white mt-2 mr-1">10</span>
-                </a>
-                <div class="app-bar-container">
-                    <a href="#" class="app-bar-item">
-                        <span class="ml-2 app-bar-name">Petr Jahoda</span>
-                    </a>
+            <div class="app-bar-container mx-auto">
+                <div style="min-width:250px">
+                    <select id="data-selection" data-filter="false" data-role="select" style="width: 100px;max-height: 100px">
+                        <option value="alarms" selected="selected">Alarms</option>
+                        <option value="downtimes">Downtimes</option>
+                        <option value="orders">Orders</option>
+                        <option value="users">Users</option>
+                    </select>
                 </div>
-                <p class="m-0" style="padding-right: 20px;padding-left: 10px;">{{.Company}}</p>
             </div>
         </div>
-        <div id="content-wrapper" class="content-inner h-100" style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <p class="pl-3">data</p>
+        <div id="content-wrapper" class="content-inner h-100"
+             style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+            <div class="row">
+                <div class="cell-12">
+                    <select data-role="select" multiple>
+                        <option value="alarms" selected="selected">CNC0</option>
+                        <option value="downtimes">CNC 1</option>
+                        <option value="orders">CNC 2</option>
+                        <option value="users">CNC 3</option>
+                        <option value="users">CNC 4</option>
+                        <option value="users">CNC 5</option>
+                        <option value="users">CNC 6</option>
+                        <option value="users">CNC 7</option>
+                        <option value="users">CNC 8</option>
+                        <option value="users">CNC 9</option>
+                        <option value="users">CNC 10</option>
+                        <option value="users">CNC 11</option>
+                        <option value="users">CNC 12</option>
+                        <option value="users">CNC 13</option>
+                        <option value="users">CNC 14</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="cell-lg-3">
+                    <div></div>
+                </div>
+                <div class="cell-lg-3 cell-md-5">
+                    <input data-role="datepicker">
+                    <input data-role="timepicker">
+
+                </div>
+                <div class="cell-lg-3 cell-md-5">
+                    <input data-role="datepicker">
+                    <input data-role="timepicker">
+                </div>
+                <div class="cell-lg-3 cell-md-1">
+                    <button class="button primary outline" style="min-width: 105px;max-width: 125px" >OK</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
