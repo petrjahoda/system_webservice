@@ -7,10 +7,10 @@ import (
 	"os"
 )
 
-const version = "2021.1.2.19"
+const version = "2021.1.2.21"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
-const config = "user=postgres password=Zps05..... dbname=version3 host=localhost port=5432 sslmode=disable"
+const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable"
 
 type program struct{}
 
@@ -61,7 +61,7 @@ func (p *program) run() {
 	go cacheUsers()
 	go cacheCompanyName()
 	go cacheLocales()
-	err := http.ListenAndServe(":80", router)
+	err := http.ListenAndServe(":82", router)
 	if err != nil {
 		logError("MAIN", "Problem starting service: "+err.Error())
 		os.Exit(-1)
