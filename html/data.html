@@ -79,7 +79,7 @@
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto">
                 <div style="min-width:250px">
-                    <select id="data-selection" data-filter="false" data-drop-height="1000px" data-role="select" style="width: 100px;max-height: 100px">
+                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select" style="width: 100px;max-height: 100px">
                         {{range .SelectionMenu}}
                         <option value="{{.}}">{{.}}</option>
                         {{end}}
@@ -91,7 +91,7 @@
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div class="row">
                 <div class="cell-12">
-                    <select data-role="select" multiple>
+                    <select data-role="select" multiple data-clear-button="true" data-drop-height="80vh">
                         {{range .Workplaces}}
                         <option value="{{.}}">{{.}}</option>
                         {{end}}
