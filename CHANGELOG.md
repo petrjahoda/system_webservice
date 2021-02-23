@@ -14,6 +14,12 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.1.2.23] - 2021-02-23
+
+### Added
+- complete data page selection functionality (menu, datetime, workplaces), downloaded from backend
+- first part of backend functionality for data page (what to download from database)
+
 ## [2021.1.2.21] - 2021-02-21
 
 ### Changed

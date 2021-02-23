@@ -13,7 +13,7 @@ type UserSettingsInput struct {
 }
 
 func updateUserSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	logInfo("MAIN", "Parsing data")
+	logInfo("MAIN", "Parsing Data")
 	var data UserSettingsInput
 	_ = json.NewDecoder(request.Body).Decode(&data)
 	email, _, _ := request.BasicAuth()

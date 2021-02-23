@@ -79,11 +79,10 @@
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto">
                 <div style="min-width:250px">
-                    <select id="data-selection" data-filter="false" data-role="select" style="width: 100px;max-height: 100px">
-                        <option value="alarms" selected="selected">Alarms</option>
-                        <option value="downtimes">Downtimes</option>
-                        <option value="orders">Orders</option>
-                        <option value="users">Users</option>
+                    <select id="data-selection" data-filter="false" data-drop-height="1000px" data-role="select" style="width: 100px;max-height: 100px">
+                        {{range .SelectionMenu}}
+                        <option value="{{.}}">{{.}}</option>
+                        {{end}}
                     </select>
                 </div>
             </div>
@@ -93,21 +92,9 @@
             <div class="row">
                 <div class="cell-12">
                     <select data-role="select" multiple>
-                        <option value="alarms" selected="selected">CNC0</option>
-                        <option value="downtimes">CNC 1</option>
-                        <option value="orders">CNC 2</option>
-                        <option value="users">CNC 3</option>
-                        <option value="users">CNC 4</option>
-                        <option value="users">CNC 5</option>
-                        <option value="users">CNC 6</option>
-                        <option value="users">CNC 7</option>
-                        <option value="users">CNC 8</option>
-                        <option value="users">CNC 9</option>
-                        <option value="users">CNC 10</option>
-                        <option value="users">CNC 11</option>
-                        <option value="users">CNC 12</option>
-                        <option value="users">CNC 13</option>
-                        <option value="users">CNC 14</option>
+                        {{range .Workplaces}}
+                        <option value="{{.}}">{{.}}</option>
+                        {{end}}
                     </select>
                 </div>
             </div>
@@ -116,16 +103,16 @@
                     <div></div>
                 </div>
                 <div class="cell-lg-3 cell-md-5">
-                    <input data-role="datepicker">
-                    <input data-role="timepicker">
+                    <input id="fromdate" data-role="datepicker">
+                    <input id="fromtime" data-role="timepicker">
 
                 </div>
                 <div class="cell-lg-3 cell-md-5">
-                    <input data-role="datepicker">
-                    <input data-role="timepicker">
+                    <input id="todate" data-role="datepicker" >
+                    <input id="totime" data-role="timepicker" >
                 </div>
                 <div class="cell-lg-3 cell-md-1">
-                    <button class="button primary outline" style="min-width: 105px;max-width: 125px" >OK</button>
+                    <button id="data-ok-button" class="button primary outline" style="min-width: 105px;max-width: 125px" >OK</button>
                 </div>
             </div>
         </div>
