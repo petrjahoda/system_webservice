@@ -1,0 +1,18 @@
+<table class="table striped row-hover" data-role="table" data-horizontal-scroll="true">
+    <thead data-sortable="true">
+    <tr>
+        {{range .TableHeader}}
+        <th class="sortable-column asc">{{.HeaderName}}</th>
+        {{end}}
+    </tr>
+    </thead>
+    <tbody>
+    {{range .TableRows}}
+    <tr>
+        {{range .TableCell}}
+        <td >{{.CellName}}</td>
+        {{end}}
+    </tr>
+    {{end}}
+    </tbody>
+</table>

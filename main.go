@@ -59,9 +59,7 @@ func (p *program) run() {
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
 	router.POST("/get_data", getData)
-	go cacheUsers()
-	go cacheCompanyName()
-	go cacheLocales()
+	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {
 		logError("MAIN", "Problem starting service: "+err.Error())

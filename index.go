@@ -41,51 +41,51 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 
 func getLocale(email string, locale string) string {
 	var menuOverview string
-	user, _ := cachedUsers[email]
+	user, _ := cachedUsersByEmail[email]
 	switch user.Locale {
 	case "CsCZ":
 		{
-			menuOverview = cachedLocales[locale].CsCZ
+			menuOverview = cachedLocalesByName[locale].CsCZ
 		}
 	case "DeDE":
 		{
-			menuOverview = cachedLocales[locale].DeDE
+			menuOverview = cachedLocalesByName[locale].DeDE
 		}
 	case "EnUS":
 		{
-			menuOverview = cachedLocales[locale].EnUS
+			menuOverview = cachedLocalesByName[locale].EnUS
 		}
 	case "EsES":
 		{
-			menuOverview = cachedLocales[locale].EsES
+			menuOverview = cachedLocalesByName[locale].EsES
 		}
 	case "FrFR":
 		{
-			menuOverview = cachedLocales[locale].FrFR
+			menuOverview = cachedLocalesByName[locale].FrFR
 		}
 	case "ItIT":
 		{
-			menuOverview = cachedLocales[locale].ItIT
+			menuOverview = cachedLocalesByName[locale].ItIT
 		}
 	case "PlPL":
 		{
-			menuOverview = cachedLocales[locale].PlPL
+			menuOverview = cachedLocalesByName[locale].PlPL
 		}
 	case "PtPT":
 		{
-			menuOverview = cachedLocales[locale].PtPT
+			menuOverview = cachedLocalesByName[locale].PtPT
 		}
 	case "SkSK":
 		{
-			menuOverview = cachedLocales[locale].SkSK
+			menuOverview = cachedLocalesByName[locale].SkSK
 		}
 	case "RuRU":
 		{
-			menuOverview = cachedLocales[locale].RuRU
+			menuOverview = cachedLocalesByName[locale].RuRU
 		}
 	default:
 		{
-			menuOverview = cachedLocales[locale].EnUS
+			menuOverview = cachedLocalesByName[locale].EnUS
 		}
 	}
 	return menuOverview

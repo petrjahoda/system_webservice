@@ -31,9 +31,9 @@ func updateProgramVersion() {
 func basicAuth(h httprouter.Handle) httprouter.Handle {
 	return func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		email, password, hasAuth := request.BasicAuth()
-		cachedUsersSync.Lock()
-		user, userFound := cachedUsers[email]
-		cachedUsersSync.Unlock()
+		usersSync.Lock()
+		user, userFound := cachedUsersByEmail[email]
+		usersSync.Unlock()
 		userMatchesPassword := comparePasswords(user.Password, []byte(password))
 		if hasAuth && userFound && userMatchesPassword {
 			h(writer, request, params)

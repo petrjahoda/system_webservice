@@ -79,7 +79,8 @@
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto">
                 <div style="min-width:250px">
-                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select" style="width: 100px;max-height: 100px">
+                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select"
+                            style="width: 100px;max-height: 100px">
                         {{range .SelectionMenu}}
                         <option value="{{.}}">{{.}}</option>
                         {{end}}
@@ -91,7 +92,7 @@
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div class="row">
                 <div class="cell-12">
-                    <select data-role="select" multiple data-clear-button="true" data-drop-height="80vh">
+                    <select data-role="select" multiple data-clear-button="true" data-drop-height="50vh">
                         {{range .Workplaces}}
                         <option value="{{.}}">{{.}}</option>
                         {{end}}
@@ -108,13 +109,18 @@
 
                 </div>
                 <div class="cell-lg-3 cell-md-5">
-                    <input id="todate" data-role="datepicker" >
-                    <input id="totime" data-role="timepicker" >
+                    <input id="todate" data-role="datepicker">
+                    <input id="totime" data-role="timepicker">
                 </div>
                 <div class="cell-lg-3 cell-md-1">
-                    <button id="data-ok-button" class="button primary outline" style="min-width: 105px;max-width: 125px" >OK</button>
+                    <button id="data-ok-button" class="button primary outline"
+                            style="min-width: 105px;max-width: 125px">OK
+                    </button>
                 </div>
             </div>
+            <div id="data-table-container" style="display: block;margin-top:10px;">
+            </div>
+
         </div>
     </div>
 </div>

@@ -8,6 +8,8 @@ const dataOkButton = document.getElementById("data-ok-button")
 
 
 dataOkButton.addEventListener("click", (event) => {
+    var locales = Metro.utils.getLocales();
+    console.log(locales);
     console.log("getting data for " + document.getElementById("data-selection").value)
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
@@ -23,7 +25,10 @@ dataOkButton.addEventListener("click", (event) => {
     fetch("/get_data", {
         method: "POST",
         body: JSON.stringify(data)
-    }).then(() => {
+    }).then((response) => {
+        response.text().then(function (data) {
+            document.getElementById("data-table-container").innerHTML = data
+        });
     }).catch((error) => {
         console.log(error)
     });

@@ -20,7 +20,7 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 	switch data.Settings {
 	case "menu":
 		{
-			cachedUserSettingsSync.Lock()
+			userSettingsSync.Lock()
 			userSettings := cachedUserSettings[email]
 			if data.State == "false" {
 				userSettings.menuState = "compacted js-compact"
@@ -28,7 +28,7 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 				userSettings.menuState = ""
 			}
 			cachedUserSettings[email] = userSettings
-			cachedUserSettingsSync.Unlock()
+			userSettingsSync.Unlock()
 		}
 	case "section":
 		{
@@ -36,7 +36,7 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 			var sectionState sectionState
 			sectionState.section = dataSeparated[1]
 			sectionState.state = dataSeparated[0]
-			cachedUserSettingsSync.Lock()
+			userSettingsSync.Lock()
 			userSettings := cachedUserSettings[email]
 			for index, state := range userSettings.sectionStates {
 				if state.section == sectionState.section {
@@ -45,7 +45,7 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 			}
 			userSettings.sectionStates = append(userSettings.sectionStates, sectionState)
 			cachedUserSettings[email] = userSettings
-			cachedUserSettingsSync.Unlock()
+			userSettingsSync.Unlock()
 		}
 	}
 }
