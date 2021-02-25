@@ -271,19 +271,15 @@ func getData(writer http.ResponseWriter, request *http.Request, params httproute
 		logInfo("MAIN", "Processing data ended")
 		return
 	}
-
-	logInfo("MAIN", "From "+dateFrom.String())
-	logInfo("MAIN", "To "+dateTo.String())
+	logInfo("MAIN", "From "+dateFrom.String()+" to "+dateTo.String())
 	email, _, _ := request.BasicAuth()
 	workplaceIds, locale := processDataFromDatabase(data, err)
-
 	userSettingsSync.Lock()
 	settings := cachedUserSettings[email]
 	settings.dataSelection = locale.Name
 	settings.selectedWorkplaces = data.Workplaces
 	cachedUserSettings[email] = settings
 	userSettingsSync.Unlock()
-
 	switch locale.Name {
 	case "alarms":
 		{
@@ -381,9 +377,7 @@ func getData(writer http.ResponseWriter, request *http.Request, params httproute
 			fmt.Println(email)
 		}
 	case "orders":
-		{
-			processOrders(writer, workplaceIds, dateFrom, dateTo, email)
-		}
+		processOrders(writer, workplaceIds, dateFrom, dateTo, email)
 	case "packages":
 		{
 			db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
