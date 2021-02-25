@@ -15,6 +15,7 @@ var cachedUserSettings = map[string]userSettings{}
 var cachedWorkplacesById = map[uint]database.Workplace{}
 var cachedLocalesByName = map[string]database.Locale{}
 var cachedCompanyName string
+var location string
 var cachedOrdersById = map[uint]database.Order{}
 var cachedOperationsById = map[uint]database.Operation{}
 var cachedWorkplaceModesById = map[uint]database.WorkplaceMode{}
@@ -33,6 +34,7 @@ var workshiftsSync sync.RWMutex
 type userSettings struct {
 	menuState     string
 	sectionStates []sectionState
+	dataSelection string
 }
 type sectionState struct {
 	section string
@@ -83,6 +85,15 @@ func cacheData() {
 		cachedCompanyName = companyName.Value
 		companyNameSync.Unlock()
 		logInfo("MAIN", "Cached company name")
+
+		logInfo("MAIN", "Reading timezone from database")
+
+		var timezone database.Setting
+		db.Where("name=?", "timezone").Find(&timezone)
+		companyNameSync.Lock()
+		location = timezone.Value
+		companyNameSync.Unlock()
+		logInfo("MAIN", "Cached timezone")
 
 		var locales []database.Locale
 		db.Find(&locales)

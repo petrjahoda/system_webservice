@@ -7,6 +7,7 @@
     <script src="../js/menu.js" defer></script>
     <script src="../js/metro.min.js" defer></script>
     <script src="../js/data.js" defer></script>
+    <script src="../js/locales.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
@@ -82,7 +83,7 @@
                     <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select"
                             style="width: 100px;max-height: 100px">
                         {{range .SelectionMenu}}
-                        <option value="{{.}}">{{.}}</option>
+                        <option value="{{.SelectionName}}" {{.Selection}}>{{.SelectionName}}</option>
                         {{end}}
                     </select>
                 </div>
@@ -92,7 +93,8 @@
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div class="row">
                 <div class="cell-12">
-                    <select data-role="select" multiple data-clear-button="true" data-drop-height="50vh">
+                    <select data-role="select" multiple data-clear-button="true" data-drop-height="50vh"
+                            data-filter-placeholder="{{.DataFilterPlaceholder}}">
                         {{range .Workplaces}}
                         <option value="{{.}}">{{.}}</option>
                         {{end}}
@@ -103,18 +105,22 @@
                 <div class="cell-lg-3">
                     <div></div>
                 </div>
-                <div class="cell-lg-3 cell-md-5">
-                    <input id="fromdate" data-role="datepicker">
-                    <input id="fromtime" data-role="timepicker">
+                <div class="cell-lg-3 cell-md-4">
+                    <input id="fromdate" data-role="datepicker" data-locale="{{.DateLocale}}">
+                    <input id="fromtime" data-role="timepicker" data-locale="{{.DateLocale}}">
 
                 </div>
-                <div class="cell-lg-3 cell-md-5">
-                    <input id="todate" data-role="datepicker">
-                    <input id="totime" data-role="timepicker">
+                <div class="cell-lg-3 cell-md-4">
+                    <input id="todate" data-role="datepicker" data-locale="{{.DateLocale}}">
+                    <input id="totime" data-role="timepicker" data-locale="{{.DateLocale}}">
                 </div>
-                <div class="cell-lg-3 cell-md-1">
+                <div class="cell-lg-3 cell-md-4" style="display: block">
                     <button id="data-ok-button" class="button primary outline"
                             style="min-width: 105px;max-width: 125px">OK
+                    </button>
+                    <button class="button alert outline" onclick="$('#data-table').data('table').export('CSV')"
+                            style="min-width: 105px;max-width: 125px">
+                        Export
                     </button>
                 </div>
             </div>

@@ -55,7 +55,7 @@ func (p *program) run() {
 	router.GET("/workplaces", basicAuth(workplaces))
 	router.GET("/charts", basicAuth(charts))
 	router.GET("/statistics", basicAuth(statistics))
-	router.GET("/Data", basicAuth(data))
+	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
 	router.POST("/get_data", getData)

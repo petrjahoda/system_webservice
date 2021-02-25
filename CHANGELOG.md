@@ -14,6 +14,14 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.1.2.25] - 2021-02-25
+
+### Added
+- locales for datetime picker
+- locales for table
+- complete table for orders, with proper UTC search
+- remembering last selection from data selection menu
+
 ## [2021.1.2.24] - 2021-02-24
 
 ### Changed
