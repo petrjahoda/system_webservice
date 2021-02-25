@@ -96,7 +96,7 @@
                     <select data-role="select" multiple data-clear-button="true" data-drop-height="50vh"
                             data-filter-placeholder="{{.DataFilterPlaceholder}}">
                         {{range .Workplaces}}
-                        <option value="{{.}}">{{.}}</option>
+                        <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
                         {{end}}
                     </select>
                 </div>

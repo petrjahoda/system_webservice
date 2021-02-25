@@ -25,10 +25,15 @@ type DataPageData struct {
 	MenuData              string
 	MenuSettings          string
 	SelectionMenu         []Selection
-	Workplaces            []string
+	Workplaces            []WorkplaceSelection
 	Compacted             string
 	DataFilterPlaceholder string
 	DateLocale            string
+}
+
+type WorkplaceSelection struct {
+	WorkplaceName      string
+	WorkplaceSelection string
 }
 type Selection struct {
 	SelectionName string
@@ -98,7 +103,7 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
 	data.Compacted = cachedUserSettings[email].menuState
-	fmt.Println(cachedUserSettings[email].dataSelection)
+
 	data.SelectionMenu = append(data.SelectionMenu, Selection{
 		SelectionName: getLocale(email, "alarms"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "alarms"),
@@ -154,12 +159,24 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	var workplaces []database.Workplace
 	db.Select("name").Find(&workplaces)
 	for _, workplace := range workplaces {
-		data.Workplaces = append(data.Workplaces, workplace.Name)
+		data.Workplaces = append(data.Workplaces, WorkplaceSelection{
+			WorkplaceName:      workplace.Name,
+			WorkplaceSelection: getWorkplaceSelection(cachedUserSettings[email].selectedWorkplaces, workplace.Name),
+		})
 	}
 
 	tmpl := template.Must(template.ParseFiles("./html/Data.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("MAIN", "Home page sent")
+}
+
+func getWorkplaceSelection(selectedWorkplaces []string, workplace string) string {
+	for _, selectedWorkplace := range selectedWorkplaces {
+		if selectedWorkplace == workplace {
+			return "selected"
+		}
+	}
+	return ""
 }
 
 func getSelected(selection string, menu string) string {
@@ -276,6 +293,7 @@ func getData(writer http.ResponseWriter, request *http.Request, params httproute
 	userSettingsSync.Lock()
 	settings := cachedUserSettings[email]
 	settings.dataSelection = locale.Name
+	settings.selectedWorkplaces = data.Workplaces
 	cachedUserSettings[email] = settings
 	userSettingsSync.Unlock()
 

@@ -32,9 +32,10 @@ var workplaceModesSync sync.RWMutex
 var workshiftsSync sync.RWMutex
 
 type userSettings struct {
-	menuState     string
-	sectionStates []sectionState
-	dataSelection string
+	menuState          string
+	sectionStates      []sectionState
+	dataSelection      string
+	selectedWorkplaces []string
 }
 type sectionState struct {
 	section string
