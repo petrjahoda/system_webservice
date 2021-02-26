@@ -14,6 +14,7 @@ var cachedUsersById = map[uint]database.User{}
 var cachedUserSettings = map[string]userSettings{}
 var cachedWorkplacesById = map[uint]database.Workplace{}
 var cachedLocalesByName = map[string]database.Locale{}
+var cachedLocales = map[string]string{}
 var cachedCompanyName string
 var location string
 var cachedOrdersById = map[uint]database.Order{}
@@ -44,10 +45,13 @@ type sectionState struct {
 
 func cacheData() {
 	for {
+		logInfo("CHACHING", "Caching started")
+		timer := time.Now()
+
 		db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 		sqlDB, _ := db.DB()
 		if err != nil {
-			logError("MAIN", "Problem opening database: "+err.Error())
+			logError("CHACHING", "Problem opening database: "+err.Error())
 			return
 		}
 		var users []database.User
@@ -67,8 +71,8 @@ func cacheData() {
 		}
 		usersSync.Unlock()
 		userSettingsSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedUsersByEmail))+" users")
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedUserSettings))+" user settings")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedUsersByEmail))+" users")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedUserSettings))+" user settings")
 
 		var workplaces []database.Workplace
 		db.Find(&workplaces)
@@ -78,23 +82,21 @@ func cacheData() {
 
 		}
 		workplacesSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedWorkplacesById))+" workplaces")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplacesById))+" workplaces")
 
 		var companyName database.Setting
 		db.Where("name like 'company'").Find(&companyName)
 		companyNameSync.Lock()
 		cachedCompanyName = companyName.Value
 		companyNameSync.Unlock()
-		logInfo("MAIN", "Cached company name")
-
-		logInfo("MAIN", "Reading timezone from database")
+		logInfo("CHACHING", "Cached company name")
 
 		var timezone database.Setting
 		db.Where("name=?", "timezone").Find(&timezone)
 		companyNameSync.Lock()
 		location = timezone.Value
 		companyNameSync.Unlock()
-		logInfo("MAIN", "Cached timezone")
+		logInfo("CHACHING", "Cached timezone")
 
 		var locales []database.Locale
 		db.Find(&locales)
@@ -102,8 +104,19 @@ func cacheData() {
 		for _, locale := range locales {
 			cachedLocalesByName[locale.Name] = locale
 		}
+		cachedLocales["CsCZ"] = "cs-CZ"
+		cachedLocales["DeDE"] = "de-DE"
+		cachedLocales["EnUS"] = "en-US"
+		cachedLocales["EsES"] = "es-MX"
+		cachedLocales["FrFR"] = "fr-FR"
+		cachedLocales["ItIT"] = "it-IT"
+		cachedLocales["PlPL"] = "pl-PL"
+		cachedLocales["PtPT"] = "pt-BR"
+		cachedLocales["SkSK"] = "sk-SK"
+		cachedLocales["RuRU"] = "ru-RU"
+		cachedLocales["EnUS"] = "en-US"
 		localesSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedLocalesByName))+" locales")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedLocalesByName))+" locales")
 
 		var orders []database.Order
 		db.Find(&orders)
@@ -113,7 +126,7 @@ func cacheData() {
 
 		}
 		ordersSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedOrdersById))+" orders")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedOrdersById))+" orders")
 
 		var operations []database.Operation
 		db.Find(&operations)
@@ -123,7 +136,7 @@ func cacheData() {
 
 		}
 		operationsSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedOperationsById))+" operations")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedOperationsById))+" operations")
 
 		var workplaceModes []database.WorkplaceMode
 		db.Find(&workplaceModes)
@@ -133,7 +146,7 @@ func cacheData() {
 
 		}
 		workplaceModesSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedWorkplaceModesById))+" workplace modes")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceModesById))+" workplace modes")
 
 		var workshifts []database.Workshift
 		db.Find(&workshifts)
@@ -143,9 +156,10 @@ func cacheData() {
 
 		}
 		workshiftsSync.Unlock()
-		logInfo("MAIN", "Cached "+strconv.Itoa(len(cachedWorkshiftsById))+" workshifts")
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkshiftsById))+" workshifts")
 
 		_ = sqlDB.Close()
+		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())
 		time.Sleep(1 * time.Minute)
 	}
 }

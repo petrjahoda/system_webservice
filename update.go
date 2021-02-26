@@ -3,8 +3,10 @@ package main
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
+	"github.com/petrjahoda/database"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type UserSettingsInput struct {
@@ -13,10 +15,11 @@ type UserSettingsInput struct {
 }
 
 func updateUserSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	logInfo("MAIN", "Parsing Data")
+	email, _, _ := request.BasicAuth()
+	logInfo("UPDATE", "Updating user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	timer := time.Now()
 	var data UserSettingsInput
 	_ = json.NewDecoder(request.Body).Decode(&data)
-	email, _, _ := request.BasicAuth()
 	switch data.Settings {
 	case "menu":
 		{
@@ -48,4 +51,17 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 			userSettingsSync.Unlock()
 		}
 	}
+	logInfo("UPDATE", "User settings updated in "+time.Since(timer).String())
+}
+
+func updateUserDataSettings(email string, locale database.Locale, data DataPageInput) {
+	logInfo("UPDATE", "Updating data user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	timer := time.Now()
+	userSettingsSync.Lock()
+	settings := cachedUserSettings[email]
+	settings.dataSelection = locale.Name
+	settings.selectedWorkplaces = data.Workplaces
+	cachedUserSettings[email] = settings
+	userSettingsSync.Unlock()
+	logInfo("UPDATE", "User settings updated in "+time.Since(timer).String())
 }

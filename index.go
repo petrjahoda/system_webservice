@@ -4,7 +4,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"html/template"
 	"net/http"
-	"strings"
+	"time"
 )
 
 type IndexPageData struct {
@@ -21,9 +21,9 @@ type IndexPageData struct {
 }
 
 func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	ipAddress := strings.Split(request.RemoteAddr, ":")
-	logInfo("MAIN", "Sending home page to "+ipAddress[0])
+	timer := time.Now()
 	email, _, _ := request.BasicAuth()
+	logInfo("MAIN", "Sending home page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data IndexPageData
 	data.Version = version
 	data.Company = cachedCompanyName
@@ -36,7 +36,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	data.Compacted = cachedUserSettings[email].menuState
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("MAIN", "Home page sent")
+	logInfo("MAIN", "Home page sent in "+time.Since(timer).String())
 }
 
 func getLocale(email string, locale string) string {

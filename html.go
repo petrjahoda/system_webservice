@@ -11,13 +11,13 @@ import (
 )
 
 func updateProgramVersion() {
-	logInfo("MAIN", "Writing program version into settings")
+	logInfo("SYSTEM", "Writing program version into settings")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("MAIN", "Problem opening database: "+err.Error())
+		logError("SYSTEM", "Problem opening database: "+err.Error())
 		return
 	}
 	var existingSettings database.Setting
@@ -25,7 +25,7 @@ func updateProgramVersion() {
 	existingSettings.Name = serviceName
 	existingSettings.Value = version
 	db.Save(&existingSettings)
-	logInfo("MAIN", "Program version written into settings in "+time.Since(timer).String())
+	logInfo("SYSTEM", "Program version written into settings in "+time.Since(timer).String())
 }
 
 func basicAuth(h httprouter.Handle) httprouter.Handle {
@@ -48,7 +48,7 @@ func comparePasswords(hashedPwd string, plainPwd []byte) bool {
 	byteHash := []byte(hashedPwd)
 	err := bcrypt.CompareHashAndPassword(byteHash, plainPwd)
 	if err != nil {
-		logError("MAIN", "Passwords not matching")
+		logError("SYSTEM", "Passwords not matching")
 		return false
 	}
 	return true

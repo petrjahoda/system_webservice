@@ -15,7 +15,7 @@ const config = "user=postgres password=pj79.. dbname=system host=localhost port=
 type program struct{}
 
 func main() {
-	logInfo("MAIN", serviceName+" ["+version+"] starting...")
+	logInfo("SYSTEM", serviceName+" ["+version+"] starting...")
 	serviceConfig := &service.Config{
 		Name:        serviceName,
 		DisplayName: serviceName,
@@ -24,22 +24,22 @@ func main() {
 	prg := &program{}
 	s, err := service.New(prg, serviceConfig)
 	if err != nil {
-		logError("MAIN", "Cannot start: "+err.Error())
+		logError("SYSTEM", "Cannot start: "+err.Error())
 	}
 	err = s.Run()
 	if err != nil {
-		logError("MAIN", "Cannot start: "+err.Error())
+		logError("SYSTEM", "Cannot start: "+err.Error())
 	}
 }
 
 func (p *program) Start(service.Service) error {
-	logInfo("MAIN", serviceName+" ["+version+"] started")
+	logInfo("SYSTEM", serviceName+" ["+version+"] started")
 	go p.run()
 	return nil
 }
 
 func (p *program) Stop(service.Service) error {
-	logInfo("MAIN", serviceName+" ["+version+"] stopped")
+	logInfo("SYSTEM", serviceName+" ["+version+"] stopped")
 	return nil
 }
 
@@ -58,12 +58,12 @@ func (p *program) run() {
 	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
-	router.POST("/get_data", getData)
+	router.POST("/get_data", getTableData)
 	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {
-		logError("MAIN", "Problem starting service: "+err.Error())
+		logError("SYSTEM", "Problem starting service: "+err.Error())
 		os.Exit(-1)
 	}
-	logInfo("MAIN", serviceName+" ["+version+"] running")
+	logInfo("SYSTEM", serviceName+" ["+version+"] running")
 }
