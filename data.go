@@ -8,6 +8,7 @@ import (
 	"gorm.io/gorm"
 	"html/template"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -44,6 +45,10 @@ type DataPageInput struct {
 	Workplaces []string
 	From       string
 	To         string
+}
+
+type DataPageOutput struct {
+	Result string
 }
 
 type TableData struct {
@@ -125,12 +130,17 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 			Selection:     getSelected(cachedUserSettings[email].dataSelection, "system-statistics"),
 		})
 	}
+	var dataWorkplaces []WorkplaceSelection
 	for _, workplace := range cachedWorkplacesById {
-		data.Workplaces = append(data.Workplaces, WorkplaceSelection{
+		dataWorkplaces = append(dataWorkplaces, WorkplaceSelection{
 			WorkplaceName:      workplace.Name,
 			WorkplaceSelection: getWorkplaceSelection(cachedUserSettings[email].selectedWorkplaces, workplace.Name),
 		})
 	}
+	sort.Slice(dataWorkplaces, func(i, j int) bool {
+		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
+	})
+	data.Workplaces = dataWorkplaces
 	tmpl := template.Must(template.ParseFiles("./html/Data.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA", "Date page sent in "+time.Since(timer).String())
@@ -200,29 +210,27 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 	workplaceIds, locale := getWorkplaceIds(data, err)
 	updateUserDataSettings(email, locale, data)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
-	orderTimer := time.Now()
 	switch locale.Name {
 	case "alarms":
-		// TODO: processAlarms(writer, workplaceIds, dateFrom, dateTo, email)
+		processAlarms(writer, workplaceIds, dateFrom, dateTo, email)
 	case "breakdowns":
-		// TODO: processBreakdowns(writer, workplaceIds, dateFrom, dateTo, email)
+		processBreakdowns(writer, workplaceIds, dateFrom, dateTo, email)
 	case "downtimes":
-		// TODO: processDowntimes(writer, workplaceIds, dateFrom, dateTo, email)
+		processDowntimes(writer, workplaceIds, dateFrom, dateTo, email)
 	case "faults":
-		// TODO: processFaults(writer, workplaceIds, dateFrom, dateTo, email)
+		processFaults(writer, workplaceIds, dateFrom, dateTo, email)
 	case "orders":
 		processOrders(writer, workplaceIds, dateFrom, dateTo, email)
-		logInfo("DATA", "Processing orders takes "+time.Since(orderTimer).String())
 	case "packages":
-		// TODO: processPackages(writer, workplaceIds, dateFrom, dateTo, email)
+		processPackages(writer, workplaceIds, dateFrom, dateTo, email)
 	case "parts":
-		// TODO: processParts(writer, workplaceIds, dateFrom, dateTo, email)
+		processParts(writer, workplaceIds, dateFrom, dateTo, email)
 	case "states":
-		// TODO: processStates(writer, workplaceIds, dateFrom, dateTo, email)
+		processStates(writer, workplaceIds, dateFrom, dateTo, email)
 	case "users":
-		// TODO: processUsers(writer, workplaceIds, dateFrom, dateTo, email)
+		processUsers(writer, workplaceIds, dateFrom, dateTo, email)
 	case "system-statistics":
-		// TODO: processSystemStatistic(writer, workplaceIds, dateFrom, dateTo, email)
+		processSystemStats(writer, dateFrom, dateTo, email)
 	}
 	logInfo("DATA", "Table data sent in "+time.Since(timer).String())
 	return

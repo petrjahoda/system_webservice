@@ -11,28 +11,9 @@ import (
 	"time"
 )
 
-type DataPageOutput struct {
-	Result       string
-	OrderRecords []OrderRecord
-}
-
-type OrderRecord struct {
-	WorkplaceName     string
-	OrderStart        string
-	OrderEnd          string
-	WorkplaceModeName string
-	WorkshiftName     string
-	UserName          string
-	OrderName         string
-	OperationName     string
-	AverageCycle      float32
-	Cavity            int
-	Ok                int
-	Nok               int
-	Note              string
-}
-
 func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+	timer := time.Now()
+	logInfo("DATA-ORDERS", "Processing orders started")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
@@ -46,9 +27,14 @@ func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 		return
 	}
 	var orderRecords []database.OrderRecord
-	db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
 	var userRecords []database.UserRecord
-	db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Find(&userRecords)
+	if workplaceIds == "workplace_id in (')" {
+		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
+		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Find(&userRecords)
+	} else {
+		db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
+		db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Find(&userRecords)
+	}
 	var userRecordsByRecordId = map[int]database.UserRecord{}
 	for _, record := range userRecords {
 		userRecordsByRecordId[record.OrderRecordID] = record
@@ -57,15 +43,16 @@ func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	addTableHeaders(email, &data)
+	addOrderTableHeaders(email, &data)
 	for _, record := range orderRecords {
-		addTableRow(record, userRecordsByRecordId, &data)
+		addOrderTableRow(record, userRecordsByRecordId, &data)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/table.html"))
 	_ = tmpl.Execute(writer, data)
+	logInfo("DATA-ORDERS", "Orders processed in "+time.Since(timer).String())
 }
 
-func addTableHeaders(email string, data *TableData) {
+func addOrderTableHeaders(email string, data *TableData) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	orderStart := HeaderCell{HeaderName: getLocale(email, "order-start")}
@@ -94,7 +81,7 @@ func addTableHeaders(email string, data *TableData) {
 	data.TableHeader = append(data.TableHeader, noteName)
 }
 
-func addTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableData) {
+func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableData) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)

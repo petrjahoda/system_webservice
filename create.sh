@@ -11,6 +11,6 @@ docker rmi -f petrjahoda/"$name":latest
 docker  build -t petrjahoda/"$name":latest .
 docker push petrjahoda/"$name":latest
 
-docker rmi -f petrjahoda/"$name":2021.1.2
-docker build -t petrjahoda/"$name":2021.1.2 .
-docker push petrjahoda/"$name":2021.1.2
+docker rmi -f petrjahoda/"$name":2021.1.3
+docker build -t petrjahoda/"$name":2021.1.3 .
+docker push petrjahoda/"$name":2021.1.3
