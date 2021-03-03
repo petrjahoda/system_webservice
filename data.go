@@ -24,23 +24,23 @@ type DataPageData struct {
 	MenuStatistics        string
 	MenuData              string
 	MenuSettings          string
-	SelectionMenu         []Selection
-	Workplaces            []WorkplaceSelection
+	SelectionMenu         []TableSelection
+	Workplaces            []TableWorkplaceSelection
 	Compacted             string
 	DataFilterPlaceholder string
 	DateLocale            string
 }
 
-type WorkplaceSelection struct {
+type TableWorkplaceSelection struct {
 	WorkplaceName      string
 	WorkplaceSelection string
 }
-type Selection struct {
+type TableSelection struct {
 	SelectionName string
 	Selection     string
 }
 
-type DataPageInput struct {
+type TableDataPageInput struct {
 	Data       string
 	Workplaces []string
 	From       string
@@ -86,53 +86,53 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
 	data.Compacted = cachedUserSettings[email].menuState
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "alarms"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "alarms"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "breakdowns"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "breakdowns"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "downtimes"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "downtimes"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "faults"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "faults"),
 	})
 
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "orders"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "orders"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "packages"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "packages"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "parts"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "parts"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, Selection{
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName: getLocale(email, "states"),
 		Selection:     getSelected(cachedUserSettings[email].dataSelection, "states"),
 	})
 	if cachedUsersByEmail[email].UserTypeID == 2 {
 		logInfo("DATA", "Adding data menu for administrator")
-		data.SelectionMenu = append(data.SelectionMenu, Selection{
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName: getLocale(email, "users"),
 			Selection:     getSelected(cachedUserSettings[email].dataSelection, "users"),
 		})
-		data.SelectionMenu = append(data.SelectionMenu, Selection{
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName: getLocale(email, "system-statistics"),
 			Selection:     getSelected(cachedUserSettings[email].dataSelection, "system-statistics"),
 		})
 	}
-	var dataWorkplaces []WorkplaceSelection
+	var dataWorkplaces []TableWorkplaceSelection
 	for _, workplace := range cachedWorkplacesById {
-		dataWorkplaces = append(dataWorkplaces, WorkplaceSelection{
+		dataWorkplaces = append(dataWorkplaces, TableWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
 			WorkplaceSelection: getWorkplaceSelection(cachedUserSettings[email].selectedWorkplaces, workplace.Name),
 		})
@@ -166,7 +166,7 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
 	logInfo("DATA", "Sending table data to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
-	var data DataPageInput
+	var data TableDataPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("DATA", "Error parsing data: "+err.Error())
@@ -236,7 +236,7 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 	return
 }
 
-func getWorkplaceIds(data DataPageInput, err error) (string, database.Locale) {
+func getWorkplaceIds(data TableDataPageInput, err error) (string, database.Locale) {
 	workplaceNames := `name in ('`
 	for _, workplace := range data.Workplaces {
 		workplaceNames += workplace + `','`

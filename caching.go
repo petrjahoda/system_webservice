@@ -28,6 +28,7 @@ var cachedFaultsById = map[uint]database.Fault{}
 var cachedPackagesById = map[uint]database.Package{}
 var cachedPartsById = map[uint]database.Part{}
 var cachedStatesById = map[uint]database.State{}
+var cachedWorkplaceDevicePorts = map[string][]database.DevicePort{}
 
 var usersSync sync.RWMutex
 var userSettingsSync sync.RWMutex
@@ -45,6 +46,7 @@ var faultsSync sync.RWMutex
 var packagesSync sync.RWMutex
 var partsSync sync.RWMutex
 var statesSync sync.RWMutex
+var workplaceDevicePortsSync sync.RWMutex
 
 type userSettings struct {
 	menuState          string
@@ -241,6 +243,24 @@ func cacheData() {
 		}
 		statesSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedStatesById))+" states")
+
+		var allWorkplaces []database.Workplace
+		db.Find(&allWorkplaces)
+		workplaceDevicePortsSync.Lock()
+		for _, workplace := range allWorkplaces {
+			var allWorkplacePorts []database.WorkplacePort
+			var allDevicePorts []database.DevicePort
+			db.Where("workplace_id = ?", workplace.ID).Find(&allWorkplacePorts)
+			for _, workplacePort := range allWorkplacePorts {
+				var devicePort database.DevicePort
+				db.Where("id = ?", workplacePort.DevicePortID).Find(&devicePort)
+				allDevicePorts = append(allDevicePorts, devicePort)
+			}
+			cachedWorkplaceDevicePorts[workplace.Name] = allDevicePorts
+
+		}
+		workplaceDevicePortsSync.Unlock()
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceDevicePorts))+" workplace deviceports")
 
 		_ = sqlDB.Close()
 		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())

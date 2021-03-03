@@ -58,7 +58,8 @@ func (p *program) run() {
 	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
-	router.POST("/get_data", getTableData)
+	router.POST("/get_table_data", getTableData)
+	router.POST("/get_chart_data", getChartData)
 	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {
