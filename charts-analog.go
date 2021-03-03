@@ -30,7 +30,6 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	allWorkplacePorts := cachedWorkplaceDevicePorts[workplaceName]
 	for _, port := range allWorkplacePorts {
 		if port.DevicePortTypeID == 2 {
-			fmt.Println(port.Name)
 			var analogData []database.DevicePortAnalogRecord
 			db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
@@ -56,6 +55,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 				date = date.Add(10 * time.Second)
 
 			}
+			fmt.Println(len(portData.PortData))
 			analogOutputData = append(analogOutputData, portData)
 		}
 	}

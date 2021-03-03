@@ -104,17 +104,20 @@
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div class="row">
+                <input type="datetime-local" value="2018-06-12T19:30">
                 <div class="cell-lg-3">
                     <div></div>
                 </div>
                 <div class="cell-lg-3 cell-md-4">
-                    <input id="fromdate" data-role="datepicker" data-locale="{{.DateLocale}}">
-                    <input id="fromtime" data-role="timepicker" data-locale="{{.DateLocale}}">
+                    <!--                    <input id="fromdate" data-role="datepicker" data-distance="1" data-locale="{{.DateLocale}}">-->
+                    <input type="text" id="fromdate" data-role="calendarpicker" data-locale="{{.DateLocale}}">
+                    <input id="fromtime" data-role="timepicker" data-seconds="false" data-locale="{{.DateLocale}}">
 
                 </div>
                 <div class="cell-lg-3 cell-md-4">
-                    <input id="todate" data-role="datepicker" data-locale="{{.DateLocale}}">
-                    <input id="totime" data-role="timepicker" data-locale="{{.DateLocale}}">
+                    <!--                    <input id="todate" data-role="datepicker" data-distance="1" data-locale="{{.DateLocale}}">-->
+                    <input type="text" id="todate" data-role="calendarpicker" data-locale="{{.DateLocale}}">
+                    <input id="totime" data-role="timepicker" data-seconds="false" data-locale="{{.DateLocale}}">
                 </div>
                 <div class="cell-lg-3 cell-md-4" style="display: block">
                     <button id="data-ok-button" class="button primary outline"

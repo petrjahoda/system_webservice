@@ -1,7 +1,9 @@
 let dt = new Date();
 dt = addDate(dt, -1, 'days');
-const datePicker = document.getElementById("fromdate")
-datePicker.dataset.value = dt.format("%Y-%m-%d")
+const fromDate = document.getElementById("fromdate")
+const toDate = document.getElementById("todate")
+fromDate.dataset.value = dt.format("%Y-%m-%d")
+toDate.dataset.value = new Date().format("%Y-%m-%d")
 const dataOkButton = document.getElementById("data-ok-button")
 
 dataOkButton.addEventListener("click", (event) => {
@@ -49,7 +51,7 @@ function drawAnalogChart(chartData) {
         const chart = am4core.create("chart", am4charts.XYChart);
         let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
         dateAxis.groupData = true;
-        dateAxis.groupCount = 17280;
+        dateAxis.groupCount = 3840;
         let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
         valueAxis.min = 0;
 
@@ -76,10 +78,10 @@ function drawAnalogChart(chartData) {
 
         chart.cursor = new am4charts.XYCursor();
         chart.cursor.xAxis = dateAxis;
-
         let scrollbarX = new am4core.Scrollbar();
         scrollbarX.marginBottom = 20;
         chart.scrollbarX = scrollbarX;
         chart.dateFormatter.language.locale = am4lang_cs_CZ;
     });
+    am4core.options.autoDispose = true;
 }
