@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
-	"github.com/petrjahoda/database"
 	"net/http"
 	"strings"
 	"time"
@@ -54,12 +53,12 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 	logInfo("UPDATE", "User settings updated in "+time.Since(timer).String())
 }
 
-func updateUserDataSettings(email string, locale database.Locale, data TableDataPageInput) {
+func updateUserDataSettings(email string, locale string, data TableDataPageInput) {
 	logInfo("UPDATE", "Updating data user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	timer := time.Now()
 	userSettingsSync.Lock()
 	settings := cachedUserSettings[email]
-	settings.dataSelection = locale.Name
+	settings.dataSelection = locale
 	settings.selectedWorkplaces = data.Workplaces
 	cachedUserSettings[email] = settings
 	userSettingsSync.Unlock()

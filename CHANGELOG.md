@@ -21,6 +21,8 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - menu UI for data and charts
 - proper language for charts
 - proper "no data" for charts
+- better loading menus
+- faster work with locales in background
 
 ## [2021.1.3.3] - 2021-03-03
 

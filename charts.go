@@ -3,9 +3,6 @@ package main
 import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
-	"github.com/petrjahoda/database"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"html/template"
 	"net/http"
 	"sort"
@@ -41,8 +38,9 @@ type ChartWorkplaceSelection struct {
 	WorkplaceSelection string
 }
 type ChartSelection struct {
-	SelectionName string
-	Selection     string
+	SelectionName  string
+	SelectionValue string
+	Selection      string
 }
 
 type ChartDataPageOutput struct {
@@ -81,28 +79,34 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	data.Compacted = cachedUserSettings[email].menuState
 
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName: getLocale(email, "combined-chart"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "combined-chart"),
+		SelectionName:  getLocale(email, "combined-chart"),
+		SelectionValue: "combined-chart",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "combined-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName: getLocale(email, "timeline-chart"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "timeline-chart"),
+		SelectionName:  getLocale(email, "timeline-chart"),
+		SelectionValue: "timeline-chart",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "timeline-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName: getLocale(email, "analog-data"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "analog-data"),
+		SelectionName:  getLocale(email, "analog-data"),
+		SelectionValue: "analog-data",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "analog-data"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName: getLocale(email, "digital-data"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "digital-data"),
+		SelectionName:  getLocale(email, "digital-data"),
+		SelectionValue: "digital-data",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "digital-data"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName: getLocale(email, "production-chart"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "production-chart"),
+		SelectionName:  getLocale(email, "production-chart"),
+		SelectionValue: "production-chart",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "production-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName: getLocale(email, "consumption-chart"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "consumption-chart"),
+		SelectionName:  getLocale(email, "consumption-chart"),
+		SelectionValue: "consumption-chart",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "consumption-chart"),
 	})
 
 	var dataWorkplaces []ChartWorkplaceSelection
@@ -167,14 +171,13 @@ func getChartData(writer http.ResponseWriter, request *http.Request, params http
 	}
 	logInfo("CHARTS", "From "+dateFrom.String()+" to "+dateTo.String())
 	logInfo("CHARTS", "Preprocessing takes "+time.Since(timer).String())
-	locale := getLocaleForChart(data)
-	switch locale.Name {
+	switch data.Data {
 	case "combined-chart":
 		//processAlarms(writer, workplaceIds, dateFrom, dateTo, email)
 	case "timeline-chart":
 		//processBreakdowns(writer, workplaceIds, dateFrom, dateTo, email)
 	case "analog-data":
-		processAnalogData(writer, data.Workplace, dateFrom, dateTo, email, locale.Name)
+		processAnalogData(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "digital-data":
 		//processFaults(writer, workplaceIds, dateFrom, dateTo, email)
 	case "production-chart":
@@ -184,16 +187,4 @@ func getChartData(writer http.ResponseWriter, request *http.Request, params http
 	}
 	logInfo("CHARTS", "Chart data sent in "+time.Since(timer).String())
 	return
-}
-
-func getLocaleForChart(data ChartsDataPageInput) database.Locale {
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("DATA", "Problem opening database: "+err.Error())
-	}
-	var locale database.Locale
-	db.Select("name").Where("cs_cz like (?)", data.Data).Or("de_de like (?)", data.Data).Or("en_us like (?)", data.Data).Or("es_es like (?)", data.Data).Or("fr_fr like (?)", data.Data).Or("it_it like (?)", data.Data).Or("pl_pl like (?)", data.Data).Or("pt_pt like (?)", data.Data).Or("sk_sk like (?)", data.Data).Or("ru_ru like (?)", data.Data).Find(&locale)
-	return locale
 }

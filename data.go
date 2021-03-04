@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -36,8 +37,9 @@ type TableWorkplaceSelection struct {
 	WorkplaceSelection string
 }
 type TableSelection struct {
-	SelectionName string
-	Selection     string
+	SelectionName  string
+	SelectionValue string
+	Selection      string
 }
 
 type TableDataPageInput struct {
@@ -87,47 +89,57 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
 	data.Compacted = cachedUserSettings[email].menuState
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "alarms"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "alarms"),
+		SelectionName:  getLocale(email, "alarms"),
+		SelectionValue: "alarms",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "alarms"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "breakdowns"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "breakdowns"),
+		SelectionName:  getLocale(email, "breakdowns"),
+		SelectionValue: "breakdowns",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "breakdowns"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "downtimes"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "downtimes"),
+		SelectionName:  getLocale(email, "downtimes"),
+		SelectionValue: "downtimes",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "downtimes"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "faults"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "faults"),
+		SelectionName:  getLocale(email, "faults"),
+		SelectionValue: "faults",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "faults"),
 	})
 
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "orders"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "orders"),
+		SelectionName:  getLocale(email, "orders"),
+		SelectionValue: "orders",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "orders"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "packages"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "packages"),
+		SelectionName:  getLocale(email, "packages"),
+		SelectionValue: "packages",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "packages"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "parts"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "parts"),
+		SelectionName:  getLocale(email, "parts"),
+		SelectionValue: "parts",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "parts"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName: getLocale(email, "states"),
-		Selection:     getSelected(cachedUserSettings[email].dataSelection, "states"),
+		SelectionName:  getLocale(email, "states"),
+		SelectionValue: "states",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "states"),
 	})
 	if cachedUsersByEmail[email].UserTypeID == 2 {
 		logInfo("DATA", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-			SelectionName: getLocale(email, "users"),
-			Selection:     getSelected(cachedUserSettings[email].dataSelection, "users"),
+			SelectionName:  getLocale(email, "users"),
+			SelectionValue: "users",
+			Selection:      getSelected(cachedUserSettings[email].dataSelection, "users"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-			SelectionName: getLocale(email, "system-statistics"),
-			Selection:     getSelected(cachedUserSettings[email].dataSelection, "system-statistics"),
+			SelectionName:  getLocale(email, "system-statistics"),
+			SelectionValue: "system-statistics",
+			Selection:      getSelected(cachedUserSettings[email].dataSelection, "system-statistics"),
 		})
 	}
 	var dataWorkplaces []TableWorkplaceSelection
@@ -207,10 +219,11 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 		return
 	}
 	logInfo("DATA", "From "+dateFrom.String()+" to "+dateTo.String())
-	workplaceIds, locale := getWorkplaceIds(data, err)
-	updateUserDataSettings(email, locale, data)
+	fmt.Println(data.Data)
+	workplaceIds := getWorkplaceIds(data, cachedUsersByEmail[email].Locale)
+	updateUserDataSettings(email, data.Data, data)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
-	switch locale.Name {
+	switch data.Data {
 	case "alarms":
 		processAlarms(writer, workplaceIds, dateFrom, dateTo, email)
 	case "breakdowns":
@@ -236,7 +249,7 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 	return
 }
 
-func getWorkplaceIds(data TableDataPageInput, err error) (string, database.Locale) {
+func getWorkplaceIds(data TableDataPageInput, userLocale string) string {
 	workplaceNames := `name in ('`
 	for _, workplace := range data.Workplaces {
 		workplaceNames += workplace + `','`
@@ -248,7 +261,7 @@ func getWorkplaceIds(data TableDataPageInput, err error) (string, database.Local
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA", "Problem opening database: "+err.Error())
-		return "", database.Locale{}
+		return ""
 	}
 	var workplaces []database.Workplace
 	db.Select("id").Where(workplaceNames).Find(&workplaces)
@@ -258,7 +271,5 @@ func getWorkplaceIds(data TableDataPageInput, err error) (string, database.Local
 	}
 	workplaceIds = strings.TrimSuffix(workplaceIds, `,'`)
 	workplaceIds += ")"
-	var locale database.Locale
-	db.Select("name").Where("cs_cz like (?)", data.Data).Or("de_de like (?)", data.Data).Or("en_us like (?)", data.Data).Or("es_es like (?)", data.Data).Or("fr_fr like (?)", data.Data).Or("it_it like (?)", data.Data).Or("pl_pl like (?)", data.Data).Or("pt_pt like (?)", data.Data).Or("sk_sk like (?)", data.Data).Or("ru_ru like (?)", data.Data).Find(&locale)
-	return workplaceIds, locale
+	return workplaceIds
 }

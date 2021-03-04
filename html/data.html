@@ -83,7 +83,7 @@
                     <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select"
                             style="width: 100px;max-height: 100px">
                         {{range .SelectionMenu}}
-                        <option value="{{.SelectionName}}" {{.Selection}}>{{.SelectionName}}</option>
+                        <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
                         {{end}}
                     </select>
                 </div>
@@ -117,29 +117,6 @@
                     </button>
                 </div>
             </div>
-<!--            <div class="row">-->
-<!--                <div class="cell-lg-3">-->
-<!--                    <div></div>-->
-<!--                </div>-->
-<!--                <div class="cell-lg-3 cell-md-4">-->
-<!--                    <input id="fromdate" data-role="datepicker" data-locale="{{.DateLocale}}">-->
-<!--                    <input id="fromtime" data-role="timepicker" data-locale="{{.DateLocale}}">-->
-
-<!--                </div>-->
-<!--                <div class="cell-lg-3 cell-md-4">-->
-<!--                    <input id="todate" data-role="datepicker" data-locale="{{.DateLocale}}">-->
-<!--                    <input id="totime" data-role="timepicker" data-locale="{{.DateLocale}}">-->
-<!--                </div>-->
-<!--                <div class="cell-lg-3 cell-md-4" style="display: block">-->
-<!--                    <button id="data-ok-button" class="button primary outline"-->
-<!--                            style="min-width: 105px;max-width: 125px">OK-->
-<!--                    </button>-->
-<!--                    <button class="button alert outline" onclick="$('#data-table').data('table').export('CSV')"-->
-<!--                            style="min-width: 105px;max-width: 125px">-->
-<!--                        Export-->
-<!--                    </button>-->
-<!--                </div>-->
-<!--            </div>-->
             <div id="data-table-container" style="display: block;margin-top:10px;">
             </div>
 
