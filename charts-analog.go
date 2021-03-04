@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"math"
 	"net/http"
 	"time"
 )
@@ -34,11 +34,13 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
 			portData.PortName = port.Name
+			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
 			date := dateFrom
 			for _, data := range analogData {
 				for data.DateTime.Sub(date).Seconds() > 20 {
 					var initialData Data
 					initialData.Time = date.Unix()
+					initialData.Value = math.MinInt16
 					portData.PortData = append(portData.PortData, initialData)
 					date = date.Add(10 * time.Second)
 				}
@@ -51,15 +53,16 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			for dateTo.Sub(date).Seconds() > 20 {
 				var initialData Data
 				initialData.Time = date.Unix()
+				initialData.Value = math.MinInt16
 				portData.PortData = append(portData.PortData, initialData)
 				date = date.Add(10 * time.Second)
 
 			}
-			fmt.Println(len(portData.PortData))
 			analogOutputData = append(analogOutputData, portData)
 		}
 	}
 	responseData.AnalogData = analogOutputData
+	responseData.Locale = cachedUsersByEmail[email].Locale
 	responseData.Result = "ok"
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")

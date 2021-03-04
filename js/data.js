@@ -1,8 +1,9 @@
+let now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById('to-date').value = now.toISOString().slice(0,16);
+now.setHours(now.getHours() - 24);
+document.getElementById('from-date').value = now.toISOString().slice(0,16);
 
-let dt = new Date();
-dt = addDate(dt, -1, 'months');
-const datePicker = document.getElementById("fromdate")
-datePicker.dataset.value = dt.format("%Y-%m-%d")
 const dataOkButton = document.getElementById("data-ok-button")
 
 dataOkButton.addEventListener("click", (event) => {
@@ -15,8 +16,8 @@ dataOkButton.addEventListener("click", (event) => {
     let data = {
         data: document.getElementById("data-selection").value,
         workplaces: workplaces,
-        from: document.getElementById("fromdate").value + ";" + document.getElementById("fromtime").value,
-        to: document.getElementById("todate").value + ";" + document.getElementById("totime").value
+        from: document.getElementById("from-date").value,
+        to: document.getElementById("to-date").value
     };
     fetch("/get_table_data", {
         method: "POST",

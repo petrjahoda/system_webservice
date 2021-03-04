@@ -79,7 +79,7 @@
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto">
-                <div style="min-width:250px">
+                <div style="min-width:205px">
                     <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select"
                             style="width: 100px;max-height: 100px">
                         {{range .SelectionMenu}}
@@ -101,29 +101,45 @@
                     </select>
                 </div>
             </div>
-            <div class="row">
-                <div class="cell-lg-3">
-                    <div></div>
-                </div>
-                <div class="cell-lg-3 cell-md-4">
-                    <input id="fromdate" data-role="datepicker" data-locale="{{.DateLocale}}">
-                    <input id="fromtime" data-role="timepicker" data-locale="{{.DateLocale}}">
+            <div class="row flex-justify-center">
+                <div class="stub" style="width: 225px">
+                    <input id="from-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px;margin-top: 10px;">
 
                 </div>
-                <div class="cell-lg-3 cell-md-4">
-                    <input id="todate" data-role="datepicker" data-locale="{{.DateLocale}}">
-                    <input id="totime" data-role="timepicker" data-locale="{{.DateLocale}}">
+                <div class="stub" style="width: 225px">
+                    <input id="to-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px;margin-top: 10px;">
                 </div>
-                <div class="cell-lg-3 cell-md-4" style="display: block">
+                <div class="stub" style="display: block;margin-top: 10px;">
                     <button id="data-ok-button" class="button primary outline"
-                            style="min-width: 105px;max-width: 125px">OK
-                    </button>
-                    <button class="button alert outline" onclick="$('#data-table').data('table').export('CSV')"
-                            style="min-width: 105px;max-width: 125px">
-                        Export
+                            style="min-width: 125px;max-width: 125px">OK
                     </button>
                 </div>
             </div>
+<!--            <div class="row">-->
+<!--                <div class="cell-lg-3">-->
+<!--                    <div></div>-->
+<!--                </div>-->
+<!--                <div class="cell-lg-3 cell-md-4">-->
+<!--                    <input id="fromdate" data-role="datepicker" data-locale="{{.DateLocale}}">-->
+<!--                    <input id="fromtime" data-role="timepicker" data-locale="{{.DateLocale}}">-->
+
+<!--                </div>-->
+<!--                <div class="cell-lg-3 cell-md-4">-->
+<!--                    <input id="todate" data-role="datepicker" data-locale="{{.DateLocale}}">-->
+<!--                    <input id="totime" data-role="timepicker" data-locale="{{.DateLocale}}">-->
+<!--                </div>-->
+<!--                <div class="cell-lg-3 cell-md-4" style="display: block">-->
+<!--                    <button id="data-ok-button" class="button primary outline"-->
+<!--                            style="min-width: 105px;max-width: 125px">OK-->
+<!--                    </button>-->
+<!--                    <button class="button alert outline" onclick="$('#data-table').data('table').export('CSV')"-->
+<!--                            style="min-width: 105px;max-width: 125px">-->
+<!--                        Export-->
+<!--                    </button>-->
+<!--                </div>-->
+<!--            </div>-->
             <div id="data-table-container" style="display: block;margin-top:10px;">
             </div>
 

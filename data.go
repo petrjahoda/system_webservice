@@ -183,7 +183,7 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 		logError("DATA", "Problem loading timezone, setting Europe/Prague")
 		loc, _ = time.LoadLocation("Europe/Prague")
 	}
-	layout := "2006-01-02;15:04:05"
+	layout := "2006-01-02T15:04"
 	dateFrom, err := time.ParseInLocation(layout, data.From, loc)
 	dateFrom = dateFrom.In(time.UTC)
 	if err != nil {

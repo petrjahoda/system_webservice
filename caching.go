@@ -29,6 +29,7 @@ var cachedPackagesById = map[uint]database.Package{}
 var cachedPartsById = map[uint]database.Part{}
 var cachedStatesById = map[uint]database.State{}
 var cachedWorkplaceDevicePorts = map[string][]database.DevicePort{}
+var cachedDevicePortsColorsById = map[int]string{}
 
 var usersSync sync.RWMutex
 var userSettingsSync sync.RWMutex
@@ -47,6 +48,7 @@ var packagesSync sync.RWMutex
 var partsSync sync.RWMutex
 var statesSync sync.RWMutex
 var workplaceDevicePortsSync sync.RWMutex
+var cachedDevicePortsColorsSync sync.RWMutex
 
 type userSettings struct {
 	menuState          string
@@ -261,6 +263,15 @@ func cacheData() {
 		}
 		workplaceDevicePortsSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceDevicePorts))+" workplace deviceports")
+
+		var workplacePorts []database.WorkplacePort
+		db.Find(&workplacePorts)
+		cachedDevicePortsColorsSync.Lock()
+		for _, workplacePort := range workplacePorts {
+			cachedDevicePortsColorsById[workplacePort.DevicePortID] = workplacePort.Color
+		}
+		cachedDevicePortsColorsSync.Unlock()
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicePortsColorsById))+" workplace deviceport colors")
 
 		_ = sqlDB.Close()
 		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())

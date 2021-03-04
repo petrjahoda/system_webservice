@@ -1,9 +1,9 @@
-let dt = new Date();
-dt = addDate(dt, -1, 'days');
-const fromDate = document.getElementById("fromdate")
-const toDate = document.getElementById("todate")
-fromDate.dataset.value = dt.format("%Y-%m-%d")
-toDate.dataset.value = new Date().format("%Y-%m-%d")
+let now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById('to-date').value = now.toISOString().slice(0,16);
+now.setHours(now.getHours() - 24);
+document.getElementById('from-date').value = now.toISOString().slice(0,16);
+
 const dataOkButton = document.getElementById("data-ok-button")
 
 dataOkButton.addEventListener("click", (event) => {
@@ -12,8 +12,8 @@ dataOkButton.addEventListener("click", (event) => {
     let data = {
         data: document.getElementById("data-selection").value,
         workplace: document.getElementById("workplace-selection").value,
-        from: document.getElementById("fromdate").value + ";" + document.getElementById("fromtime").value,
-        to: document.getElementById("todate").value + ";" + document.getElementById("totime").value
+        from: document.getElementById("from-date").value,
+        to: document.getElementById("to-date").value
     };
     fetch("/get_chart_data", {
         method: "POST",
@@ -54,34 +54,49 @@ function drawAnalogChart(chartData) {
         dateAxis.groupCount = 3840;
         let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
         valueAxis.min = 0;
-
         for (const analogData of chartData["AnalogData"]) {
-            console.log(analogData["PortName"] + " started")
             const series = chart.series.push(new am4charts.LineSeries());
+            series.connect = false;
             series.dataFields.valueY = "value";
             series.dataFields.dateX = "date";
             series.name = analogData["PortName"];
+            series.stroke = am4core.color(analogData["PortColor"]);
             let segment = series.segments.template;
             segment.interactionsEnabled = true;
             const data = [];
             for (const oneData of analogData["PortData"]) {
-                dataItem = {date: oneData["Time"]*1000, value:oneData["Value"]};
+                if (oneData["Value"] === -32768) {
+                    dataItem = {date: oneData["Time"]*1000};
+                } else {
+                    dataItem = {date: oneData["Time"]*1000, value:oneData["Value"]};
+                    if (oneData["Value"] < valueAxis.min) {
+                        valueAxis.min = oneData["Value"];
+                    }
+                }
                 data.push(dataItem);
             }
-            console.log(analogData["PortName"] + " ended with length of " + data.length)
             series.tooltipText = "{valueY}";
             series.data = data;
         }
         chart.legend = new am4charts.Legend();
         chart.legend.position = "right";
         chart.legend.scrollable = true;
-
         chart.cursor = new am4charts.XYCursor();
         chart.cursor.xAxis = dateAxis;
         let scrollbarX = new am4core.Scrollbar();
         scrollbarX.marginBottom = 20;
         chart.scrollbarX = scrollbarX;
-        chart.dateFormatter.language.locale = am4lang_cs_CZ;
+        switch (chartData["Locale"]) {
+            case "CsCZ": chart.dateFormatter.language.locale = am4lang_cs_CZ;break;
+            case "DeDE": chart.dateFormatter.language.locale = am4lang_de_DE;break;
+            case "EsES": chart.dateFormatter.language.locale = am4lang_es_ES;break;
+            case "FrFR": chart.dateFormatter.language.locale = am4lang_fr_FR;break;
+            case "ItIT": chart.dateFormatter.language.locale = am4lang_it_IT;break;
+            case "PlPL": chart.dateFormatter.language.locale = am4lang_pl_PL;break;
+            case "PtPT": chart.dateFormatter.language.locale = am4lang_pt_PT;break;
+            case "SkSK": chart.dateFormatter.language.locale = am4lang_cs_CZ;break;
+            case "RuRU": chart.dateFormatter.language.locale = am4lang_sr_RS;break;
+        }
     });
     am4core.options.autoDispose = true;
 }

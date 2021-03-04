@@ -14,6 +14,14 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.1.3.4] - 2021-03-04
+
+### Changed
+- datetime picker for data and charts
+- menu UI for data and charts
+- proper language for charts
+- proper "no data" for charts
+
 ## [2021.1.3.3] - 2021-03-03
 
 ### Added

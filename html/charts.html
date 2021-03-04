@@ -12,6 +12,13 @@
     <script src="../js/amcharts/charts.js" defer></script>
     <script src="../js/amcharts/animated.js" defer></script>
     <script src="../js/amcharts/locales/cs_CZ.js" defer></script>
+    <script src="../js/amcharts/locales/de_DE.js" defer></script>
+    <script src="../js/amcharts/locales/es_ES.js" defer></script>
+    <script src="../js/amcharts/locales/fr_FR.js" defer></script>
+    <script src="../js/amcharts/locales/it_IT.js" defer></script>
+    <script src="../js/amcharts/locales/pl_PL.js" defer></script>
+    <script src="../js/amcharts/locales/pt_PT.js" defer></script>
+    <script src="../js/amcharts/locales/sr_RS.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
@@ -83,7 +90,7 @@
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto">
-                <div style="min-width:250px;margin-right: 7px">
+                <div style="min-width:205px;margin-right: 3px">
                     <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select"
                             style="width: 100px;max-height: 100px">
                         {{range .SelectionMenu}}
@@ -91,7 +98,7 @@
                         {{end}}
                     </select>
                 </div>
-                <div style="min-width:250px;margin-left: 7px">
+                <div style="min-width:205px;margin-left: 3px">
                     <select id="workplace-selection" data-filter="false" data-drop-height="80vh" data-role="select"
                             style="width: 100px;max-height: 100px">
                         {{range .Workplaces}}
@@ -102,32 +109,27 @@
             </div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
-             style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div class="row">
-                <input type="datetime-local" value="2018-06-12T19:30">
-                <div class="cell-lg-3">
-                    <div></div>
-                </div>
-                <div class="cell-lg-3 cell-md-4">
-                    <!--                    <input id="fromdate" data-role="datepicker" data-distance="1" data-locale="{{.DateLocale}}">-->
-                    <input type="text" id="fromdate" data-role="calendarpicker" data-locale="{{.DateLocale}}">
-                    <input id="fromtime" data-role="timepicker" data-seconds="false" data-locale="{{.DateLocale}}">
+             style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+            <div class="row flex-justify-center">
+                <div class="stub" style="width: 225px">
+                    <input id="from-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px;margin-top: 10px;">
 
                 </div>
-                <div class="cell-lg-3 cell-md-4">
-                    <!--                    <input id="todate" data-role="datepicker" data-distance="1" data-locale="{{.DateLocale}}">-->
-                    <input type="text" id="todate" data-role="calendarpicker" data-locale="{{.DateLocale}}">
-                    <input id="totime" data-role="timepicker" data-seconds="false" data-locale="{{.DateLocale}}">
+                <div class="stub" style="width: 225px">
+                    <input id="to-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px;margin-top: 10px;">
                 </div>
-                <div class="cell-lg-3 cell-md-4" style="display: block">
+                <div class="stub" style="display: block;margin-top: 10px;">
                     <button id="data-ok-button" class="button primary outline"
-                            style="min-width: 105px;max-width: 125px">OK
+                            style="min-width: 125px;max-width: 125px">OK
                     </button>
                 </div>
             </div>
             <div id="data-table-container" style="display: block;margin-top:10px;">
                 <div id="chart" style="height: 80vh"></div>
             </div>
+
         </div>
     </div>
 </div>
