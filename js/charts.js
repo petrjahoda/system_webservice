@@ -51,7 +51,7 @@ function drawAnalogChart(chartData) {
         const chart = am4core.create("chart", am4charts.XYChart);
         let dateAxis = chart.xAxes.push(new am4charts.DateAxis());
         dateAxis.groupData = true;
-        dateAxis.groupCount = 3840;
+        dateAxis.groupCount = 8640;
         let valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
         valueAxis.min = 0;
         for (const analogData of chartData["AnalogData"]) {

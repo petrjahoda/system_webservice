@@ -27,9 +27,9 @@ func processAlarms(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	}
 	var alarmRecords []database.AlarmRecord
 	if workplaceIds == "workplace_id in (')" {
-		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&alarmRecords)
+		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&alarmRecords)
 	} else {
-		db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&alarmRecords)
+		db.Where(workplaceIds).Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&alarmRecords)
 	}
 	var data TableData
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")

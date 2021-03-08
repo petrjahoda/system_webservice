@@ -29,11 +29,11 @@ func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	var orderRecords []database.OrderRecord
 	var userRecords []database.UserRecord
 	if workplaceIds == "workplace_id in (')" {
-		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
-		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Find(&userRecords)
+		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&orderRecords)
+		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Find(&userRecords)
 	} else {
-		db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
-		db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Find(&userRecords)
+		db.Where(workplaceIds).Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&orderRecords)
+		db.Where(workplaceIds).Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Find(&userRecords)
 	}
 	var userRecordsByRecordId = map[int]database.UserRecord{}
 	for _, record := range userRecords {
