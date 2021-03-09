@@ -62,6 +62,48 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 		}
 	}
 	responseData.AnalogData = analogOutputData
+	var terminalData []TerminalData
+	var orderRecords []database.OrderRecord
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Find(&orderRecords)
+	for _, record := range orderRecords {
+		productId := int(cachedOrdersById[uint(record.OrderID)].ProductID.Int32)
+		dateTimeEnd := time.Now().Unix() * 1000
+		if !record.DateTimeEnd.Time.IsZero() {
+			dateTimeEnd = record.DateTimeEnd.Time.Unix() * 1000
+		}
+		oneOrderData := TerminalData{
+			Name:          "production",
+			Color:         "green",
+			FromDate:      record.DateTimeStart.Unix() * 1000,
+			ToDate:        dateTimeEnd,
+			DataName:      cachedOrdersById[uint(record.OrderID)].Name,
+			OperationName: cachedOperationsById[uint(record.OperationID)].Name,
+			ProductName:   cachedProductsById[uint(productId)].Name,
+			AverageCycle:  record.AverageCycle,
+			CountOk:       record.CountOk,
+			CountNok:      record.CountNok,
+			Note:          record.Note,
+		}
+		terminalData = append(terminalData, oneOrderData)
+	}
+	var downtimeRecords []database.DowntimeRecord
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Find(&downtimeRecords)
+	for _, record := range downtimeRecords {
+		dateTimeEnd := time.Now().Unix() * 1000
+		if !record.DateTimeEnd.Time.IsZero() {
+			dateTimeEnd = record.DateTimeEnd.Time.Unix() * 1000
+		}
+		oneOrderData := TerminalData{
+			Name:     "downtime",
+			Color:    "orange",
+			FromDate: record.DateTimeStart.Unix() * 1000,
+			ToDate:   dateTimeEnd,
+			DataName: cachedDowntimesById[uint(record.DowntimeID)].Name,
+			Note:     record.Note,
+		}
+		terminalData = append(terminalData, oneOrderData)
+	}
+	responseData.OrderData = terminalData
 	responseData.Locale = cachedUsersByEmail[email].Locale
 	responseData.Result = "ok"
 	responseData.Type = chartName

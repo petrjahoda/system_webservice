@@ -48,6 +48,21 @@ type ChartDataPageOutput struct {
 	Locale     string
 	Type       string
 	AnalogData []PortData
+	OrderData  []TerminalData
+}
+
+type TerminalData struct {
+	Name          string
+	Color         string
+	FromDate      int64
+	ToDate        int64
+	DataName      string
+	OperationName string
+	ProductName   string
+	AverageCycle  float32
+	CountOk       int
+	CountNok      int
+	Note          string
 }
 
 type PortData struct {

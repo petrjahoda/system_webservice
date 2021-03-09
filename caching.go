@@ -13,12 +13,14 @@ var cachedUsersByEmail = map[string]database.User{}
 var cachedUsersById = map[uint]database.User{}
 var cachedUserSettings = map[string]userSettings{}
 var cachedWorkplacesById = map[uint]database.Workplace{}
+var cachedWorkplacesByName = map[string]database.Workplace{}
 var cachedLocalesByName = map[string]database.Locale{}
 var cachedLocales = map[string]string{}
 var cachedCompanyName string
 var location string
 var cachedOrdersById = map[uint]database.Order{}
 var cachedOperationsById = map[uint]database.Operation{}
+var cachedProductsById = map[uint]database.Product{}
 var cachedWorkplaceModesById = map[uint]database.WorkplaceMode{}
 var cachedWorkshiftsById = map[uint]database.Workshift{}
 var cachedAlarmsById = map[uint]database.Alarm{}
@@ -38,6 +40,7 @@ var companyNameSync sync.RWMutex
 var workplacesSync sync.RWMutex
 var ordersSync sync.RWMutex
 var operationsSync sync.RWMutex
+var productsSync sync.RWMutex
 var workplaceModesSync sync.RWMutex
 var workshiftsSync sync.RWMutex
 var alarmsSync sync.RWMutex
@@ -97,6 +100,7 @@ func cacheData() {
 		workplacesSync.Lock()
 		for _, workplace := range workplaces {
 			cachedWorkplacesById[workplace.ID] = workplace
+			cachedWorkplacesByName[workplace.Name] = workplace
 
 		}
 		workplacesSync.Unlock()
@@ -155,6 +159,16 @@ func cacheData() {
 		}
 		operationsSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedOperationsById))+" operations")
+
+		var products []database.Product
+		db.Find(&products)
+		productsSync.Lock()
+		for _, product := range products {
+			cachedProductsById[product.ID] = product
+
+		}
+		productsSync.Unlock()
+		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedProductsById))+" products")
 
 		var workplaceModes []database.WorkplaceMode
 		db.Find(&workplaceModes)

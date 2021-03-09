@@ -19,10 +19,12 @@
     <script src="../js/amcharts/locales/pl_PL.js" defer></script>
     <script src="../js/amcharts/locales/pt_PT.js" defer></script>
     <script src="../js/amcharts/locales/sr_RS.js" defer></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
-<body class="m4-cloak h-vh-100">
+<body class="m4-cloak h-vh-100" style="min-width: 1000px;">
 <div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm"
      class="{{.Compacted}}">
     <div class="navview-pane" style="z-index: 999">
@@ -89,45 +91,41 @@
     <div class="navview-content">
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
-            <div class="app-bar-container mx-auto">
-                <div style="min-width:205px;margin-right: 3px">
-                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select"
-                            style="width: 100px;max-height: 100px">
+            <div class="app-bar-container mx-auto" style="margin: 0">
+                <div style="min-width:200px;margin-top: 3px">
+                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select">
                         {{range .SelectionMenu}}
                         <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
                         {{end}}
                     </select>
                 </div>
-                <div style="min-width:205px;margin-left: 3px">
-                    <select id="workplace-selection" data-filter="false" data-drop-height="80vh" data-role="select"
-                            style="width: 100px;max-height: 100px">
+                <div style="min-width:200px;margin-left: 3px;margin-top: 3px;">
+                    <select id="workplace-selection" data-filter="false" data-drop-height="80vh" data-role="select">
                         {{range .Workplaces}}
                         <option value="{{.WorkplaceName}}">{{.WorkplaceName}}</option>
                         {{end}}
                     </select>
                 </div>
+                <div style="min-width:200px;margin-top: 3px;margin-left: 3px">
+                    <input id="from-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px">
+                </div>
+                <div style="min-width:200px;margin-top: 3px;margin-left: 3px">
+                    <input id="to-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px">
+                </div>
+                <div style="min-width:100px;margin-left: 3px">
+                    <button id="data-ok-button" class="button primary"
+                            style="min-width: 100px;max-width: 100px;height: 35px">OK
+                    </button>
+                </div>
             </div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div class="row flex-justify-center">
-                <div class="stub" style="width: 225px">
-                    <input id="from-date" type="datetime-local"
-                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px;margin-top: 10px;">
-
-                </div>
-                <div class="stub" style="width: 225px">
-                    <input id="to-date" type="datetime-local"
-                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px;margin-top: 10px;">
-                </div>
-                <div class="stub" style="display: block;margin-top: 10px;">
-                    <button id="data-ok-button" class="button primary outline"
-                            style="min-width: 125px;max-width: 125px">OK
-                    </button>
-                </div>
-            </div>
-            <div id="data-table-container" style="display: block;margin-top:10px;">
-                <div id="chart" style="height: 80vh"></div>
+            <div id="data-table-container" style="display: block;margin-top:10px;height: 90%">
+                <div id="chart" style="margin: 0;height: 70%"></div>
+                <div id="order-chart" style="margin: 0"></div>
             </div>
 
         </div>

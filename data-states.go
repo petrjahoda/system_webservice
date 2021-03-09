@@ -29,7 +29,7 @@ func processStates(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	if workplaceIds == "workplace_id in (')" {
 		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
 	} else {
-		db.Where(workplaceIds).Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Order("date_time_start desc").Find(&orderRecords)
+		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&orderRecords)
 	}
 	var data TableData
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
@@ -39,7 +39,7 @@ func processStates(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	for _, record := range orderRecords {
 		addStateTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/table.html"))
+	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-STATES", "States processed in "+time.Since(timer).String())
 }

@@ -221,7 +221,7 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 	logInfo("DATA", "From "+dateFrom.String()+" to "+dateTo.String())
 	fmt.Println(data.Data)
 	workplaceIds := getWorkplaceIds(data, cachedUsersByEmail[email].Locale)
-	updateUserDataSettings(email, data.Data, data)
+	updateUserDataSettings(email, data.Data, data.Workplaces)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "alarms":

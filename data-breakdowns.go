@@ -29,7 +29,7 @@ func processBreakdowns(writer http.ResponseWriter, workplaceIds string, dateFrom
 	if workplaceIds == "workplace_id in (')" {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&breakdownRecords)
 	} else {
-		db.Where(workplaceIds).Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&breakdownRecords)
+		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&breakdownRecords)
 	}
 	var data TableData
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
@@ -39,7 +39,7 @@ func processBreakdowns(writer http.ResponseWriter, workplaceIds string, dateFrom
 	for _, record := range breakdownRecords {
 		addBreakdownTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/table.html"))
+	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-BREAKDOWNS", "Breakdowns processed in "+time.Since(timer).String())
 }

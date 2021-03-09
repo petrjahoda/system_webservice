@@ -30,7 +30,7 @@ func processPackages(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	if workplaceIds == "workplace_id in (')" {
 		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Order("date_time desc").Find(&packageRecords)
 	} else {
-		db.Where(workplaceIds).Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Order("date_time desc").Find(&packageRecords)
+		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where(workplaceIds).Order("date_time desc").Find(&packageRecords)
 	}
 	var data TableData
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
@@ -40,7 +40,7 @@ func processPackages(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	for _, record := range packageRecords {
 		addPackageTableRow(record, &data, db)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/table.html"))
+	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-PACKAGES", "Packages processed in "+time.Since(timer).String())
 }

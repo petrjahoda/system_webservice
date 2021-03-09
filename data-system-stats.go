@@ -36,7 +36,7 @@ func processSystemStats(writer http.ResponseWriter, dateFrom time.Time, dateTo t
 	for _, record := range systemRecords {
 		addSystemTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/table.html"))
+	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-SYSTEM-STATS", "System stats processed in "+time.Since(timer).String())
 }
