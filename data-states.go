@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-func processStates(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadStatesTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-STATES", "Processing states started")
+	logInfo("DATA-STATES", "Loading states table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-STATES", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-STATES", "Processing data ended")
+		logInfo("DATA-STATES", "Loading states table ended")
 		return
 	}
 	var orderRecords []database.StateRecord
@@ -31,7 +31,7 @@ func processStates(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	} else {
 		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&orderRecords)
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -41,10 +41,10 @@ func processStates(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-STATES", "States processed in "+time.Since(timer).String())
+	logInfo("DATA-STATES", "States table loaded in "+time.Since(timer).String())
 }
 
-func addStateTableRow(record database.StateRecord, data *TableData) {
+func addStateTableRow(record database.StateRecord, data *TableOutput) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -57,7 +57,7 @@ func addStateTableRow(record database.StateRecord, data *TableData) {
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addStateTableHeaders(email string, data *TableData) {
+func addStateTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	stateStart := HeaderCell{HeaderName: getLocale(email, "state-start")}

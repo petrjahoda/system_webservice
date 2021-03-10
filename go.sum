@@ -1,6 +1,8 @@
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/TwinProduction/go-color v0.0.3 h1:2asEWaZo0Oh/FCib+KqHmEoideK8fMyX58JujC/dbDA=
 github.com/TwinProduction/go-color v0.0.3/go.mod h1:5hWpSyT+mmKPjCwPNEruBW5Dkbs/2PwOuU468ntEXNQ=
+github.com/TwinProduction/go-color v1.0.0 h1:8n59tqmLmt8jyRsY44RPy2ixPDDw0FcVoAhlYeyz3Jw=
+github.com/TwinProduction/go-color v1.0.0/go.mod h1:5hWpSyT+mmKPjCwPNEruBW5Dkbs/2PwOuU468ntEXNQ=
 github.com/cockroachdb/apd v1.1.0 h1:3LFP3629v+1aKXU5Q37mxmRxX/pIu1nijXydLShEq5I=
 github.com/cockroachdb/apd v1.1.0/go.mod h1:8Sl8LxpKi29FqWXR16WEFZRNSz3SoPzUzeMeY4+DwBQ=
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=

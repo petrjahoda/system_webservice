@@ -15,7 +15,7 @@ dataOkButton.addEventListener("click", (event) => {
         from: document.getElementById("from-date").value,
         to: document.getElementById("to-date").value
     };
-    fetch("/get_chart_data", {
+    fetch("/load_chart_data", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {

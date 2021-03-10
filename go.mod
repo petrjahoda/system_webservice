@@ -3,7 +3,7 @@ module system_webservice
 go 1.15
 
 require (
-	github.com/TwinProduction/go-color v0.0.3
+	github.com/TwinProduction/go-color v1.0.0
 	github.com/cockroachdb/apd v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gofrs/uuid v4.0.0+incompatible // indirect

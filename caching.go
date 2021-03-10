@@ -189,17 +189,7 @@ func cacheData() {
 		}
 		workshiftsSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkshiftsById))+" workshifts")
-
-		var alarms []database.Alarm
-		db.Find(&alarms)
-		alarmsSync.Lock()
-		for _, alarm := range alarms {
-			cachedAlarmsById[alarm.ID] = alarm
-
-		}
-		alarmsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedAlarmsById))+" alarms")
-
+		cacheAlarms(db)
 		var breakdowns []database.Breakdown
 		db.Find(&breakdowns)
 		breakdownsSync.Lock()
@@ -291,4 +281,16 @@ func cacheData() {
 		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func cacheAlarms(db *gorm.DB) {
+	var alarms []database.Alarm
+	db.Find(&alarms)
+	alarmsSync.Lock()
+	for _, alarm := range alarms {
+		cachedAlarmsById[alarm.ID] = alarm
+
+	}
+	alarmsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedAlarmsById))+" alarms")
 }

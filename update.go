@@ -54,7 +54,7 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 }
 
 func updateUserDataSettings(email string, locale string, workplaces []string) {
-	logInfo("UPDATE", "Updating data user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("UPDATE", "Updating user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	timer := time.Now()
 	userSettingsSync.Lock()
 	settings := cachedUserSettings[email]

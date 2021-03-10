@@ -5,11 +5,15 @@ import (
 	"github.com/julienschmidt/httprouter"
 	"html/template"
 	"net/http"
-	"strings"
 	"time"
 )
 
-type SettingsPageData struct {
+type SettingsPageInput struct {
+	Data string
+	Name string
+}
+
+type SettingsPageOutput struct {
 	Version        string
 	Company        string
 	Alarms         string
@@ -24,16 +28,11 @@ type SettingsPageData struct {
 	DateLocale     string
 }
 
-type SettingsDataPageInput struct {
-	Data string
-	Name string
-}
-
 func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
-	ipAddress := strings.Split(request.RemoteAddr, ":")
-	logInfo("SETTINGS", "Sending home page to "+ipAddress[0])
+	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	var data SettingsPageData
+	logInfo("SETTINGS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	var data SettingsPageOutput
 	data.Version = version
 	data.Company = cachedCompanyName
 	data.MenuOverview = getLocale(email, "menu-overview")
@@ -124,29 +123,29 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Home page sent")
+	logInfo("SETTINGS", "Page sent in "+time.Since(timer).String())
 }
 
-func getSettingsData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadSettingsData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("SETTINGS", "Sending settings data to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
-	var data SettingsDataPageInput
+	logInfo("SETTINGS", "Loading settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	var data SettingsPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS", "Processing data ended")
+		logInfo("SETTINGS", "Loading settings ended")
 		return
 	}
 	logInfo("SETTINGS", "Loading settings for "+data.Data)
 	updateUserDataSettings(email, data.Data, nil)
 	switch data.Data {
 	case "alarms":
-		processAlarmsSettings(writer, email)
+		loadAlarmsSettings(writer, email)
 	case "breakdowns":
 		//processBreakdownsSettings(writer, email)
 	case "downtimes":
@@ -176,29 +175,29 @@ func getSettingsData(writer http.ResponseWriter, request *http.Request, params h
 	case "workshifts":
 		//processWorkshiftsSettings(writer, email)
 	}
-	logInfo("SETTINGS", "Settings data sent in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Settings loaded in "+time.Since(timer).String())
 	return
 }
 
-func getDetailSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("SETTINGS", "Sending settings data to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
-	var data SettingsDataPageInput
+	logInfo("SETTINGS", "Loading settings detail for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	var data SettingsPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS", "Processing data ended")
+		logInfo("SETTINGS", "Loading settings detail ended")
 		return
 	}
 	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Name)
 	switch data.Data {
 	case "alarms":
-		processDetailAlarmSettings(data.Name, writer, email)
+		loadAlarmDetails(data.Name, writer, email)
 	case "breakdowns":
 		//processBreakdownsSettings(writer, email)
 	case "downtimes":
@@ -228,6 +227,6 @@ func getDetailSettings(writer http.ResponseWriter, request *http.Request, params
 	case "workshifts":
 		//processWorkshiftsSettings(writer, email)
 	}
-	logInfo("SETTINGS", "Detail settings sent in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
 	return
 }

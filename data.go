@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -15,7 +14,13 @@ import (
 	"time"
 )
 
-type DataPageData struct {
+type DataPageInput struct {
+	Data       string
+	Workplaces []string
+	From       string
+	To         string
+}
+type DataPageOutput struct {
 	Version               string
 	Company               string
 	Alarms                string
@@ -32,51 +37,22 @@ type DataPageData struct {
 	DateLocale            string
 }
 
-type TableWorkplaceSelection struct {
-	WorkplaceName      string
-	WorkplaceSelection string
-}
 type TableSelection struct {
 	SelectionName  string
 	SelectionValue string
 	Selection      string
 }
 
-type TableDataPageInput struct {
-	Data       string
-	Workplaces []string
-	From       string
-	To         string
-}
-
-type DataPageOutput struct {
-	Result string
-}
-
-type TableData struct {
-	DataTableSearchTitle    string
-	DataTableInfoTitle      string
-	DataTableRowsCountTitle string
-	TableHeader             []HeaderCell
-	TableRows               []TableRow
-}
-type TableRow struct {
-	TableCell []TableCell
-}
-
-type TableCell struct {
-	CellName string
-}
-
-type HeaderCell struct {
-	HeaderName string
+type TableWorkplaceSelection struct {
+	WorkplaceName      string
+	WorkplaceSelection string
 }
 
 func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("DATA", "Sending data page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
-	var data DataPageData
+	logInfo("DATA", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	var data DataPageOutput
 	data.Version = version
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
 	data.Company = cachedCompanyName
@@ -155,7 +131,7 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.Workplaces = dataWorkplaces
 	tmpl := template.Must(template.ParseFiles("./html/Data.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA", "Date page sent in "+time.Since(timer).String())
+	logInfo("DATA", "Page sent in "+time.Since(timer).String())
 }
 
 func getWorkplaceSelection(selectedWorkplaces []string, workplace string) string {
@@ -174,19 +150,19 @@ func getSelected(selection string, menu string) string {
 	return ""
 }
 
-func getTableData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadTableData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("DATA", "Sending table data to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
-	var data TableDataPageInput
+	logInfo("DATA", "Loading table for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	var data DataPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("DATA", "Error parsing data: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA", "Processing data ended")
+		logInfo("DATA", "Loading table ended")
 		return
 	}
 	logInfo("DATA", "Loading data for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
@@ -200,56 +176,58 @@ func getTableData(writer http.ResponseWriter, request *http.Request, params http
 	dateFrom = dateFrom.In(time.UTC)
 	if err != nil {
 		logError("DATA", "Problem parsing date: "+data.From)
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA", "Processing data ended")
+		logInfo("DATA", "Loading table ended")
 		return
 	}
 	dateTo, err := time.ParseInLocation(layout, data.To, loc)
 	dateTo = dateTo.In(time.UTC)
 	if err != nil {
 		logError("DATA", "Problem parsing date: "+data.To)
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA", "Processing data ended")
+		logInfo("DATA", "Loading table ended")
 		return
 	}
 	logInfo("DATA", "From "+dateFrom.String()+" to "+dateTo.String())
-	fmt.Println(data.Data)
-	workplaceIds := getWorkplaceIds(data, cachedUsersByEmail[email].Locale)
+	workplaceIds := getWorkplaceIds(data)
 	updateUserDataSettings(email, data.Data, data.Workplaces)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "alarms":
-		processAlarms(writer, workplaceIds, dateFrom, dateTo, email)
+		loadAlarmsTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "breakdowns":
-		processBreakdowns(writer, workplaceIds, dateFrom, dateTo, email)
+		loadBreakdownTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "downtimes":
-		processDowntimes(writer, workplaceIds, dateFrom, dateTo, email)
+		loadDowntimesTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "faults":
-		processFaults(writer, workplaceIds, dateFrom, dateTo, email)
+		loadFaultsTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "orders":
-		processOrders(writer, workplaceIds, dateFrom, dateTo, email)
+		loadOrdersTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "packages":
-		processPackages(writer, workplaceIds, dateFrom, dateTo, email)
+		loadPackagesTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "parts":
-		processParts(writer, workplaceIds, dateFrom, dateTo, email)
+		loadPartsTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "states":
-		processStates(writer, workplaceIds, dateFrom, dateTo, email)
+		loadStatesTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "users":
-		processUsers(writer, workplaceIds, dateFrom, dateTo, email)
+		loadUsersTable(writer, workplaceIds, dateFrom, dateTo, email)
 	case "system-statistics":
-		processSystemStats(writer, dateFrom, dateTo, email)
+		loadSystemStatsTable(writer, dateFrom, dateTo, email)
 	}
-	logInfo("DATA", "Table data sent in "+time.Since(timer).String())
+	logInfo("DATA", "Table loaded in "+time.Since(timer).String())
 	return
 }
 
-func getWorkplaceIds(data TableDataPageInput, userLocale string) string {
+func getWorkplaceIds(data DataPageInput) string {
+	if len(data.Workplaces) == 0 {
+		return ""
+	}
 	workplaceNames := `name in ('`
 	for _, workplace := range data.Workplaces {
 		workplaceNames += workplace + `','`

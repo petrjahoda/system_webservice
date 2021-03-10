@@ -10,6 +10,27 @@ import (
 	"time"
 )
 
+type TableOutput struct {
+	Result                  string
+	DataTableSearchTitle    string
+	DataTableInfoTitle      string
+	DataTableRowsCountTitle string
+	TableHeader             []HeaderCell
+	TableRows               []TableRow
+}
+
+type HeaderCell struct {
+	HeaderName string
+}
+
+type TableRow struct {
+	TableCell []TableCell
+}
+
+type TableCell struct {
+	CellName string
+}
+
 func updateProgramVersion() {
 	logInfo("SYSTEM", "Writing program version into settings")
 	timer := time.Now()

@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const version = "2021.1.3.9"
+const version = "2021.1.3.10"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable"
@@ -60,11 +60,11 @@ func (p *program) run() {
 	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
-	router.POST("/get_table_data", getTableData)
-	router.POST("/get_settings_data", getSettingsData)
-	router.POST("/get_chart_data", getChartData)
-	router.POST("/get_detail_settings", getDetailSettings)
-	router.POST("/save_detail_alarm", saveDetailAlarm)
+	router.POST("/load_table_data", loadTableData)
+	router.POST("/load_chart_data", loadChartData)
+	router.POST("/load_settings_data", loadSettingsData)
+	router.POST("/load_settings_detail", loadSettingsDetail)
+	router.POST("/save_alarm", saveAlarm)
 	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {

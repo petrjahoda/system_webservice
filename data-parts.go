@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-func processParts(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadPartsTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-PARTS", "Processing parts started")
+	logInfo("DATA-PARTS", "Loading parts table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-PARTS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-PARTS", "Processing data ended")
+		logInfo("DATA-PARTS", "Loading parts table ended")
 		return
 	}
 	var packageRecords []database.PartRecord
@@ -32,7 +32,7 @@ func processParts(writer http.ResponseWriter, workplaceIds string, dateFrom time
 	} else {
 		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where(workplaceIds).Order("date_time desc").Find(&packageRecords)
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -42,10 +42,10 @@ func processParts(writer http.ResponseWriter, workplaceIds string, dateFrom time
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-PARTS", "Parts processed in "+time.Since(timer).String())
+	logInfo("DATA-PARTS", "Parts table loaded in "+time.Since(timer).String())
 }
 
-func addPartTableRow(record database.PartRecord, data *TableData, db *gorm.DB) {
+func addPartTableRow(record database.PartRecord, data *TableOutput, db *gorm.DB) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -67,7 +67,7 @@ func addPartTableRow(record database.PartRecord, data *TableData, db *gorm.DB) {
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addPartTableHeaders(email string, data *TableData) {
+func addPartTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	partDate := HeaderCell{HeaderName: getLocale(email, "part-date")}

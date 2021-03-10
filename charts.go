@@ -140,7 +140,7 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	logInfo("CHARTS", "Charts page sent in "+time.Since(timer).String())
 }
 
-func getChartData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadChartData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
 	logInfo("CHARTS", "Sending chart data to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
@@ -148,7 +148,7 @@ func getChartData(writer http.ResponseWriter, request *http.Request, params http
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("CHARTS", "Error parsing data: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
@@ -166,7 +166,7 @@ func getChartData(writer http.ResponseWriter, request *http.Request, params http
 	dateFrom = dateFrom.In(time.UTC)
 	if err != nil {
 		logError("CHARTS", "Problem parsing date: "+data.From)
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
@@ -177,7 +177,7 @@ func getChartData(writer http.ResponseWriter, request *http.Request, params http
 	dateTo = dateTo.In(time.UTC)
 	if err != nil {
 		logError("CHARTS", "Problem parsing date: "+data.To)
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
@@ -188,17 +188,12 @@ func getChartData(writer http.ResponseWriter, request *http.Request, params http
 	logInfo("CHARTS", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "combined-chart":
-		//processAlarms(writer, workplaceIds, dateFrom, dateTo, email)
 	case "timeline-chart":
-		//processBreakdowns(writer, workplaceIds, dateFrom, dateTo, email)
 	case "analog-data":
 		processAnalogData(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "digital-data":
-		//processFaults(writer, workplaceIds, dateFrom, dateTo, email)
 	case "production-chart":
-		//processOrders(writer, workplaceIds, dateFrom, dateTo, email)
 	case "consumption-chart":
-		//processPackages(writer, workplaceIds, dateFrom, dateTo, email)
 	}
 	logInfo("CHARTS", "Chart data sent in "+time.Since(timer).String())
 	return

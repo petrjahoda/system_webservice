@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-func processAlarms(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadAlarmsTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-ALARMS", "Processing alarms started")
+	logInfo("DATA-ALARMS", "Loading alarms table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-ALARMS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-ALARMS", "Processing data ended")
+		logInfo("DATA-ALARMS", "Loading alarms table ended")
 		return
 	}
 	var alarmRecords []database.AlarmRecord
@@ -31,7 +31,7 @@ func processAlarms(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	} else {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&alarmRecords)
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -41,10 +41,10 @@ func processAlarms(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-ALARMS", "Alarms processed in "+time.Since(timer).String())
+	logInfo("DATA-ALARMS", "Alarms table loaded in "+time.Since(timer).String())
 }
 
-func addAlarmTableRow(record database.AlarmRecord, data *TableData) {
+func addAlarmTableRow(record database.AlarmRecord, data *TableOutput) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -69,7 +69,7 @@ func addAlarmTableRow(record database.AlarmRecord, data *TableData) {
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addAlarmTableHeaders(email string, data *TableData) {
+func addAlarmTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	alarmStart := HeaderCell{HeaderName: getLocale(email, "alarm-start")}

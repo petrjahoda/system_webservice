@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type AlarmsSettingsData struct {
+type AlarmsSettingsDataOutput struct {
 	AlarmName               string
 	WorkplaceName           string
 	SqlCommand              string
@@ -31,7 +31,19 @@ type AlarmsSettingsData struct {
 	TableRows               []TableRow
 }
 
-type AlarmData struct {
+type AlarmDetailsDataInput struct {
+	Id         string
+	Name       string
+	Workplace  string
+	Sql        string
+	Header     string
+	Text       string
+	Recipients string
+	Url        string
+	Pdf        string
+}
+
+type AlarmDetailsDataOutput struct {
 	AlarmName            string
 	AlarmNamePrepend     string
 	WorkplaceName        string
@@ -61,26 +73,14 @@ type WorkplaceSelection struct {
 	WorkplaceSelected string
 }
 
-type SaveDetailAlarm struct {
-	Id         string
-	Name       string
-	Workplace  string
-	Sql        string
-	Header     string
-	Text       string
-	Recipients string
-	Url        string
-	Pdf        string
-}
-
-func saveDetailAlarm(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func saveAlarm(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	logInfo("SETTINGS-ALARMS", "Saving alarm started")
-	var data SaveDetailAlarm
+	var data AlarmDetailsDataInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("SETTINGS-ALARMS", "Error parsing data: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
@@ -92,7 +92,7 @@ func saveDetailAlarm(writer http.ResponseWriter, request *http.Request, params h
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS-ALARMS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
@@ -110,28 +110,28 @@ func saveDetailAlarm(writer http.ResponseWriter, request *http.Request, params h
 	alarm.Url = data.Url
 	alarm.Pdf = data.Pdf
 	db.Save(&alarm)
+	cacheAlarms(db)
 	logInfo("SETTINGS-ALARMS", "Alarm saved in "+time.Since(timer).String())
 }
 
-func processAlarmsSettings(writer http.ResponseWriter, email string) {
+func loadAlarmsSettings(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-ALARMS", "Processing alarms settings started")
+	logInfo("SETTINGS-ALARMS", "Loading alarm settings")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS-ALARMS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-ALARMS", "Processing alarms settings ended")
+		logInfo("SETTINGS-ALARMS", "Loading alarms settings ended")
 		return
 	}
 	var alarms []database.Alarm
-	db.Find(&alarms)
-
-	var data AlarmsSettingsData
+	db.Order("id desc").Find(&alarms)
+	var data AlarmsSettingsDataOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -145,18 +145,16 @@ func processAlarmsSettings(writer http.ResponseWriter, email string) {
 	data.Pdf = getLocale(email, "pdf")
 	data.CreatedAt = getLocale(email, "created-at")
 	data.UpdatedAt = getLocale(email, "updated-at")
-
 	addAlarmSettingsTableHeaders(email, &data)
 	for _, record := range alarms {
 		addAlarmSettingsTableRow(record, &data)
 	}
-
-	tmpl := template.Must(template.ParseFiles("./html/settings-alarms.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-ALARMS", "Alarms settings processed in "+time.Since(timer).String())
+	logInfo("SETTINGS-ALARMS", "Alarm settings loaded in "+time.Since(timer).String())
 }
 
-func addAlarmSettingsTableRow(record database.Alarm, data *AlarmsSettingsData) {
+func addAlarmSettingsTableRow(record database.Alarm, data *AlarmsSettingsDataOutput) {
 	var tableRow TableRow
 	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
 	tableRow.TableCell = append(tableRow.TableCell, id)
@@ -165,26 +163,26 @@ func addAlarmSettingsTableRow(record database.Alarm, data *AlarmsSettingsData) {
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addAlarmSettingsTableHeaders(email string, data *AlarmsSettingsData) {
+func addAlarmSettingsTableHeaders(email string, data *AlarmsSettingsDataOutput) {
 	id := HeaderCell{HeaderName: "#"}
 	data.TableHeader = append(data.TableHeader, id)
 	alarmName := HeaderCell{HeaderName: getLocale(email, "alarm-name")}
 	data.TableHeader = append(data.TableHeader, alarmName)
 }
 
-func processDetailAlarmSettings(id string, writer http.ResponseWriter, email string) {
+func loadAlarmDetails(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-ALARMS", "Processing detail alarm settings started")
+	logInfo("SETTINGS-ALARMS", "Loading alarm details")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS-ALARMS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-ALARMS", "Processing detail alarm settings ended")
+		logInfo("SETTINGS-ALARMS", "Loading alarm details ended")
 		return
 	}
 	var alarm database.Alarm
@@ -197,11 +195,10 @@ func processDetailAlarmSettings(id string, writer http.ResponseWriter, email str
 			workplaces = append(workplaces, WorkplaceSelection{WorkplaceName: workplace.Name, WorkplaceId: workplace.ID})
 		}
 	}
-
 	sort.Slice(workplaces, func(i, j int) bool {
 		return workplaces[i].WorkplaceName < workplaces[j].WorkplaceName
 	})
-	data := AlarmData{
+	data := AlarmDetailsDataOutput{
 		AlarmName:            alarm.Name,
 		AlarmNamePrepend:     getLocale(email, "alarm-name"),
 		WorkplaceName:        cachedWorkplacesById[uint(alarm.WorkplaceID)].Name,
@@ -224,7 +221,7 @@ func processDetailAlarmSettings(id string, writer http.ResponseWriter, email str
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		Workplaces:           workplaces,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-alarms-details.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-alarm.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-ALARMS", "Detail alarm settings processed in "+time.Since(timer).String())
+	logInfo("SETTINGS-ALARMS", "Alarm details loaded in "+time.Since(timer).String())
 }

@@ -11,24 +11,24 @@ import (
 	"time"
 )
 
-func processSystemStats(writer http.ResponseWriter, dateFrom time.Time, dateTo time.Time, email string) {
+func loadSystemStatsTable(writer http.ResponseWriter, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-SYSTEM-STATS", "Processing system stats started")
+	logInfo("DATA-SYSTEM-STATS", "Loading system stats table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-SYSTEM-STATS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-SYSTEM-STATS", "Processing data ended")
+		logInfo("DATA-SYSTEM-STATS", "Loading system stats table ended")
 		return
 	}
 	var systemRecords []database.SystemRecord
 	db.Debug().Where("created_at >= ?", dateFrom).Where("created_at <= ?", dateTo).Order("created_at desc").Find(&systemRecords)
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -38,10 +38,10 @@ func processSystemStats(writer http.ResponseWriter, dateFrom time.Time, dateTo t
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-SYSTEM-STATS", "System stats processed in "+time.Since(timer).String())
+	logInfo("DATA-SYSTEM-STATS", "System stats table loaded in "+time.Since(timer).String())
 }
 
-func addSystemTableRow(record database.SystemRecord, data *TableData) {
+func addSystemTableRow(record database.SystemRecord, data *TableOutput) {
 	var tableRow TableRow
 	systemDate := TableCell{CellName: record.CreatedAt.Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, systemDate)
@@ -65,7 +65,7 @@ func addSystemTableRow(record database.SystemRecord, data *TableData) {
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addSystemTableHeaders(email string, data *TableData) {
+func addSystemTableHeaders(email string, data *TableOutput) {
 	faultDate := HeaderCell{HeaderName: getLocale(email, "system-date")}
 	data.TableHeader = append(data.TableHeader, faultDate)
 	databaseSize := HeaderCell{HeaderName: getLocale(email, "database-size")}

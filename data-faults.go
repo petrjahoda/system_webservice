@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-func processFaults(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadFaultsTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-FAULTS", "Processing faults started")
+	logInfo("DATA-FAULTS", "Loading faults table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-FAULTS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-FAULTS", "Processing data ended")
+		logInfo("DATA-FAULTS", "Loading faults table ended")
 		return
 	}
 	var orderRecords []database.FaultRecord
@@ -32,7 +32,7 @@ func processFaults(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	} else {
 		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where(workplaceIds).Order("date_time desc").Find(&orderRecords)
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -42,10 +42,10 @@ func processFaults(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-FAULTS", "Faults processed in "+time.Since(timer).String())
+	logInfo("DATA-FAULTS", "Faults table loaded in "+time.Since(timer).String())
 }
 
-func addFaultTableRow(record database.FaultRecord, data *TableData, db *gorm.DB) {
+func addFaultTableRow(record database.FaultRecord, data *TableOutput, db *gorm.DB) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -67,7 +67,7 @@ func addFaultTableRow(record database.FaultRecord, data *TableData, db *gorm.DB)
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addFaultTableHeaders(email string, data *TableData) {
+func addFaultTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	faultDate := HeaderCell{HeaderName: getLocale(email, "fault-date")}

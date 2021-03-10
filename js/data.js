@@ -25,7 +25,7 @@ function loadData() {
         from: document.getElementById("from-date").value,
         to: document.getElementById("to-date").value
     };
-    fetch("/get_table_data", {
+    fetch("/load_table_data", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
@@ -55,9 +55,7 @@ function addDate(dt, amount, dateType) {
 }
 
 function load() {
-    console.log("getting data for " + document.getElementById("data-selection").value)
     const workplacesElement = document.getElementsByClassName("tag short-tag");
-    console.log(workplacesElement)
     let workplaces = []
     for (let index = 0; index < workplacesElement.length; index++) {
         workplaces.push(workplacesElement[index].children[0].innerHTML)
@@ -68,7 +66,7 @@ function load() {
         from: document.getElementById("from-date").value,
         to: document.getElementById("to-date").value
     };
-    fetch("/get_table_data", {
+    fetch("/load_table_data", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {

@@ -1,6 +1,7 @@
 const dataSelection = document.getElementById("data-selection")
 dataSelection.addEventListener("change", (event) => {
     loadSettings();
+    document.getElementById("settings-container-detail").innerHTML = ""
 })
 
 const container = document.getElementById("settings-container")
@@ -32,16 +33,12 @@ containerDetail.addEventListener("click", (event) => {
                 document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
                 document.getElementById("data-save-button-mif").classList.add("mif-cross")
                 let selection = document.getElementById("data-selection").value
-                console.log("Saving: " + selection)
                 setTimeout(function () {
                     if (document.getElementById("data-save-button").classList[1] === "alert") {
                         switch (selection) {
                             case "alarms" : {
                                 saveAlarm();
                                 break
-                            }
-                            default: {
-                                console.log("default")
                             }
                         }
                     }
@@ -73,7 +70,7 @@ function saveAlarm() {
         url: document.getElementById("url").value,
         pdf: document.getElementById("pdf").value,
     };
-    fetch("/save_detail_alarm", {
+    fetch("/save_alarm", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
@@ -93,11 +90,10 @@ function sleep(ms) {
 }
 
 function loadSettings() {
-    console.log("getting settings for " + document.getElementById("data-selection").value)
     let data = {
         data: document.getElementById("data-selection").value,
     };
-    fetch("/get_settings_data", {
+    fetch("/load_settings_data", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
@@ -115,7 +111,7 @@ function loadDetails(selectedItem) {
         data: selection,
         name: selectedItem
     };
-    fetch("/get_detail_settings", {
+    fetch("/load_settings_detail", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {

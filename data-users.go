@@ -10,19 +10,19 @@ import (
 	"time"
 )
 
-func processUsers(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadUsersTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-USERS", "Processing users started")
+	logInfo("DATA-USERS", "Loading users table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-USERS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-USERS", "Processing data ended")
+		logInfo("DATA-USERS", "Loading users table ended")
 		return
 	}
 	var userRecords []database.UserRecord
@@ -31,7 +31,7 @@ func processUsers(writer http.ResponseWriter, workplaceIds string, dateFrom time
 	} else {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -41,10 +41,10 @@ func processUsers(writer http.ResponseWriter, workplaceIds string, dateFrom time
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-USERS", "Users processed in "+time.Since(timer).String())
+	logInfo("DATA-USERS", "Users table loaded in "+time.Since(timer).String())
 }
 
-func addUserTableRow(record database.UserRecord, data *TableData, db *gorm.DB) {
+func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -68,7 +68,7 @@ func addUserTableRow(record database.UserRecord, data *TableData, db *gorm.DB) {
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addUserTableHeaders(email string, data *TableData) {
+func addUserTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	userStart := HeaderCell{HeaderName: getLocale(email, "user-start")}

@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadOrdersTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-ORDERS", "Processing orders started")
+	logInfo("DATA-ORDERS", "Loading orders table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-ORDERS", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-ORDERS", "Processing data ended")
+		logInfo("DATA-ORDERS", "Loading orders table ended")
 		return
 	}
 	var orderRecords []database.OrderRecord
@@ -39,7 +39,7 @@ func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	for _, record := range userRecords {
 		userRecordsByRecordId[record.OrderRecordID] = record
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -49,10 +49,10 @@ func processOrders(writer http.ResponseWriter, workplaceIds string, dateFrom tim
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-ORDERS", "Orders processed in "+time.Since(timer).String())
+	logInfo("DATA-ORDERS", "Orders table loaded in "+time.Since(timer).String())
 }
 
-func addOrderTableHeaders(email string, data *TableData) {
+func addOrderTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	orderStart := HeaderCell{HeaderName: getLocale(email, "order-start")}
@@ -81,7 +81,7 @@ func addOrderTableHeaders(email string, data *TableData) {
 	data.TableHeader = append(data.TableHeader, noteName)
 }
 
-func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableData) {
+func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableOutput) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)

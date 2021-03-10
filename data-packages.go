@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-func processPackages(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadPackagesTable(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
-	logInfo("DATA-PACKAGES", "Processing packages started")
+	logInfo("DATA-PACKAGES", "Loading packages table")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
 		logError("DATA-PACKAGES", "Problem opening database: "+err.Error())
-		var responseData DataPageOutput
+		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("DATA-PACKAGES", "Processing data ended")
+		logInfo("DATA-PACKAGES", "Loading packages table ended")
 		return
 	}
 	var packageRecords []database.PackageRecord
@@ -32,7 +32,7 @@ func processPackages(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	} else {
 		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where(workplaceIds).Order("date_time desc").Find(&packageRecords)
 	}
-	var data TableData
+	var data TableOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -42,10 +42,10 @@ func processPackages(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-PACKAGES", "Packages processed in "+time.Since(timer).String())
+	logInfo("DATA-PACKAGES", "Packages table loaded in "+time.Since(timer).String())
 }
 
-func addPackageTableRow(record database.PackageRecord, data *TableData, db *gorm.DB) {
+func addPackageTableRow(record database.PackageRecord, data *TableOutput, db *gorm.DB) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -67,7 +67,7 @@ func addPackageTableRow(record database.PackageRecord, data *TableData, db *gorm
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addPackageTableHeaders(email string, data *TableData) {
+func addPackageTableHeaders(email string, data *TableOutput) {
 	workplaceName := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	packageDate := HeaderCell{HeaderName: getLocale(email, "package-date")}

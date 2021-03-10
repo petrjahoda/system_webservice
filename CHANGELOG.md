@@ -23,6 +23,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 ### Changed
 - loading setting and data table immediately after change in selection
+- code reformat
 
 ## [2021.1.3.9] - 2021-03-09
 
