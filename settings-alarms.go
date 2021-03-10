@@ -14,16 +14,6 @@ import (
 )
 
 type AlarmsSettingsDataOutput struct {
-	AlarmName               string
-	WorkplaceName           string
-	SqlCommand              string
-	MessageHeader           string
-	MessageText             string
-	Recipients              string
-	Url                     string
-	Pdf                     string
-	CreatedAt               string
-	UpdatedAt               string
 	DataTableSearchTitle    string
 	DataTableInfoTitle      string
 	DataTableRowsCountTitle string
@@ -135,16 +125,6 @@ func loadAlarmsSettings(writer http.ResponseWriter, email string) {
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	data.AlarmName = getLocale(email, "alarm-name")
-	data.WorkplaceName = getLocale(email, "workplace-name")
-	data.SqlCommand = getLocale(email, "sql-command")
-	data.MessageHeader = getLocale(email, "message-header")
-	data.MessageText = getLocale(email, "message-text")
-	data.Recipients = getLocale(email, "recipients")
-	data.Url = getLocale(email, "url")
-	data.Pdf = getLocale(email, "pdf")
-	data.CreatedAt = getLocale(email, "created-at")
-	data.UpdatedAt = getLocale(email, "updated-at")
 	addAlarmSettingsTableHeaders(email, &data)
 	for _, record := range alarms {
 		addAlarmSettingsTableRow(record, &data)

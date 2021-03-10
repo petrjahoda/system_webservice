@@ -51,6 +51,7 @@ func (p *program) run() {
 	router.ServeFiles("/css/*filepath", http.Dir("css"))
 	router.ServeFiles("/js/*filepath", http.Dir("js"))
 	router.ServeFiles("/mif/*filepath", http.Dir("mif"))
+	router.ServeFiles("/icon/*filepath", http.Dir("icon"))
 	router.GET("/favicon.ico", faviconHandler)
 	router.GET("/", basicAuth(index))
 	router.GET("/index", basicAuth(index))
