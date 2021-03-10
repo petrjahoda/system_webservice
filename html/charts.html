@@ -93,14 +93,14 @@
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto" style="margin: 0">
                 <div style="min-width:200px;margin-top: 3px">
-                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select">
+                    <select id="data-selection" data-filter="false"  data-role="select">
                         {{range .SelectionMenu}}
                         <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
                         {{end}}
                     </select>
                 </div>
                 <div style="min-width:200px;margin-left: 3px;margin-top: 3px;">
-                    <select id="workplace-selection" data-filter="false" data-drop-height="80vh" data-role="select">
+                    <select id="workplace-selection" data-filter="false"  data-role="select">
                         {{range .Workplaces}}
                         <option value="{{.WorkplaceName}}">{{.WorkplaceName}}</option>
                         {{end}}
@@ -116,7 +116,7 @@
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-ok-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px">OK
+                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark">
                     </button>
                 </div>
             </div>

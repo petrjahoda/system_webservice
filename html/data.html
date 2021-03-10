@@ -80,7 +80,7 @@
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto" style="margin: 0">
                 <div style="min-width:200px;margin-top: 3px">
-                    <select id="data-selection" data-filter="false" data-drop-height="80vh" data-role="select">
+                    <select id="data-selection" data-filter="false" data-role="select">
                         {{range .SelectionMenu}}
                         <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
                         {{end}}
@@ -96,16 +96,16 @@
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-ok-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px">OK
+                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark">
                     </button>
                 </div>
             </div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
-             style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+             style="padding-top: 60px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div class="row">
                 <div class="cell-12">
-                    <select data-role="select" multiple data-clear-button="true" data-drop-height="50vh"
+                    <select data-role="select" multiple data-clear-button="true"
                             data-filter-placeholder="{{.DataFilterPlaceholder}}">
                         {{range .Workplaces}}
                         <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>

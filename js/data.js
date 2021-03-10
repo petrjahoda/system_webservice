@@ -1,3 +1,8 @@
+const dataSelection = document.getElementById("data-selection")
+dataSelection.addEventListener("change", (event) => {
+    loadData();
+})
+
 
 let now = new Date();
 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
@@ -8,10 +13,8 @@ document.getElementById('from-date').value = now.toISOString().slice(0,16);
 const dataOkButton = document.getElementById("data-ok-button")
 
 
-dataOkButton.addEventListener("click", (event) => {
-    console.log("getting data for " + document.getElementById("data-selection").value)
+function loadData() {
     const workplacesElement = document.getElementsByClassName("tag short-tag");
-    console.log(workplacesElement)
     let workplaces = []
     for (let index = 0; index < workplacesElement.length; index++) {
         workplaces.push(workplacesElement[index].children[0].innerHTML)
@@ -32,6 +35,10 @@ dataOkButton.addEventListener("click", (event) => {
     }).catch((error) => {
         console.log(error)
     });
+}
+
+dataOkButton.addEventListener("click", (event) => {
+    loadData();
 })
 
 function addDate(dt, amount, dateType) {

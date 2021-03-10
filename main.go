@@ -64,6 +64,7 @@ func (p *program) run() {
 	router.POST("/get_settings_data", getSettingsData)
 	router.POST("/get_chart_data", getChartData)
 	router.POST("/get_detail_settings", getDetailSettings)
+	router.POST("/save_detail_alarm", saveDetailAlarm)
 	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {

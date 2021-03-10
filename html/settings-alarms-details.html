@@ -1,33 +1,43 @@
-<div class="cell">
-    <div>
-        <input id="alarm-name" type="text" data-role="input" data-prepend="{{.AlarmName}}: ">
-    </div>
-    <div style="margin-top: 14px;">
-        <select id="workplace-selection" data-filter="false" data-drop-height="80vh" data-role="select" data-prepend="{{.WorkplaceName}}: ">
-        </select>
-    </div>
-    <div style="margin-top: 14px;">
-        <textarea id="sql-command" data-role="textarea" data-prepend="{{.SqlCommand}}: "></textarea>
-    </div>
-    <div style="margin-top: 14px;">
-        <input id="message-header" type="text" data-role="input" data-prepend="{{.MessageHeader}}: ">
-    </div>
-    <div style="margin-top: 14px;">
-        <textarea id="message-text" data-role="textarea" data-prepend="{{.MessageText}}: "></textarea>
-    </div>
-    <div style="margin-top: 14px;">
-        <input id="recipients" type="text" data-role="input" data-prepend="{{.Recipients}}: ">
-    </div>
-    <div style="margin-top: 14px;">
-        <input id="url" type="text" data-role="input" data-prepend="{{.Url}}: ">
-    </div>
-    <div style="margin-top: 14px;">
-        <input id="pdf" type="text" data-role="input" data-prepend="{{.Pdf}}: ">
-    </div>
-    <div style="margin-top: 14px;" disabled>
-        <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAt}}: ">
-    </div>
-    <div style="margin-top: 14px;" disabled>
-        <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAt}}: ">
-    </div>
+<div class="important">
+    <input id="alarm-name" type="text" data-role="input" data-prepend="{{.AlarmNamePrepend}}: " value="{{.AlarmName}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-selection" data-filter="false" data-role="select" data-prepend="{{.WorkplaceNamePrepend}}: ">
+        {{range .Workplaces}}
+        <option value="{{.WorkplaceName}}" {{.WorkplaceSelected}}>{{.WorkplaceName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <input id="sql-command" type="text" data-role="input" data-prepend="{{.SqlCommandPrepend}}: "
+              value="{{.SqlCommand}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="message-header" type="text" data-role="input" data-prepend="{{.MessageHeaderPrepend}}: "
+           value="{{.MessageHeader}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="message-text" type="text" data-role="input" data-prepend="{{.MessageTextPrepend}}: "
+              value="{{.MessageText}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="recipients" type="text" data-role="input" data-prepend="{{.RecipientsPrepend}}: "
+           value="{{.Recipients}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="url" type="text" data-role="input" data-prepend="{{.UrlPrepend}}: " value="{{.Url}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="pdf" type="text" data-role="input" data-prepend="{{.PdfPrepend}}: " value="{{.Pdf}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: center">
+    <button id="data-save-button" class="button primary"
+            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-floppy-disk" id="data-save-button-mif"></button>
 </div>
