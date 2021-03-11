@@ -19,8 +19,10 @@ var cachedLocales = map[string]string{}
 var cachedCompanyName string
 var location string
 var cachedOrdersById = map[uint]database.Order{}
+var cachedOrdersByName = map[string]database.Order{}
 var cachedOperationsById = map[uint]database.Operation{}
 var cachedProductsById = map[uint]database.Product{}
+var cachedProductsByName = map[string]database.Product{}
 var cachedWorkplaceModesById = map[uint]database.WorkplaceMode{}
 var cachedWorkshiftsById = map[uint]database.Workshift{}
 var cachedAlarmsById = map[uint]database.Alarm{}
@@ -57,6 +59,7 @@ type userSettings struct {
 	menuState          string
 	sectionStates      []sectionState
 	dataSelection      string
+	settingsSelection  string
 	selectedWorkplaces []string
 }
 type sectionState struct {
@@ -145,6 +148,7 @@ func cacheData() {
 		ordersSync.Lock()
 		for _, order := range orders {
 			cachedOrdersById[order.ID] = order
+			cachedOrdersByName[order.Name] = order
 
 		}
 		ordersSync.Unlock()
@@ -165,6 +169,7 @@ func cacheData() {
 		productsSync.Lock()
 		for _, product := range products {
 			cachedProductsById[product.ID] = product
+			cachedProductsByName[product.Name] = product
 
 		}
 		productsSync.Unlock()

@@ -1,0 +1,50 @@
+<div class="important">
+    <input id="order-name" type="text" data-role="input" data-prepend="{{.OrderNamePrepend}}: "
+           value="{{.OrderName}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="product-selection" data-filter="false" data-role="select" data-prepend="{{.ProductNamePrepend}}: ">
+        {{range .Products}}
+        <option value="{{.ProductName}}" {{.ProductSelected}}>{{.ProductName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-selection" data-filter="false" data-role="select" data-prepend="{{.WorkplaceNamePrepend}}: ">
+        {{range .Workplaces}}
+        <option value="{{.WorkplaceName}}" {{.WorkplaceSelected}}>{{.WorkplaceName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <input id="order-barcode" type="text" data-role="input" data-prepend="{{.BarcodePrepend}}: "
+           value="{{.Barcode}}">
+</div>
+<div style="margin-top: 14px;" class="important">
+    <input id="date-time-request" type="text" data-role="input" data-prepend="{{.DateTimeRequestPrepend}}: "
+           value="{{.DateTimeRequest}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="count-request" type="text" data-role="input" data-prepend="{{.CountRequestPrepend}}: "
+           value="{{.CountRequest}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="cavity" type="text" data-role="input" data-prepend="{{.CavityPrepend}}: "
+           value="{{.Cavity}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="order-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: right">
+    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="data-save-button-mif"></span>
+    </button>
+</div>

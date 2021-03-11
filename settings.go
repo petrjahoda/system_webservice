@@ -43,84 +43,89 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.Compacted = cachedUserSettings[email].menuState
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "alarms"),
-		SelectionValue: "alarms",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "alarms"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "breakdowns"),
-		SelectionValue: "breakdowns",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "breakdowns"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "downtimes"),
-		SelectionValue: "downtimes",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "downtimes"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "faults"),
-		SelectionValue: "faults",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "faults"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "operations"),
-		SelectionValue: "operations",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "operations"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "orders"),
-		SelectionValue: "orders",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "orders"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "packages"),
-		SelectionValue: "packages",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "packages"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "parts"),
-		SelectionValue: "parts",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "parts"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "products"),
-		SelectionValue: "products",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "products"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "states"),
-		SelectionValue: "states",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "states"),
-	})
-	if cachedUsersByEmail[email].UserTypeID == 2 {
+	if cachedUsersByEmail[email].UserRoleID != 3 {
+		logInfo("SETTINGS", "Adding data menu for power user")
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "alarms"),
+			SelectionValue: "alarms",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "alarms"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "breakdowns"),
+			SelectionValue: "breakdowns",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "breakdowns"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "downtimes"),
+			SelectionValue: "downtimes",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "downtimes"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "faults"),
+			SelectionValue: "faults",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "faults"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "operations"),
+			SelectionValue: "operations",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "operations"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "orders"),
+			SelectionValue: "orders",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "orders"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "packages"),
+			SelectionValue: "packages",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "packages"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "parts"),
+			SelectionValue: "parts",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "parts"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "products"),
+			SelectionValue: "products",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "products"),
+		})
+	}
+	if cachedUsersByEmail[email].UserRoleID == 1 {
 		logInfo("SETTINGS", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "devices"),
 			SelectionValue: "devices",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "devices"),
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "devices"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-			SelectionName:  getLocale(email, "system-settings"),
-			SelectionValue: "system-settings",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "system-settings"),
+			SelectionName:  getLocale(email, "states"),
+			SelectionValue: "states",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "states"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
 			SelectionValue: "users",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "users"),
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "users"),
 		})
+
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "workplaces"),
 			SelectionValue: "workplaces",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "workplaces"),
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "workplaces"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "workshifts"),
 			SelectionValue: "workshifts",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "workshifts"),
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "workshifts"),
+		})
+		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+			SelectionName:  getLocale(email, "system-settings"),
+			SelectionValue: "system-settings",
+			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "system-settings"),
 		})
 	}
+
 	tmpl := template.Must(template.ParseFiles("./html/settings.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("SETTINGS", "Page sent in "+time.Since(timer).String())
@@ -142,38 +147,38 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, params 
 		return
 	}
 	logInfo("SETTINGS", "Loading settings for "+data.Data)
-	updateUserDataSettings(email, data.Data, nil)
+	updateUserDataSettings(email, "", data.Data, nil)
 	switch data.Data {
 	case "alarms":
 		loadAlarmsSettings(writer, email)
 	case "breakdowns":
-		//processBreakdownsSettings(writer, email)
+		loadBreakdownsSettings(writer, email)
 	case "downtimes":
-		//processDowntimesSettings(writer, email)
+		loadDowntimesSettings(writer, email)
 	case "faults":
-		//processFaultsSettings(writer, email)
+		loadFaultsSettings(writer, email)
 	case "operations":
-		//processOperationsSettings(writer, email)
+		loadOperationsSettings(writer, email)
 	case "orders":
-		//processOrdersSettings(writer, email)
+		loadOrdersSettings(writer, email)
 	case "packages":
-		//processPackagesSettings(writer, email)
+		loadPackagesSettings(writer, email)
 	case "parts":
-		//processPartsSettings(writer, email)
+		loadPartsSettings(writer, email)
 	case "products":
-		//processProductsSettings(writer, email)
+		loadProductsSettings(writer, email)
 	case "states":
-		//processStatesSettings(writer, email)
+		loadStatesSettings(writer, email)
 	case "devices":
-		//processDevicesSettings(writer, email)
-	case "system-settings":
-		//processSystemSettings(writer, email)
+		loadDevicesSettings(writer, email)
 	case "users":
-		//processUsersSettings(writer, email)
-	case "workplace":
-		//processWorkplacesSettings(writer, email)
+		loadUsersSettings(writer, email)
+	case "workplaces":
+		loadWorkplacesSettings(writer, email)
 	case "workshifts":
-		//processWorkshiftsSettings(writer, email)
+		loadWorkshiftsSettings(writer, email)
+	case "system-settings":
+		loadSystemSettings(writer, email)
 	}
 	logInfo("SETTINGS", "Settings loaded in "+time.Since(timer).String())
 	return
@@ -205,9 +210,9 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 	case "faults":
 		//processFaultsSettings(writer, email)
 	case "operations":
-		//processOperationsSettings(writer, email)
+		loadOperationDetails(data.Name, writer, email)
 	case "orders":
-		//processOrdersSettings(writer, email)
+		loadOrderDetails(data.Name, writer, email)
 	case "packages":
 		//processPackagesSettings(writer, email)
 	case "parts":

@@ -24,7 +24,7 @@ require (
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/lib/pq v1.10.0 // indirect
-	github.com/petrjahoda/database v0.0.0-20210221083114-821a71d9b8d4
+	github.com/petrjahoda/database v0.0.0-20210311105338-942970d400aa
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect

@@ -1,12 +1,14 @@
 <table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="data-table"
        data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
        data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
-       data-pagination-next-title="⇨" data-check="true"
+       data-pagination-next-title="⇨" data-check="true" data-pagination-wrapper=".my-pagination-wrapper"
+       data-rows-steps="5, 10, 15"
+       data-rows="10"
        data-check-type="radio">
     <thead data-sortable="true">
     <tr>
         {{range .TableHeader}}
-        <th class="sortable-column asc">{{.HeaderName}}</th>
+        <th class="sortable-column asc" data-size="{{.HeaderWidth}}">{{.HeaderName}}</th>
         {{end}}
     </tr>
     </thead>
@@ -20,12 +22,11 @@
     {{end}}
     </tbody>
 </table>
-<div style="margin-top: 14px;text-align: center">
-    <button id="data-new-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
-        <span class="mif-plus" id="data-new-button-mif"></span>
-    </button>
+<div class="row mb-2">
+    <div class="cell-6 my-pagination-wrapper" ></div>
+    <div class="cell-6" style="text-align: right">
+        <button id="data-new-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+            <span class="mif-plus" id="data-new-button-mif"></span>
+        </button>
+    </div>
 </div>
-
-
-
-

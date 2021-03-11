@@ -119,16 +119,19 @@ func loadAlarmsSettings(writer http.ResponseWriter, email string) {
 		logInfo("SETTINGS-ALARMS", "Loading alarms settings ended")
 		return
 	}
-	var alarms []database.Alarm
-	db.Order("id desc").Find(&alarms)
+
 	var data AlarmsSettingsDataOutput
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+
+	var records []database.Alarm
+	db.Order("id desc").Find(&records)
 	addAlarmSettingsTableHeaders(email, &data)
-	for _, record := range alarms {
+	for _, record := range records {
 		addAlarmSettingsTableRow(record, &data)
 	}
+
 	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("SETTINGS-ALARMS", "Alarm settings loaded in "+time.Since(timer).String())
@@ -138,16 +141,16 @@ func addAlarmSettingsTableRow(record database.Alarm, data *AlarmsSettingsDataOut
 	var tableRow TableRow
 	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
 	tableRow.TableCell = append(tableRow.TableCell, id)
-	alarmName := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, alarmName)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
 func addAlarmSettingsTableHeaders(email string, data *AlarmsSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#"}
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
 	data.TableHeader = append(data.TableHeader, id)
-	alarmName := HeaderCell{HeaderName: getLocale(email, "alarm-name")}
-	data.TableHeader = append(data.TableHeader, alarmName)
+	name := HeaderCell{HeaderName: getLocale(email, "alarm-name")}
+	data.TableHeader = append(data.TableHeader, name)
 }
 
 func loadAlarmDetails(id string, writer http.ResponseWriter, email string) {
@@ -195,9 +198,9 @@ func loadAlarmDetails(id string, writer http.ResponseWriter, email string) {
 		UrlPrepend:           getLocale(email, "url"),
 		Pdf:                  alarm.Pdf,
 		PdfPrepend:           getLocale(email, "pdf"),
-		CreatedAt:            alarm.CreatedAt.Format("2006-01-02 15:04:05"),
+		CreatedAt:            alarm.CreatedAt.Format("2006-01-02T15:04:05"),
 		CreatedAtPrepend:     getLocale(email, "created-at"),
-		UpdatedAt:            alarm.UpdatedAt.Format("2006-01-02 15:04:05"),
+		UpdatedAt:            alarm.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		Workplaces:           workplaces,
 	}

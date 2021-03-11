@@ -112,6 +112,8 @@ github.com/petrjahoda/database v0.0.0-20201214092312-14881394bfcc h1:YhJTtONr2x0
 github.com/petrjahoda/database v0.0.0-20201214092312-14881394bfcc/go.mod h1:ibk5VF2QGl3+et3uAU70zTSQM97b7a+FkGzZMLFm+xU=
 github.com/petrjahoda/database v0.0.0-20210221083114-821a71d9b8d4 h1:kQzu3TBCzwTWFq4qjbQ5smnt+Z+IlvukX4XZVDKCIHE=
 github.com/petrjahoda/database v0.0.0-20210221083114-821a71d9b8d4/go.mod h1:sujUCnRLIq6ZiD8KcKuVQPXvA/Cxi1eufYuDtBDuJSw=
+github.com/petrjahoda/database v0.0.0-20210311105338-942970d400aa h1:qO77YoxGfNtncrzZAKm8L7oAxrA8leP/CtDI8UufQQ8=
+github.com/petrjahoda/database v0.0.0-20210311105338-942970d400aa/go.mod h1:sujUCnRLIq6ZiD8KcKuVQPXvA/Cxi1eufYuDtBDuJSw=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=

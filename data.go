@@ -196,7 +196,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	}
 	logInfo("DATA", "From "+dateFrom.String()+" to "+dateTo.String())
 	workplaceIds := getWorkplaceIds(data)
-	updateUserDataSettings(email, data.Data, data.Workplaces)
+	updateUserDataSettings(email, data.Data, "", data.Workplaces)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "alarms":

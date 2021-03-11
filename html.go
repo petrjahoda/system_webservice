@@ -20,15 +20,29 @@ type TableOutput struct {
 }
 
 type HeaderCell struct {
-	HeaderName string
+	HeaderWidth string
+	HeaderName  string
+}
+
+type HeaderCellType struct {
+	HeaderWidthType string
+	HeaderNameType  string
 }
 
 type TableRow struct {
 	TableCell []TableCell
 }
 
+type TableRowType struct {
+	TableCellType []TableCellType
+}
+
 type TableCell struct {
 	CellName string
+}
+
+type TableCellType struct {
+	CellNameType string
 }
 
 func updateProgramVersion() {

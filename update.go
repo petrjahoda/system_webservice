@@ -53,12 +53,17 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 	logInfo("UPDATE", "User settings updated in "+time.Since(timer).String())
 }
 
-func updateUserDataSettings(email string, locale string, workplaces []string) {
+func updateUserDataSettings(email string, dataSelection string, settingsSelection string, workplaces []string) {
 	logInfo("UPDATE", "Updating user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	timer := time.Now()
 	userSettingsSync.Lock()
 	settings := cachedUserSettings[email]
-	settings.dataSelection = locale
+	if len(dataSelection) > 0 {
+		settings.dataSelection = dataSelection
+	}
+	if len(settingsSelection) > 0 {
+		settings.settingsSelection = settingsSelection
+	}
 	if len(workplaces) > 0 {
 		settings.selectedWorkplaces = workplaces
 	}
