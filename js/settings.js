@@ -18,8 +18,6 @@ container.addEventListener("click", (event) => {
 })
 
 const containerDetail = document.getElementById("settings-container-detail")
-
-
 containerDetail.addEventListener("click", (event) => {
     if (event.target.id === "data-save-button" || event.target.id === "data-save-button-mif") {
         let selection = document.getElementById("data-selection").value
@@ -37,9 +35,234 @@ containerDetail.addEventListener("click", (event) => {
                 saveOrder();
                 break;
             }
+            case "products" : {
+                saveProduct();
+                break;
+            }
+            case "parts" : {
+                savePart();
+                break;
+            }
+            case "states" : {
+                saveState();
+                break;
+            }
+            case "workshifts" : {
+                saveWorkshift();
+                break;
+            }
         }
     }
 })
+
+
+function saveWorkshift() {
+    let pattern = /^(?:2[0-3]|[01]?[0-9]):[0-5][0-9]:[0-5][0-9]$/
+    if (document.getElementById("workshift-name").value.length === 0) {
+        document.getElementById("workshift-name").style.backgroundColor = "#ffcccb"
+    } else if (!document.getElementById("workshift-start").value.match(pattern)) {
+        document.getElementById("workshift-start").style.backgroundColor = "#ffcccb"
+    } else if (!document.getElementById("workshift-end").value.match(pattern)) {
+        document.getElementById("workshift-end").style.backgroundColor = "#ffcccb"
+    }else {
+        document.getElementById("workshift-name").style.backgroundColor = ""
+        document.getElementById("workshift-start").style.backgroundColor = ""
+        document.getElementById("workshift-end").style.backgroundColor = ""
+        if (document.getElementById("data-save-button").classList[1] === "primary") {
+            document.getElementById("data-save-button").classList.remove("primary")
+            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    let background = ""
+                    let colorCursor = document.getElementsByClassName("color-cursor")
+                    for (const color of colorCursor) {
+                        background = getComputedStyle(color).background
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("workshift-name").value,
+                        start: document.getElementById("workshift-start").value,
+                        end: document.getElementById("workshift-end").value,
+                        note: document.getElementById("workshift-note").value,
+                    };
+                    fetch("/save_workshift", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
+            document.getElementById("data-save-button").classList.remove("alert")
+            document.getElementById("data-save-button").classList.add("primary")
+            document.getElementById("data-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+function saveState() {
+    if (document.getElementById("state-name").value.length === 0) {
+        document.getElementById("state-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("state-name").style.backgroundColor = ""
+        if (document.getElementById("data-save-button").classList[1] === "primary") {
+            document.getElementById("data-save-button").classList.remove("primary")
+            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    let background = ""
+                    let colorCursor = document.getElementsByClassName("color-cursor")
+                    for (const color of colorCursor) {
+                        background = getComputedStyle(color).background
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("state-name").value,
+                        color: background,
+                        note: document.getElementById("state-note").value,
+                    };
+                    fetch("/save_state", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
+            document.getElementById("data-save-button").classList.remove("alert")
+            document.getElementById("data-save-button").classList.add("primary")
+            document.getElementById("data-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+function savePart() {
+    if (document.getElementById("part-name").value.length === 0) {
+        document.getElementById("part-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("part-name").style.backgroundColor = ""
+        if (document.getElementById("data-save-button").classList[1] === "primary") {
+            document.getElementById("data-save-button").classList.remove("primary")
+            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("part-name").value,
+                        barcode: document.getElementById("part-barcode").value,
+                        note: document.getElementById("part-note").value,
+                    };
+                    fetch("/save_part", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
+            document.getElementById("data-save-button").classList.remove("alert")
+            document.getElementById("data-save-button").classList.add("primary")
+            document.getElementById("data-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+function saveProduct() {
+    if (document.getElementById("product-name").value.length === 0) {
+        document.getElementById("product-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("product-name").style.backgroundColor = ""
+        if (document.getElementById("data-save-button").classList[1] === "primary") {
+            document.getElementById("data-save-button").classList.remove("primary")
+            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("product-name").value,
+                        barcode: document.getElementById("product-barcode").value,
+                        cycle: document.getElementById("cycle-time").value,
+                        downtimeDuration: document.getElementById("downtime-duration").value,
+                        note: document.getElementById("product-note").value,
+                    };
+                    fetch("/save_product", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
+            document.getElementById("data-save-button").classList.remove("alert")
+            document.getElementById("data-save-button").classList.add("primary")
+            document.getElementById("data-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
 
 function saveOrder() {
     if (document.getElementById("order-name").value.length === 0) {
@@ -234,3 +457,4 @@ function loadDetails(selectedItem) {
         console.log(error)
     });
 }
+

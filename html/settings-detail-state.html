@@ -1,0 +1,23 @@
+<div class="important">
+    <input id="state-name" type="text" data-role="input" data-prepend="{{.StateNamePrepend}}: "
+           value="{{.StateName}}">
+</div>
+<div id="color" style="margin-top: 14px;width: 100%" data-role="color-selector" data-init-color="{{.Color}}"
+     data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
+</div>
+<div style="margin-top: 14px;">
+    <input id="state-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: right">
+    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="data-save-button-mif"></span>
+    </button>
+</div>

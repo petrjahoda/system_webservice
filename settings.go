@@ -216,11 +216,11 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 	case "packages":
 		//processPackagesSettings(writer, email)
 	case "parts":
-		//processPartsSettings(writer, email)
+		loadPartDetails(data.Name, writer, email)
 	case "products":
-		//processProductsSettings(writer, email)
+		loadProductDetails(data.Name, writer, email)
 	case "states":
-		//processStatesSettings(writer, email)
+		loadStateDetails(data.Name, writer, email)
 	case "devices":
 		//processDevicesSettings(writer, email)
 	case "system-settings":
@@ -230,7 +230,7 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 	case "workplace":
 		//processWorkplacesSettings(writer, email)
 	case "workshifts":
-		//processWorkshiftsSettings(writer, email)
+		loadWorkshiftDetails(data.Name, writer, email)
 	}
 	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
 	return

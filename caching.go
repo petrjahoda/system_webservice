@@ -164,16 +164,7 @@ func cacheData() {
 		operationsSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedOperationsById))+" operations")
 
-		var products []database.Product
-		db.Find(&products)
-		productsSync.Lock()
-		for _, product := range products {
-			cachedProductsById[product.ID] = product
-			cachedProductsByName[product.Name] = product
-
-		}
-		productsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedProductsById))+" products")
+		cacheProducts(db)
 
 		var workplaceModes []database.WorkplaceMode
 		db.Find(&workplaceModes)
@@ -185,15 +176,7 @@ func cacheData() {
 		workplaceModesSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceModesById))+" workplace modes")
 
-		var workshifts []database.Workshift
-		db.Find(&workshifts)
-		workshiftsSync.Lock()
-		for _, workshift := range workshifts {
-			cachedWorkshiftsById[workshift.ID] = workshift
-
-		}
-		workshiftsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkshiftsById))+" workshifts")
+		cacheWorkshifts(db)
 		cacheAlarms(db)
 		var breakdowns []database.Breakdown
 		db.Find(&breakdowns)
@@ -235,25 +218,9 @@ func cacheData() {
 		packagesSync.Unlock()
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedPackagesById))+" packages")
 
-		var parts []database.Part
-		db.Find(&parts)
-		partsSync.Lock()
-		for _, part := range parts {
-			cachedPartsById[part.ID] = part
+		cacheParts(db)
 
-		}
-		partsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedPartsById))+" parts")
-
-		var states []database.State
-		db.Find(&states)
-		statesSync.Lock()
-		for _, state := range states {
-			cachedStatesById[state.ID] = state
-
-		}
-		statesSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedStatesById))+" states")
+		cacheStates(db)
 
 		var allWorkplaces []database.Workplace
 		db.Find(&allWorkplaces)
@@ -286,6 +253,54 @@ func cacheData() {
 		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func cacheWorkshifts(db *gorm.DB) {
+	var workshifts []database.Workshift
+	db.Find(&workshifts)
+	workshiftsSync.Lock()
+	for _, workshift := range workshifts {
+		cachedWorkshiftsById[workshift.ID] = workshift
+
+	}
+	workshiftsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkshiftsById))+" workshifts")
+}
+
+func cacheStates(db *gorm.DB) {
+	var states []database.State
+	db.Find(&states)
+	statesSync.Lock()
+	for _, state := range states {
+		cachedStatesById[state.ID] = state
+	}
+	statesSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedStatesById))+" states")
+}
+
+func cacheParts(db *gorm.DB) {
+	var parts []database.Part
+	db.Find(&parts)
+	partsSync.Lock()
+	for _, part := range parts {
+		cachedPartsById[part.ID] = part
+
+	}
+	partsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedPartsById))+" parts")
+}
+
+func cacheProducts(db *gorm.DB) {
+	var products []database.Product
+	db.Find(&products)
+	productsSync.Lock()
+	for _, product := range products {
+		cachedProductsById[product.ID] = product
+		cachedProductsByName[product.Name] = product
+
+	}
+	productsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedProductsById))+" products")
 }
 
 func cacheAlarms(db *gorm.DB) {

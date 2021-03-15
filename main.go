@@ -68,6 +68,10 @@ func (p *program) run() {
 	router.POST("/save_alarm", saveAlarm)
 	router.POST("/save_operation", saveOperation)
 	router.POST("/save_order", saveOrder)
+	router.POST("/save_product", saveProduct)
+	router.POST("/save_part", savePart)
+	router.POST("/save_state", saveState)
+	router.POST("/save_workshift", saveWorkshift)
 	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {

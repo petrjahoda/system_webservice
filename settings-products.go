@@ -2,12 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -17,6 +19,119 @@ type ProductsSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+}
+
+type ProductDetailsDataOutput struct {
+	ProductName             string
+	ProductNamePrepend      string
+	Barcode                 string
+	BarcodePrepend          string
+	CycleTime               string
+	CycleTimePrepend        string
+	DowntimeDuration        string
+	DowntimeDurationPrepend string
+	Note                    string
+	NotePrepend             string
+	CreatedAt               string
+	CreatedAtPrepend        string
+	UpdatedAt               string
+	UpdatedAtPrepend        string
+}
+
+type ProductDetailsDataInput struct {
+	Id               string
+	Name             string
+	Barcode          string
+	Cycle            string
+	DowntimeDuration string
+	Note             string
+}
+
+func saveProduct(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS-PRODUCTS", "Saving product started")
+	var data ProductDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-PRODUCTS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-PRODUCTS", "Saving product ended")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-PRODUCTS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-PRODUCTS", "Saving product ended")
+		return
+	}
+
+	cycleTime, err := strconv.Atoi(strings.TrimRight(data.Cycle, "s"))
+	if err != nil {
+		logError("SETTINGS-PRODUCTS", "Problem parsing cycle time: "+err.Error())
+		cycleTime = 0
+	}
+	duration, err := strconv.Atoi(strings.TrimRight(data.DowntimeDuration, "s"))
+	if err != nil {
+		logError("SETTINGS-PRODUCTS", "Problem parsing duration: "+err.Error())
+		duration = 0
+	}
+	var product database.Product
+	db.Where("id=?", data.Id).Find(&product)
+	product.Name = data.Name
+	product.Barcode = data.Barcode
+	product.CycleTime = cycleTime
+	product.DownTimeDuration = time.Duration(duration * 1000000000)
+	product.Note = data.Note
+	db.Debug().Save(&product)
+	cacheProducts(db)
+	logInfo("SETTINGS-PRODUCTS", "Product saved in "+time.Since(timer).String())
+}
+
+func loadProductDetails(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS-PRODUCTS", "Loading product details")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-PRODUCTS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-PRODUCTS", "Loading product details ended")
+		return
+	}
+	productId, _ := strconv.Atoi(id)
+	product := cachedProductsById[uint(productId)]
+	data := ProductDetailsDataOutput{
+		ProductName:             product.Name,
+		ProductNamePrepend:      getLocale(email, "product-name"),
+		Barcode:                 product.Barcode,
+		BarcodePrepend:          getLocale(email, "barcode"),
+		CycleTime:               strconv.Itoa(product.CycleTime) + "s",
+		CycleTimePrepend:        getLocale(email, "cycle-name"),
+		DowntimeDuration:        product.DownTimeDuration.String(),
+		DowntimeDurationPrepend: getLocale(email, "downtime-duration"),
+		Note:                    product.Note,
+		NotePrepend:             getLocale(email, "note-name"),
+		CreatedAt:               product.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:        getLocale(email, "created-at"),
+		UpdatedAt:               product.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:        getLocale(email, "updated-at"),
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-product.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS-PRODUCTS", "Product details loaded in "+time.Since(timer).String())
 }
 
 func loadProductsSettings(writer http.ResponseWriter, email string) {
