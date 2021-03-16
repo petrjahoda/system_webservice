@@ -27,13 +27,25 @@ var cachedWorkplaceModesById = map[uint]database.WorkplaceMode{}
 var cachedWorkshiftsById = map[uint]database.Workshift{}
 var cachedAlarmsById = map[uint]database.Alarm{}
 var cachedBreakdownsById = map[uint]database.Breakdown{}
+var cachedBreakdownTypesByName = map[string]database.BreakdownType{}
+var cachedBreakdownTypesById = map[uint]database.BreakdownType{}
 var cachedDowntimesById = map[uint]database.Downtime{}
+var cachedDowntimeTypesByName = map[string]database.DowntimeType{}
+var cachedDowntimeTypesById = map[uint]database.DowntimeType{}
 var cachedFaultsById = map[uint]database.Fault{}
+var cachedFaultTypesByName = map[string]database.FaultType{}
+var cachedFaultTypesById = map[uint]database.FaultType{}
 var cachedPackagesById = map[uint]database.Package{}
+var cachedPackageTypesByName = map[string]database.PackageType{}
+var cachedPackageTypesById = map[uint]database.PackageType{}
 var cachedPartsById = map[uint]database.Part{}
 var cachedStatesById = map[uint]database.State{}
 var cachedWorkplaceDevicePorts = map[string][]database.DevicePort{}
 var cachedDevicePortsColorsById = map[int]string{}
+var cachedUserRolesById = map[uint]database.UserRole{}
+var cachedUserRolesByName = map[string]database.UserRole{}
+var cachedUserTypesById = map[uint]database.UserType{}
+var cachedUserTypesByName = map[string]database.UserType{}
 
 var usersSync sync.RWMutex
 var userSettingsSync sync.RWMutex
@@ -78,25 +90,8 @@ func cacheData() {
 			logError("CHACHING", "Problem opening database: "+err.Error())
 			return
 		}
-		var users []database.User
-		db.Find(&users)
-		usersSync.Lock()
-		userSettingsSync.Lock()
-		for _, user := range users {
-			if len(user.Email) > 0 {
-				cachedUsersByEmail[user.Email] = user
-				_, userCached := cachedUserSettings[user.Email]
-				if !userCached {
-					var userSettings userSettings
-					cachedUserSettings[user.Email] = userSettings
-				}
-			}
-			cachedUsersById[user.ID] = user
-		}
-		usersSync.Unlock()
-		userSettingsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedUsersByEmail))+" users")
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedUserSettings))+" user settings")
+
+		cacheUsers(db)
 
 		var workplaces []database.Workplace
 		db.Find(&workplaces)
@@ -178,48 +173,11 @@ func cacheData() {
 
 		cacheWorkshifts(db)
 		cacheAlarms(db)
-		var breakdowns []database.Breakdown
-		db.Find(&breakdowns)
-		breakdownsSync.Lock()
-		for _, breakdown := range breakdowns {
-			cachedBreakdownsById[breakdown.ID] = breakdown
-
-		}
-		breakdownsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedBreakdownsById))+" breakdowns")
-
-		var downtimes []database.Downtime
-		db.Find(&downtimes)
-		downtimesSync.Lock()
-		for _, downtime := range downtimes {
-			cachedDowntimesById[downtime.ID] = downtime
-
-		}
-		downtimesSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDowntimesById))+" downtimes")
-
-		var faults []database.Fault
-		db.Find(&faults)
-		faultsSync.Lock()
-		for _, fault := range faults {
-			cachedFaultsById[fault.ID] = fault
-
-		}
-		faultsSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedFaultsById))+" faults")
-
-		var packages []database.Package
-		db.Find(&packages)
-		packagesSync.Lock()
-		for _, onePackage := range packages {
-			cachedPackagesById[onePackage.ID] = onePackage
-
-		}
-		packagesSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedPackagesById))+" packages")
-
+		cacheBreakdowns(db)
+		cacheDowntimes(db)
+		cacheFaults(db)
+		cachePackages(db)
 		cacheParts(db)
-
 		cacheStates(db)
 
 		var allWorkplaces []database.Workplace
@@ -253,6 +211,112 @@ func cacheData() {
 		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func cacheUsers(db *gorm.DB) {
+	var users []database.User
+	var userTypes []database.UserType
+	var userRoles []database.UserRole
+	db.Find(&users)
+	db.Find(&userTypes)
+	db.Find(&userRoles)
+	usersSync.Lock()
+	userSettingsSync.Lock()
+	for _, user := range users {
+		if len(user.Email) > 0 {
+			cachedUsersByEmail[user.Email] = user
+			_, userCached := cachedUserSettings[user.Email]
+			if !userCached {
+				var userSettings userSettings
+				cachedUserSettings[user.Email] = userSettings
+			}
+		}
+		cachedUsersById[user.ID] = user
+	}
+	for _, userType := range userTypes {
+		cachedUserTypesById[userType.ID] = userType
+		cachedUserTypesByName[userType.Name] = userType
+	}
+	for _, userRole := range userRoles {
+		cachedUserRolesById[userRole.ID] = userRole
+		cachedUserRolesByName[userRole.Name] = userRole
+	}
+
+	usersSync.Unlock()
+	userSettingsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedUsersByEmail))+" users")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedUserSettings))+" user settings")
+}
+
+func cachePackages(db *gorm.DB) {
+	var packages []database.Package
+	var packageTypes []database.PackageType
+	db.Find(&packages)
+	db.Find(&packageTypes)
+	packagesSync.Lock()
+	for _, onePackage := range packages {
+		cachedPackagesById[onePackage.ID] = onePackage
+
+	}
+	for _, packageType := range packageTypes {
+		cachedPackageTypesById[packageType.ID] = packageType
+		cachedPackageTypesByName[packageType.Name] = packageType
+	}
+	packagesSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedPackagesById))+" packages")
+}
+
+func cacheFaults(db *gorm.DB) {
+	var faults []database.Fault
+	var faultTypes []database.FaultType
+	db.Find(&faults)
+	db.Find(&faultTypes)
+	faultsSync.Lock()
+	for _, fault := range faults {
+		cachedFaultsById[fault.ID] = fault
+
+	}
+	for _, faultType := range faultTypes {
+		cachedFaultTypesById[faultType.ID] = faultType
+		cachedFaultTypesByName[faultType.Name] = faultType
+	}
+	faultsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedFaultsById))+" faults")
+}
+
+func cacheDowntimes(db *gorm.DB) {
+	var downtimes []database.Downtime
+	var downtimeTypes []database.DowntimeType
+	db.Find(&downtimes)
+	db.Find(&downtimeTypes)
+	downtimesSync.Lock()
+	for _, downtime := range downtimes {
+		cachedDowntimesById[downtime.ID] = downtime
+	}
+	for _, downtimeType := range downtimeTypes {
+		cachedDowntimeTypesById[downtimeType.ID] = downtimeType
+		cachedDowntimeTypesByName[downtimeType.Name] = downtimeType
+	}
+	downtimesSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDowntimesById))+" downtimes")
+}
+
+func cacheBreakdowns(db *gorm.DB) {
+	var breakdowns []database.Breakdown
+	var breakdownTypes []database.BreakdownType
+	db.Find(&breakdowns)
+	db.Find(&breakdownTypes)
+	breakdownsSync.Lock()
+	for _, breakdown := range breakdowns {
+		cachedBreakdownsById[breakdown.ID] = breakdown
+
+	}
+	for _, breakdownType := range breakdownTypes {
+		cachedBreakdownTypesById[breakdownType.ID] = breakdownType
+		cachedBreakdownTypesByName[breakdownType.Name] = breakdownType
+	}
+	breakdownsSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedBreakdownsById))+" breakdowns")
 }
 
 func cacheWorkshifts(db *gorm.DB) {

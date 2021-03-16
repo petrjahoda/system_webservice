@@ -21,11 +21,19 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="4">
+          <list size="12">
             <item index="0" class="java.lang.String" itemvalue="{{.selection}}" />
             <item index="1" class="java.lang.String" itemvalue="{{.workplaceselected}}" />
             <item index="2" class="java.lang.String" itemvalue="{{.orderselected}}" />
             <item index="3" class="java.lang.String" itemvalue="{{.productselected}}" />
+            <item index="4" class="java.lang.String" itemvalue="{{.breakdowntypeselected}}" />
+            <item index="5" class="java.lang.String" itemvalue="{{.downtimetypeselected}}" />
+            <item index="6" class="java.lang.String" itemvalue="{{.faulttypeselected}}" />
+            <item index="7" class="java.lang.String" itemvalue="{{.packagetypeselected}}" />
+            <item index="8" class="java.lang.String" itemvalue="{{.usertypeselected}}" />
+            <item index="9" class="java.lang.String" itemvalue="{{.localeselected}}" />
+            <item index="10" class="java.lang.String" itemvalue="{{.userroleselected}}" />
+            <item index="11" class="java.lang.String" itemvalue="{{.systemsettingsselected}}" />
           </list>
         </value>
       </option>

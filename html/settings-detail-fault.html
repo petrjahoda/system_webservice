@@ -1,12 +1,12 @@
 <div class="important">
-    <input id="breakdown-name" type="text" data-role="input" data-prepend="{{.BreakdownNamePrepend}}: "
-           value="{{.BreakdownName}}">
+    <input id="fault-name" type="text" data-role="input" data-prepend="{{.FaultNamePrepend}}: "
+           value="{{.FaultName}}">
 </div>
 <div style="margin-top: 14px;">
-    <select id="breakdown-type-selection" data-filter="false" data-role="select"
-            data-prepend="{{.BreakdownTypeNamePrepend}}: ">
-        {{range .BreakdownTypes}}
-        <option value="{{.BreakdownTypeName}}" {{.BreakdownTypeSelected}}>{{.BreakdownTypeName}}</option>
+    <select id="fault-type-selection" data-filter="false" data-role="select"
+            data-prepend="{{.FaultTypeNamePrepend}}: ">
+        {{range .FaultTypes}}
+        <option value="{{.FaultTypeName}}" {{.FaultTypeSelected}}>{{.FaultTypeName}}</option>
         {{end}}
     </select>
 </div>
@@ -14,11 +14,8 @@
     <input id="barcode" type="text" data-role="input" data-prepend="{{.BarcodePrepend}}: "
            value="{{.Barcode}}">
 </div>
-<div id="color" style="margin-top: 14px;width: 100%" data-role="color-selector" data-init-color="{{.Color}}"
-     data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
-</div>
 <div style="margin-top: 14px;">
-    <input id="breakdown-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+    <input id="fault-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
 <div style="margin-top: 14px;" disabled>

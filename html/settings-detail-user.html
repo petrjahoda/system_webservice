@@ -1,0 +1,76 @@
+<div class="important">
+    <input id="first-name" type="text" data-role="input" data-prepend="{{.FirstNamePrepend}}: "
+           value="{{.FirstName}}">
+</div >
+<div class="important" style="margin-top: 14px;">
+    <input id="second-name" type="text" data-role="input" data-prepend="{{.SecondNamePrepend}}: "
+           value="{{.SecondName}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="user-type-selection" data-filter="false" data-role="select"
+            data-prepend="{{.UserTypeNamePrepend}}: ">
+        {{range .UserTypes}}
+        <option value="{{.UserTypeName}}" {{.UserTypeSelected}}>{{.UserTypeName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="user-role-selection" data-filter="false" data-role="select"
+            data-prepend="{{.UserRoleNamePrepend}}: ">
+        {{range .UserRoles}}
+        <option value="{{.UserRoleName}}" {{.UserRoleSelected}}>{{.UserRoleName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="user-locale-selection" data-filter="false" data-role="select"
+            data-prepend="{{.LocalePrepend}}: ">
+        {{range .Locales}}
+        <option value="{{.LocaleName}}" {{.LocaleSelected}}>{{.LocaleName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <input id="barcode" type="text" data-role="input" data-prepend="{{.BarcodePrepend}}: "
+           value="{{.Barcode}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="password" type="text" data-role="input" data-prepend="{{.PasswordPrepend}}: "
+           value="{{.Password}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="email" type="text" data-role="input" data-prepend="{{.EmailPrepend}}: "
+           value="{{.Email}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="phone" type="text" data-role="input" data-prepend="{{.PhonePrepend}}: "
+           value="{{.Phone}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="pin" type="text" data-role="input" data-prepend="{{.PINPrepend}}: "
+           value="{{.PIN}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="position" type="text" data-role="input" data-prepend="{{.PositionPrepend}}: "
+           value="{{.Position}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="rfid" type="text" data-role="input" data-prepend="{{.RfidPrepend}}: "
+           value="{{.Rfid}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="user-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: right">
+    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="data-save-button-mif"></span>
+    </button>
+</div>

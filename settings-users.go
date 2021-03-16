@@ -2,11 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"html/template"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -19,6 +22,310 @@ type UsersSettingsDataOutput struct {
 	TableRows               []TableRow
 	TableHeaderType         []HeaderCellType
 	TableRowsType           []TableRowType
+}
+
+type UserTypeDetailsDataOutput struct {
+	UserTypeName        string
+	UserTypeNamePrepend string
+	Note                string
+	NotePrepend         string
+	CreatedAt           string
+	CreatedAtPrepend    string
+	UpdatedAt           string
+	UpdatedAtPrepend    string
+}
+
+type UserDetailsDataOutput struct {
+	FirstName            string
+	FirstNamePrepend     string
+	SecondName           string
+	SecondNamePrepend    string
+	UserTypeName         string
+	UserTypeNamePrepend  string
+	UserRoleName         string
+	UserRoleNamePrepend  string
+	SelectionName        string
+	SelectionNamePrepend string
+	Barcode              string
+	BarcodePrepend       string
+	Email                string
+	EmailPrepend         string
+	Password             string
+	PasswordPrepend      string
+	Phone                string
+	PhonePrepend         string
+	PIN                  string
+	PINPrepend           string
+	Rfid                 string
+	RfidPrepend          string
+	Position             string
+	PositionPrepend      string
+	Locale               string
+	LocalePrepend        string
+	Note                 string
+	NotePrepend          string
+	CreatedAt            string
+	CreatedAtPrepend     string
+	UpdatedAt            string
+	UpdatedAtPrepend     string
+	UserTypes            []UserTypeSelection
+	UserRoles            []UserRoleSelection
+	Locales              []LocaleSelection
+}
+
+type UserTypeSelection struct {
+	UserTypeName     string
+	UserTypeId       uint
+	UserTypeSelected string
+}
+
+type UserRoleSelection struct {
+	UserRoleName     string
+	UserRoleId       uint
+	UserRoleSelected string
+}
+
+type LocaleSelection struct {
+	LocaleName     string
+	LocaleSelected string
+}
+
+type UserDetailsDataInput struct {
+	Id         string
+	FirstName  string
+	SecondName string
+	Type       string
+	Role       string
+	Locale     string
+	Barcode    string
+	Password   string
+	Email      string
+	Phone      string
+	Pin        string
+	Position   string
+	Rfid       string
+	Note       string
+}
+
+type UserTypeDetailsDataInput struct {
+	Id   string
+	Name string
+	Note string
+}
+
+func saveUserType(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS-USERS", "Saving user type started")
+	var data UserTypeDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-USERS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Saving user type ended")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Saving user type ended")
+		return
+	}
+	var userType database.UserType
+	db.Where("id=?", data.Id).Find(&userType)
+	userType.Name = data.Name
+	userType.Note = data.Note
+	db.Save(&userType)
+	cacheUsers(db)
+	logInfo("SETTINGS-USERS", "User type saved in "+time.Since(timer).String())
+}
+
+func saveUser(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS-USERS", "Saving user started")
+	var data UserDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-USERS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Saving user ended")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Saving user ended")
+		return
+	}
+	var user database.User
+	db.Where("id=?", data.Id).Find(&user)
+	user.FirstName = data.FirstName
+	user.SecondName = data.SecondName
+	user.UserTypeID = int(cachedUserTypesByName[data.Type].ID)
+	user.UserRoleID = int(cachedUserRolesByName[data.Role].ID)
+	user.Barcode = data.Barcode
+	user.Email = data.Email
+	user.Phone = data.Phone
+	user.Pin = data.Pin
+	user.Rfid = data.Rfid
+	user.Note = data.Note
+	user.Locale = data.Locale
+	if len(data.Password) > 0 {
+		user.Password = hashPasswordFromString([]byte(data.Password))
+	}
+	db.Save(&user)
+	cacheUsers(db)
+	logInfo("SETTINGS-USERS", "User saved in "+time.Since(timer).String())
+}
+
+func loadUserTypeDetails(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS-USERS", "Loading user type details")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Loading user type details ended")
+		return
+	}
+	var userType database.UserType
+	db.Where("id = ?", id).Find(&userType)
+
+	data := UserTypeDetailsDataOutput{
+		UserTypeName:        userType.Name,
+		UserTypeNamePrepend: getLocale(email, "type-name"),
+		Note:                userType.Note,
+		NotePrepend:         getLocale(email, "note-name"),
+		CreatedAt:           userType.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:    getLocale(email, "created-at"),
+		UpdatedAt:           userType.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:    getLocale(email, "updated-at"),
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user-type.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS-USERS", "User type details loaded in "+time.Since(timer).String())
+}
+
+func loadUserDetails(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS-USERS", "Loading user details")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Loading user details ended")
+		return
+	}
+	var user database.User
+	db.Where("id = ?", id).Find(&user)
+
+	var userTypes []UserTypeSelection
+	for _, userType := range cachedUserTypesById {
+		if userType.Name == cachedUserTypesById[uint(user.UserTypeID)].Name {
+			userTypes = append(userTypes, UserTypeSelection{UserTypeName: userType.Name, UserTypeId: userType.ID, UserTypeSelected: "selected"})
+		} else {
+			userTypes = append(userTypes, UserTypeSelection{UserTypeName: userType.Name, UserTypeId: userType.ID})
+		}
+	}
+	sort.Slice(userTypes, func(i, j int) bool {
+		return userTypes[i].UserTypeName < userTypes[j].UserTypeName
+	})
+
+	var userRoles []UserRoleSelection
+	for _, userRole := range cachedUserRolesById {
+		if userRole.Name == cachedUserRolesById[uint(user.UserRoleID)].Name {
+			userRoles = append(userRoles, UserRoleSelection{UserRoleName: userRole.Name, UserRoleId: userRole.ID, UserRoleSelected: "selected"})
+		} else {
+			userRoles = append(userRoles, UserRoleSelection{UserRoleName: userRole.Name, UserRoleId: userRole.ID})
+		}
+	}
+	sort.Slice(userTypes, func(i, j int) bool {
+		return userTypes[i].UserTypeName < userTypes[j].UserTypeName
+	})
+
+	var locales []LocaleSelection
+	locales = append(locales, LocaleSelection{LocaleName: "CsCZ", LocaleSelected: testLocaleForUser(user.Locale, "CsCZ")})
+	locales = append(locales, LocaleSelection{LocaleName: "DeDE", LocaleSelected: testLocaleForUser(user.Locale, "DeDE")})
+	locales = append(locales, LocaleSelection{LocaleName: "EnUS", LocaleSelected: testLocaleForUser(user.Locale, "EnUS")})
+	locales = append(locales, LocaleSelection{LocaleName: "EsES", LocaleSelected: testLocaleForUser(user.Locale, "EsES")})
+	locales = append(locales, LocaleSelection{LocaleName: "FrFR", LocaleSelected: testLocaleForUser(user.Locale, "FrFR")})
+	locales = append(locales, LocaleSelection{LocaleName: "ItIT", LocaleSelected: testLocaleForUser(user.Locale, "ItIT")})
+	locales = append(locales, LocaleSelection{LocaleName: "PlPL", LocaleSelected: testLocaleForUser(user.Locale, "PlPL")})
+	locales = append(locales, LocaleSelection{LocaleName: "PtPT", LocaleSelected: testLocaleForUser(user.Locale, "PtPT")})
+	locales = append(locales, LocaleSelection{LocaleName: "SkSK", LocaleSelected: testLocaleForUser(user.Locale, "SkSK")})
+	locales = append(locales, LocaleSelection{LocaleName: "RuRU", LocaleSelected: testLocaleForUser(user.Locale, "RuRU")})
+
+	data := UserDetailsDataOutput{
+		FirstName:           user.FirstName,
+		FirstNamePrepend:    getLocale(email, "first-name"),
+		SecondName:          user.SecondName,
+		SecondNamePrepend:   getLocale(email, "second-name"),
+		UserRoleName:        cachedUserRolesById[uint(user.UserRoleID)].Name,
+		UserRoleNamePrepend: getLocale(email, "role-name"),
+		UserTypeName:        cachedUserTypesById[uint(user.UserTypeID)].Name,
+		UserTypeNamePrepend: getLocale(email, "type-name"),
+		LocalePrepend:       getLocale(email, "locale"),
+		Barcode:             user.Barcode,
+		BarcodePrepend:      getLocale(email, "barcode"),
+		Email:               user.Email,
+		EmailPrepend:        getLocale(email, "email"),
+		Password:            "",
+		PasswordPrepend:     getLocale(email, "password"),
+		Phone:               user.Phone,
+		PhonePrepend:        getLocale(email, "phone"),
+		PIN:                 user.Pin,
+		PINPrepend:          getLocale(email, "pin"),
+		Position:            user.Position,
+		PositionPrepend:     getLocale(email, "position"),
+		Rfid:                user.Rfid,
+		RfidPrepend:         getLocale(email, "rfid"),
+		Note:                user.Note,
+		NotePrepend:         getLocale(email, "note-name"),
+		CreatedAt:           user.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:    getLocale(email, "created-at"),
+		UpdatedAt:           user.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:    getLocale(email, "updated-at"),
+		UserTypes:           userTypes,
+		UserRoles:           userRoles,
+		Locales:             locales,
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS-USERS", "User details loaded in "+time.Since(timer).String())
+}
+
+func testLocaleForUser(userLocale string, locale string) string {
+	if userLocale == locale {
+		return "selected"
+	}
+	return ""
 }
 
 func loadUsersSettings(writer http.ResponseWriter, email string) {
@@ -91,4 +398,16 @@ func addUserSettingsTypeTableHeaders(email string, data *UsersSettingsDataOutput
 	data.TableHeaderType = append(data.TableHeaderType, id)
 	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
 	data.TableHeaderType = append(data.TableHeaderType, name)
+}
+
+func hashPasswordFromString(pwd []byte) string {
+	logInfo("MAIN", "Hashing password")
+	timer := time.Now()
+	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
+	if err != nil {
+		logError("MAIN", "Cannot hash password: "+err.Error())
+		return ""
+	}
+	logInfo("MAIN", "Password hashed in  "+time.Since(timer).String())
+	return string(hash)
 }

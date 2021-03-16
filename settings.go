@@ -11,6 +11,7 @@ import (
 type SettingsPageInput struct {
 	Data string
 	Name string
+	Type bool
 }
 
 type SettingsPageOutput struct {
@@ -43,6 +44,11 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.Compacted = cachedUserSettings[email].menuState
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+		SelectionName:  getLocale(email, "user-name"),
+		SelectionValue: "user",
+		Selection:      getSelected(cachedUserSettings[email].settingsSelection, "user-name"),
+	})
 	if cachedUsersByEmail[email].UserRoleID != 3 {
 		logInfo("SETTINGS", "Adding data menu for power user")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
@@ -179,6 +185,8 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, params 
 		loadWorkshiftsSettings(writer, email)
 	case "system-settings":
 		loadSystemSettings(writer, email)
+	case "user":
+		loadUserSettings(writer, email)
 	}
 	logInfo("SETTINGS", "Settings loaded in "+time.Since(timer).String())
 	return
@@ -199,38 +207,64 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		logInfo("SETTINGS", "Loading settings detail ended")
 		return
 	}
+
 	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Name)
-	switch data.Data {
-	case "alarms":
-		loadAlarmDetails(data.Name, writer, email)
-	case "breakdowns":
-		//processBreakdownsSettings(writer, email)
-	case "downtimes":
-		//processDowntimesSettings(writer, email)
-	case "faults":
-		//processFaultsSettings(writer, email)
-	case "operations":
-		loadOperationDetails(data.Name, writer, email)
-	case "orders":
-		loadOrderDetails(data.Name, writer, email)
-	case "packages":
-		//processPackagesSettings(writer, email)
-	case "parts":
-		loadPartDetails(data.Name, writer, email)
-	case "products":
-		loadProductDetails(data.Name, writer, email)
-	case "states":
-		loadStateDetails(data.Name, writer, email)
-	case "devices":
-		//processDevicesSettings(writer, email)
-	case "system-settings":
-		//processSystemSettings(writer, email)
-	case "users":
-		//processUsersSettings(writer, email)
-	case "workplace":
-		//processWorkplacesSettings(writer, email)
-	case "workshifts":
-		loadWorkshiftDetails(data.Name, writer, email)
+	if data.Type {
+		switch data.Data {
+		case "alarms":
+		case "breakdowns":
+			loadBreakdownTypeDetails(data.Name, writer, email)
+		case "downtimes":
+			loadDowntimeTypeDetails(data.Name, writer, email)
+		case "faults":
+			loadFaultTypeDetails(data.Name, writer, email)
+		case "operations":
+		case "orders":
+		case "packages":
+			loadPackageTypeDetails(data.Name, writer, email)
+		case "parts":
+		case "products":
+		case "states":
+		case "devices":
+		case "system-settings":
+		case "users":
+			loadUserTypeDetails(data.Name, writer, email)
+		case "workplace":
+		case "workshifts":
+		}
+	} else {
+		switch data.Data {
+		case "alarms":
+			loadAlarmDetails(data.Name, writer, email)
+		case "breakdowns":
+			loadBreakdownDetails(data.Name, writer, email)
+		case "downtimes":
+			loadDowntimeDetails(data.Name, writer, email)
+		case "faults":
+			loadFaultDetails(data.Name, writer, email)
+		case "operations":
+			loadOperationDetails(data.Name, writer, email)
+		case "orders":
+			loadOrderDetails(data.Name, writer, email)
+		case "packages":
+			loadPackageDetails(data.Name, writer, email)
+		case "parts":
+			loadPartDetails(data.Name, writer, email)
+		case "products":
+			loadProductDetails(data.Name, writer, email)
+		case "states":
+			loadStateDetails(data.Name, writer, email)
+		case "devices":
+			//processDevicesSettings(writer, email)
+		case "system-settings":
+			loadSystemSettingsDetails(data.Name, writer, email)
+		case "users":
+			loadUserDetails(data.Name, writer, email)
+		case "workplace":
+			//processWorkplacesSettings(writer, email)
+		case "workshifts":
+			loadWorkshiftDetails(data.Name, writer, email)
+		}
 	}
 	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
 	return

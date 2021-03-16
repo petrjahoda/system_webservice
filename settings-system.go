@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -17,6 +18,120 @@ type SystemSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+}
+
+type SystemSettingsDetailsDataOutput struct {
+	SystemSettingsName         string
+	SystemSettingsNamePrepend  string
+	SystemSettingsSelection    []SystemSettingsSelection
+	SystemSettingsValue        string
+	SystemSettingsValuePrepend string
+	Enabled                    string
+	EnabledPrepend             string
+	Note                       string
+	NotePrepend                string
+	CreatedAt                  string
+	CreatedAtPrepend           string
+	UpdatedAt                  string
+	UpdatedAtPrepend           string
+}
+type SystemSettingsSelection struct {
+	SystemSettingsValue    string
+	SystemSettingsSelected string
+}
+
+type SystemSettingsDataInput struct {
+	Id      string
+	Name    string
+	Value   string
+	Enabled string
+	Note    string
+}
+
+func saveSystemSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS-SYSTEM", "Saving system settings started")
+	var data SystemSettingsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-SYSTEM", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-SYSTEM", "Saving system settings ended")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-SYSTEM", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-SYSTEM", "Saving system settings ended")
+		return
+	}
+	var settings database.Setting
+	db.Where("id=?", data.Id).Find(&settings)
+	settings.Name = data.Name
+	settings.Value = data.Value
+	settings.Enabled, _ = strconv.ParseBool(data.Enabled)
+	settings.Note = data.Note
+	db.Save(&settings)
+	cacheUsers(db)
+	logInfo("SETTINGS-SYSTEM", "System settings saved in "+time.Since(timer).String())
+}
+
+func loadSystemSettingsDetails(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS-SYSTEM", "Loading system settings details")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-SYSTEM", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-SYSTEM", "Loading system settings details ended")
+		return
+	}
+	var settings database.Setting
+	db.Where("id = ?", id).Find(&settings)
+
+	var systemSettingsSelection []SystemSettingsSelection
+	systemSettingsSelection = append(systemSettingsSelection, SystemSettingsSelection{SystemSettingsValue: "true", SystemSettingsSelected: checkSelection(settings.Enabled, "true")})
+	systemSettingsSelection = append(systemSettingsSelection, SystemSettingsSelection{SystemSettingsValue: "false", SystemSettingsSelected: checkSelection(settings.Enabled, "false")})
+
+	data := SystemSettingsDetailsDataOutput{
+		SystemSettingsName:         settings.Name,
+		SystemSettingsNamePrepend:  getLocale(email, "name"),
+		SystemSettingsValue:        settings.Value,
+		SystemSettingsValuePrepend: getLocale(email, "value"),
+		Enabled:                    strconv.FormatBool(settings.Enabled),
+		EnabledPrepend:             getLocale(email, "enabled"),
+		Note:                       settings.Note,
+		NotePrepend:                getLocale(email, "note-name"),
+		CreatedAt:                  settings.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:           getLocale(email, "created-at"),
+		UpdatedAt:                  settings.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:           getLocale(email, "updated-at"),
+		SystemSettingsSelection:    systemSettingsSelection,
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-system.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS-SYSTEM", "System settings details loaded in "+time.Since(timer).String())
+}
+
+func checkSelection(enabled bool, selection string) string {
+	if strconv.FormatBool(enabled) == selection {
+		return "selected"
+	}
+	return ""
 }
 
 func loadSystemSettings(writer http.ResponseWriter, email string) {

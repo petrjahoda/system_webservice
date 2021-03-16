@@ -1,12 +1,12 @@
 <div class="important">
-    <input id="breakdown-name" type="text" data-role="input" data-prepend="{{.BreakdownNamePrepend}}: "
-           value="{{.BreakdownName}}">
+    <input id="downtime-name" type="text" data-role="input" data-prepend="{{.DowntimeNamePrepend}}: "
+           value="{{.DowntimeName}}">
 </div>
 <div style="margin-top: 14px;">
-    <select id="breakdown-type-selection" data-filter="false" data-role="select"
-            data-prepend="{{.BreakdownTypeNamePrepend}}: ">
-        {{range .BreakdownTypes}}
-        <option value="{{.BreakdownTypeName}}" {{.BreakdownTypeSelected}}>{{.BreakdownTypeName}}</option>
+    <select id="downtime-type-selection" data-filter="false" data-role="select"
+            data-prepend="{{.DowntimeTypeNamePrepend}}: ">
+        {{range .DowntimeTypes}}
+        <option value="{{.DowntimeTypeName}}" {{.DowntimeTypeSelected}}>{{.DowntimeTypeName}}</option>
         {{end}}
     </select>
 </div>
@@ -18,7 +18,7 @@
      data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
 </div>
 <div style="margin-top: 14px;">
-    <input id="breakdown-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+    <input id="downtime-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
 <div style="margin-top: 14px;" disabled>

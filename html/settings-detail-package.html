@@ -1,12 +1,19 @@
 <div class="important">
-    <input id="breakdown-name" type="text" data-role="input" data-prepend="{{.BreakdownNamePrepend}}: "
-           value="{{.BreakdownName}}">
+    <input id="package-name" type="text" data-role="input" data-prepend="{{.PackageNamePrepend}}: "
+           value="{{.PackageName}}">
 </div>
 <div style="margin-top: 14px;">
-    <select id="breakdown-type-selection" data-filter="false" data-role="select"
-            data-prepend="{{.BreakdownTypeNamePrepend}}: ">
-        {{range .BreakdownTypes}}
-        <option value="{{.BreakdownTypeName}}" {{.BreakdownTypeSelected}}>{{.BreakdownTypeName}}</option>
+    <select id="package-type-selection" data-filter="false" data-role="select"
+            data-prepend="{{.PackageTypeNamePrepend}}: ">
+        {{range .PackageTypes}}
+        <option value="{{.PackageTypeName}}" {{.PackageTypeSelected}}>{{.PackageTypeName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="order-selection" data-filter="false" data-role="select" data-prepend="{{.OrderNamePrepend}}: ">
+        {{range .Orders}}
+        <option value="{{.OrderName}}" {{.OrderSelected}}>{{.OrderName}}</option>
         {{end}}
     </select>
 </div>
@@ -14,11 +21,8 @@
     <input id="barcode" type="text" data-role="input" data-prepend="{{.BarcodePrepend}}: "
            value="{{.Barcode}}">
 </div>
-<div id="color" style="margin-top: 14px;width: 100%" data-role="color-selector" data-init-color="{{.Color}}"
-     data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
-</div>
 <div style="margin-top: 14px;">
-    <input id="breakdown-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+    <input id="package-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
 <div style="margin-top: 14px;" disabled>

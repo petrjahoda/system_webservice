@@ -1,0 +1,20 @@
+<div class="important">
+    <input id="downtime-type-name" type="text" data-role="input" data-prepend="{{.DowntimeTypeNamePrepend}}: "
+           value="{{.DowntimeTypeName}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="downtime-type-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: right">
+    <button id="data-type-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="data-type-save-button-mif"></span>
+    </button>
+</div>
