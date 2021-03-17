@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+type PortDetailsPageInput struct {
+	Data string
+	Type string
+}
+
 type SettingsPageInput struct {
 	Data string
 	Name string
@@ -211,26 +216,16 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Name)
 	if data.Type {
 		switch data.Data {
-		case "alarms":
 		case "breakdowns":
 			loadBreakdownTypeDetails(data.Name, writer, email)
 		case "downtimes":
 			loadDowntimeTypeDetails(data.Name, writer, email)
 		case "faults":
 			loadFaultTypeDetails(data.Name, writer, email)
-		case "operations":
-		case "orders":
 		case "packages":
 			loadPackageTypeDetails(data.Name, writer, email)
-		case "parts":
-		case "products":
-		case "states":
-		case "devices":
-		case "system-settings":
 		case "users":
 			loadUserTypeDetails(data.Name, writer, email)
-		case "workplace":
-		case "workshifts":
 		}
 	} else {
 		switch data.Data {
@@ -255,7 +250,7 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		case "states":
 			loadStateDetails(data.Name, writer, email)
 		case "devices":
-			//processDevicesSettings(writer, email)
+			loadDeviceDetails(data.Name, writer, email)
 		case "system-settings":
 			loadSystemSettingsDetails(data.Name, writer, email)
 		case "users":
@@ -267,5 +262,32 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		}
 	}
 	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
+	return
+}
+
+func loadPortDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	email, _, _ := request.BasicAuth()
+	logInfo("SETTINGS", "Loading port detail for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	var data PortDetailsPageInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Loading settings detail ended")
+		return
+	}
+
+	logInfo("SETTINGS", "Loading details settings for "+data.Data)
+	switch data.Type {
+	case "device":
+		loadDevicePortDetails(data.Data, writer, email)
+	case "workplace":
+		//loadWorkplacePortDetails(data.Data, writer, email)
+	}
+	logInfo("SETTINGS", "Port detail loaded in "+time.Since(timer).String())
 	return
 }

@@ -48,6 +48,10 @@ containerDetail.addEventListener("click", (event) => {
                 saveBreakdown();
                 break
             }
+            case "devices" : {
+                saveDevice();
+                break
+            }
             case "downtimes" : {
                 saveDowntime();
                 break
@@ -118,8 +122,152 @@ containerDetail.addEventListener("click", (event) => {
                 break;
             }
         }
+    } else if (event.target.id === "data-new-port-button" || event.target.id === "data-new-port-button-mif") {
+        loadPortDetails(null, "device");
+    } else if (event.target.id === "port-save-button" || event.target.id === "port-save-button-mif") {
+            saveDevicePortDetails();
+    } else {
+        const tablePortSelectedId = event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id
+        let portTable = Metro.getPlugin("#data-port-table", "table");
+        if (tablePortSelectedId === "data-port-table" && portTable.getSelectedItems().length > 0 && event.target.type === "radio") {
+            let selectedItem = portTable.getSelectedItems()[0][0]
+            loadPortDetails(selectedItem, "device");
+        }
+
     }
 })
+
+function saveDevicePortDetails() {
+    if (document.getElementById("device-port-name").value.length === 0) {
+        document.getElementById("device-port-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("device-port-name").style.backgroundColor = ""
+        if (document.getElementById("port-save-button").classList[1] === "primary") {
+            document.getElementById("port-save-button").classList.remove("primary")
+            document.getElementById("port-save-button").classList.add("alert")
+            document.getElementById("port-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("port-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("port-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-port-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-port-table", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        deviceName: document.getElementById("device-name").value,
+                        name: document.getElementById("device-port-name").value,
+                        type: document.getElementById("device-port-type-selection").value,
+                        position: document.getElementById("device-port-file-position").value,
+                        unit: document.getElementById("device-port-unit").value,
+                        plcDataType: document.getElementById("device-port-plc-data-type").value,
+                        plcDataAddress: document.getElementById("device-port-plc-data-address").value,
+                        settings: document.getElementById("device-port-settings").value,
+                        note: document.getElementById("device-port-note").value,
+                        virtual: document.getElementById("device-port-virtual-selection").value,
+                    };
+                    fetch("/save_device_port_details", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("port-container").innerHTML = ""
+                            let table = Metro.getPlugin("#data-table", "table");
+                            let selectedItem = table.getSelectedItems()[0][0]
+                            loadDetails(selectedItem, false);
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("port-container").innerHTML = ""
+                        let table = Metro.getPlugin("#data-table", "table");
+                        let selectedItem = table.getSelectedItems()[0][0]
+                        loadDetails(selectedItem, false);
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("port-save-button").classList[1] === "alert") {
+            document.getElementById("port-save-button").classList.remove("alert")
+            document.getElementById("port-save-button").classList.add("primary")
+            document.getElementById("port-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("port-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+function loadPortDetails(selectedPort, type) {
+    console.log(type + ": loading port details for " + selectedPort)
+    let data = {
+        data: selectedPort,
+        type: type
+    };
+    fetch("/load_port_detail", {
+        method: "POST",
+        body: JSON.stringify(data)
+    }).then((response) => {
+        response.text().then(function (data) {
+            document.getElementById("port-container").innerHTML = data
+            setTimeout(function () {
+                document.getElementById("port-container").scrollIntoView();
+            }, 100);
+
+        });
+    }).catch((error) => {
+        console.log(error)
+    });
+}
+
+function saveDevice() {
+    if (document.getElementById("device-name").value.length === 0) {
+        document.getElementById("device-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("device-name").style.backgroundColor = ""
+        if (document.getElementById("data-save-button").classList[1] === "primary") {
+            document.getElementById("data-save-button").classList.remove("primary")
+            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("device-name").value,
+                        type: document.getElementById("device-type-selection").value,
+                        ip: document.getElementById("ip-address").value,
+                        mac: document.getElementById("mac-address").value,
+                        version: document.getElementById("device-version-name").value,
+                        settings: document.getElementById("device-settings").value,
+                        note: document.getElementById("device-note").value,
+                        enabled: document.getElementById("device-enabled-selection").value
+                    };
+                    fetch("/save_device", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
+            document.getElementById("data-save-button").classList.remove("alert")
+            document.getElementById("data-save-button").classList.add("primary")
+            document.getElementById("data-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
 
 function saveSystemSettings() {
     if (document.getElementById("system-settings-name").value.length === 0) {

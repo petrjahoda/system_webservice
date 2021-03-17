@@ -47,7 +47,15 @@ var cachedUserRolesByName = map[string]database.UserRole{}
 var cachedUserTypesById = map[uint]database.UserType{}
 var cachedUserTypesByName = map[string]database.UserType{}
 
+var cachedDevicesbyId = map[uint]database.Device{}
+var cachedDevicesbyName = map[string]database.Device{}
+var cachedDeviceTypesById = map[uint]database.DeviceType{}
+var cachedDeviceTypesByName = map[string]database.DeviceType{}
+var cachedDevicePortTypesById = map[uint]database.DevicePortType{}
+var cachedDevicePortTypesByName = map[string]database.DevicePortType{}
+
 var usersSync sync.RWMutex
+var devicesSync sync.RWMutex
 var userSettingsSync sync.RWMutex
 var localesSync sync.RWMutex
 var companyNameSync sync.RWMutex
@@ -92,7 +100,7 @@ func cacheData() {
 		}
 
 		cacheUsers(db)
-
+		cacheDevices(db)
 		var workplaces []database.Workplace
 		db.Find(&workplaces)
 		workplacesSync.Lock()
@@ -211,6 +219,33 @@ func cacheData() {
 		logInfo("CHACHING", "Caching done in "+time.Since(timer).String())
 		time.Sleep(1 * time.Minute)
 	}
+}
+
+func cacheDevices(db *gorm.DB) {
+	var devices []database.Device
+	var deviceTypes []database.DeviceType
+	var devicePortTypes []database.DevicePortType
+	db.Find(&devices)
+	db.Find(&deviceTypes)
+	db.Find(&devicePortTypes)
+	devicesSync.Lock()
+	for _, device := range devices {
+		cachedDevicesbyId[device.ID] = device
+		cachedDevicesbyName[device.Name] = device
+	}
+	for _, deviceType := range deviceTypes {
+		cachedDeviceTypesById[deviceType.ID] = deviceType
+		cachedDeviceTypesByName[deviceType.Name] = deviceType
+	}
+	for _, devicePortType := range devicePortTypes {
+		cachedDevicePortTypesById[devicePortType.ID] = devicePortType
+		cachedDevicePortTypesByName[devicePortType.Name] = devicePortType
+	}
+
+	devicesSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicesbyId))+" devices")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDeviceTypesById))+" device types")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicePortTypesById))+" device port types")
 }
 
 func cacheUsers(db *gorm.DB) {

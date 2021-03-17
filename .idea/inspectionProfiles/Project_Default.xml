@@ -21,7 +21,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="12">
+          <list size="18">
             <item index="0" class="java.lang.String" itemvalue="{{.selection}}" />
             <item index="1" class="java.lang.String" itemvalue="{{.workplaceselected}}" />
             <item index="2" class="java.lang.String" itemvalue="{{.orderselected}}" />
@@ -34,6 +34,12 @@
             <item index="9" class="java.lang.String" itemvalue="{{.localeselected}}" />
             <item index="10" class="java.lang.String" itemvalue="{{.userroleselected}}" />
             <item index="11" class="java.lang.String" itemvalue="{{.systemsettingsselected}}" />
+            <item index="12" class="java.lang.String" itemvalue="{{.devicetypeselected}}" />
+            <item index="13" class="java.lang.String" itemvalue="{{.deviceselected}}" />
+            <item index="14" class="java.lang.String" itemvalue="{{.deviceporttypeselected}}" />
+            <item index="15" class="java.lang.String" itemvalue="{{.portvirtualselected}}" />
+            <item index="16" class="java.lang.String" itemvalue="{{.deviceenabledselected}}" />
+            <item index="17" class="java.lang.String" itemvalue="{{.portshidden}}" />
           </list>
         </value>
       </option>

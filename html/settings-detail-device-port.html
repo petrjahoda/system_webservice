@@ -1,0 +1,58 @@
+<div class="important" style="margin-top: 14px;">
+    <input id="device-port-name" type="text" data-role="input" data-prepend="{{.DevicePortNamePrepend}}: "
+           value="{{.DevicePortName}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="device-port-type-selection" data-filter="false" data-role="select"
+            data-prepend="{{.DevicePortTypeNamePrepend}}: ">
+        {{range .DevicePortTypes}}
+        <option value="{{.DevicePortTypeName}}" {{.DevicePortTypeSelected}}>{{.DevicePortTypeName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <input id="device-port-file-position" type="text" data-role="input" data-prepend="{{.DevicePortFilePositionPrepend}}: "
+           value="{{.DevicePortFilePosition}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="device-port-unit" type="text" data-role="input" data-prepend="{{.DevicePortUnitPrepend}}: "
+           value="{{.DevicePortUnit}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="device-port-plc-data-type" type="text" data-role="input" data-prepend="{{.PlcDataTypePrepend}}: "
+           value="{{.PlcDataType}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="device-port-plc-data-address" type="text" data-role="input" data-prepend="{{.PlcDataAddressPrepend}}: "
+           value="{{.PlcDataAddress}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="device-port-settings" type="text" data-role="input" data-prepend="{{.SettingsPrepend}}: "
+           value="{{.Settings}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="device-port-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="device-port-virtual-selection" data-filter="false" data-role="select"
+            data-prepend="{{.VirtualEnabledPrepend}}: ">
+        {{range .PortVirtualSelection}}
+        <option value="{{.PortVirtual}}" {{.PortVirtualSelected}}>{{.PortVirtual}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="port-created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: "
+           value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="port-updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: "
+           value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: right">
+    <button id="port-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="port-save-button-mif"></span>
+    </button>
+</div>

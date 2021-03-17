@@ -8,16 +8,15 @@
            value="{{.SystemSettingsValue}}">
 </div>
 <div style="margin-top: 14px;">
-    <select id="system-settings-selection" data-filter="false" data-role="select"
-            data-prepend="{{.EnabledPrepend}}: ">
+    <input id="system-settings-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="system-settings-selection" data-filter="false" data-role="select" data-prepend="{{.EnabledPrepend}}: ">
         {{range .SystemSettingsSelection}}
         <option value="{{.SystemSettingsValue}}" {{.SystemSettingsSelected}}>{{.SystemSettingsValue}}</option>
         {{end}}
     </select>
-</div>
-<div style="margin-top: 14px;">
-    <input id="system-settings-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
-           value="{{.Note}}">
 </div>
 <div style="margin-top: 14px;" disabled>
     <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
