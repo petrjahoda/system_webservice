@@ -24,6 +24,9 @@ var cachedOperationsById = map[uint]database.Operation{}
 var cachedProductsById = map[uint]database.Product{}
 var cachedProductsByName = map[string]database.Product{}
 var cachedWorkplaceModesById = map[uint]database.WorkplaceMode{}
+var cachedWorkplaceModesByName = map[string]database.WorkplaceMode{}
+var cachedWorkplaceSectionsById = map[uint]database.WorkplaceSection{}
+var cachedWorkplaceSectionsByName = map[string]database.WorkplaceSection{}
 var cachedWorkshiftsById = map[uint]database.Workshift{}
 var cachedAlarmsById = map[uint]database.Alarm{}
 var cachedBreakdownsById = map[uint]database.Breakdown{}
@@ -47,8 +50,10 @@ var cachedUserRolesByName = map[string]database.UserRole{}
 var cachedUserTypesById = map[uint]database.UserType{}
 var cachedUserTypesByName = map[string]database.UserType{}
 
-var cachedDevicesbyId = map[uint]database.Device{}
-var cachedDevicesbyName = map[string]database.Device{}
+var cachedDevicesById = map[uint]database.Device{}
+var cachedDevicesByName = map[string]database.Device{}
+var cachedDevicePortsById = map[uint]database.DevicePort{}
+var cachedDevicePortsByName = map[string]database.DevicePort{}
 var cachedDeviceTypesById = map[uint]database.DeviceType{}
 var cachedDeviceTypesByName = map[string]database.DeviceType{}
 var cachedDevicePortTypesById = map[uint]database.DevicePortType{}
@@ -63,7 +68,6 @@ var workplacesSync sync.RWMutex
 var ordersSync sync.RWMutex
 var operationsSync sync.RWMutex
 var productsSync sync.RWMutex
-var workplaceModesSync sync.RWMutex
 var workshiftsSync sync.RWMutex
 var alarmsSync sync.RWMutex
 var breakdownsSync sync.RWMutex
@@ -98,19 +102,8 @@ func cacheData() {
 			logError("CHACHING", "Problem opening database: "+err.Error())
 			return
 		}
-
 		cacheUsers(db)
 		cacheDevices(db)
-		var workplaces []database.Workplace
-		db.Find(&workplaces)
-		workplacesSync.Lock()
-		for _, workplace := range workplaces {
-			cachedWorkplacesById[workplace.ID] = workplace
-			cachedWorkplacesByName[workplace.Name] = workplace
-
-		}
-		workplacesSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplacesById))+" workplaces")
 
 		var companyName database.Setting
 		db.Where("name like 'company'").Find(&companyName)
@@ -168,18 +161,8 @@ func cacheData() {
 		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedOperationsById))+" operations")
 
 		cacheProducts(db)
-
-		var workplaceModes []database.WorkplaceMode
-		db.Find(&workplaceModes)
-		workplaceModesSync.Lock()
-		for _, workplaceMode := range workplaceModes {
-			cachedWorkplaceModesById[workplaceMode.ID] = workplaceMode
-
-		}
-		workplaceModesSync.Unlock()
-		logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceModesById))+" workplace modes")
-
-		cacheWorkshifts(db)
+		cacheWorkplaces(db)
+		cacheWorkShifts(db)
 		cacheAlarms(db)
 		cacheBreakdowns(db)
 		cacheDowntimes(db)
@@ -221,17 +204,48 @@ func cacheData() {
 	}
 }
 
+func cacheWorkplaces(db *gorm.DB) {
+	var workplaceModes []database.WorkplaceMode
+	var workplaceSections []database.WorkplaceSection
+	var workplaces []database.Workplace
+	db.Find(&workplaces)
+	db.Find(&workplaceModes)
+	db.Find(&workplaceSections)
+	workplacesSync.Lock()
+	for _, workplaceMode := range workplaceModes {
+		cachedWorkplaceModesById[workplaceMode.ID] = workplaceMode
+		cachedWorkplaceModesByName[workplaceMode.Name] = workplaceMode
+
+	}
+	for _, workplaceSection := range workplaceSections {
+		cachedWorkplaceSectionsById[workplaceSection.ID] = workplaceSection
+		cachedWorkplaceSectionsByName[workplaceSection.Name] = workplaceSection
+
+	}
+	for _, workplace := range workplaces {
+		cachedWorkplacesById[workplace.ID] = workplace
+		cachedWorkplacesByName[workplace.Name] = workplace
+
+	}
+	workplacesSync.Unlock()
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplacesById))+" workplaces")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceModesById))+" workplace modes")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedWorkplaceSectionsById))+" workplace sections")
+}
+
 func cacheDevices(db *gorm.DB) {
 	var devices []database.Device
 	var deviceTypes []database.DeviceType
 	var devicePortTypes []database.DevicePortType
+	var devicePorts []database.DevicePort
 	db.Find(&devices)
 	db.Find(&deviceTypes)
 	db.Find(&devicePortTypes)
+	db.Find(&devicePorts)
 	devicesSync.Lock()
 	for _, device := range devices {
-		cachedDevicesbyId[device.ID] = device
-		cachedDevicesbyName[device.Name] = device
+		cachedDevicesById[device.ID] = device
+		cachedDevicesByName[device.Name] = device
 	}
 	for _, deviceType := range deviceTypes {
 		cachedDeviceTypesById[deviceType.ID] = deviceType
@@ -241,9 +255,14 @@ func cacheDevices(db *gorm.DB) {
 		cachedDevicePortTypesById[devicePortType.ID] = devicePortType
 		cachedDevicePortTypesByName[devicePortType.Name] = devicePortType
 	}
+	for _, devicePort := range devicePorts {
+		cachedDevicePortsById[devicePort.ID] = devicePort
+		cachedDevicePortsByName[devicePort.Name] = devicePort
+	}
 
 	devicesSync.Unlock()
-	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicesbyId))+" devices")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicesById))+" devices")
+	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicePortsById))+" device ports")
 	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDeviceTypesById))+" device types")
 	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedDevicePortTypesById))+" device port types")
 }
@@ -354,7 +373,7 @@ func cacheBreakdowns(db *gorm.DB) {
 	logInfo("CHACHING", "Cached "+strconv.Itoa(len(cachedBreakdownsById))+" breakdowns")
 }
 
-func cacheWorkshifts(db *gorm.DB) {
+func cacheWorkShifts(db *gorm.DB) {
 	var workshifts []database.Workshift
 	db.Find(&workshifts)
 	workshiftsSync.Lock()

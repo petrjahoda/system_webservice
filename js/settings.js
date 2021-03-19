@@ -9,18 +9,25 @@ container.addEventListener("click", (event) => {
     const tableSelectedId = event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id
     let table = Metro.getPlugin("#data-table", "table");
     let typeTable = Metro.getPlugin("#type-table", "table");
+    let typeTableExtended = Metro.getPlugin("#type-table-extended", "table");
     if (tableSelectedId === "data-table" && table.getSelectedItems().length > 0 && event.target.type === "radio") {
         let selectedItem = table.getSelectedItems()[0][0]
-        loadDetails(selectedItem, false);
+        loadDetails(selectedItem, "first");
     } else if (tableSelectedId === "type-table" && typeTable.getSelectedItems().length > 0 && event.target.type === "radio") {
         let selectedItem = typeTable.getSelectedItems()[0][0]
-        loadDetails(selectedItem, true);
+        loadDetails(selectedItem, "second");
+    } else if (tableSelectedId === "type-table-extended" && typeTableExtended.getSelectedItems().length > 0 && event.target.type === "radio") {
+        let selectedItem = typeTableExtended.getSelectedItems()[0][0]
+        loadDetails(selectedItem, "third");
     } else if (event.target.id === "data-new-button" || event.target.id === "data-new-button-mif") {
         loadSettings();
-        loadDetails(null, false);
+        loadDetails(null, "first");
     } else if (event.target.id === "data-new-button-type" || event.target.id === "data-new-button-mif-type") {
         loadSettings();
-        loadDetails(null, true);
+        loadDetails(null, "second");
+    } else if (event.target.id === "data-new-button-type-extended" || event.target.id === "data-new-button-mif-type-extended") {
+        loadSettings();
+        loadDetails(null, "third");
     }
     if (event.target.id === "data-save-button") {
         let selection = document.getElementById("data-selection").value
@@ -96,6 +103,10 @@ containerDetail.addEventListener("click", (event) => {
                 saveWorkshift();
                 break;
             }
+            case "workplaces": {
+                saveWorkplace();
+                break;
+            }
         }
     } else if (event.target.id === "data-type-save-button" || event.target.id === "data-type-save-button-mif") {
         let selection = document.getElementById("data-selection").value
@@ -121,21 +132,262 @@ containerDetail.addEventListener("click", (event) => {
                 saveUserType();
                 break;
             }
+            case "workplaces" : {
+                saveWorkplaceSection()
+                break;
+            }
+        }
+    } else if (event.target.id === "data-mode-save-button" || event.target.id === "data-mode-save-button-mif") {
+        let selection = document.getElementById("data-selection").value
+        console.log("Saving mode of " + selection)
+        switch (selection) {
+            case "workplaces" : {
+                saveWorkplaceMode();
+                break
+            }
         }
     } else if (event.target.id === "data-new-port-button" || event.target.id === "data-new-port-button-mif") {
-        loadPortDetails(null, "device");
+        loadDevicePortDetails(null, "device");
+    } else if (event.target.id === "data-new-workplace-port-button" || event.target.id === "data-new-workplace-port-button-mif") {
+        loadWorkplacePortDetails(null, "workplace");
+    } else if (event.target.id === "data-delete-workplace-port-button" || event.target.id === "data-delete-workplace-port-button-mif") {
+        deleteWorkplacePortFromWorkplace(null, "workplace");
+    } else if (event.target.id === "data-new-workshift-button" || event.target.id === "data-new-workshift-button-mif") {
+        loadWorkshiftDetails(null, "workshift");
+    } else if (event.target.id === "data-delete-workshift-button" || event.target.id === "data-delete-workshift-button-mif") {
+        deleteWorkshiftFromWorkplace(null, "workshift");
     } else if (event.target.id === "port-save-button" || event.target.id === "port-save-button-mif") {
-            saveDevicePortDetails();
+        saveDevicePortDetails();
+    } else if (event.target.id === "workplace-port-save-button" || event.target.id === "workplace-port-save-button-mif") {
+        saveWorkplacePortDetails();
+    } else if (event.target.id === "workshift-save-button" || event.target.id === "workshift-save-button-mif") {
+        saveWorkshiftDetails();
     } else {
         const tablePortSelectedId = event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id
         let portTable = Metro.getPlugin("#data-port-table", "table");
+        let workplacePortTable = Metro.getPlugin("#data-workplace-port-table", "table");
+        let workshiftTable = Metro.getPlugin("#data-workshift-table", "table");
         if (tablePortSelectedId === "data-port-table" && portTable.getSelectedItems().length > 0 && event.target.type === "radio") {
             let selectedItem = portTable.getSelectedItems()[0][0]
-            loadPortDetails(selectedItem, "device");
+            loadDevicePortDetails(selectedItem, "device");
+        } else if (tablePortSelectedId === "data-workplace-port-table" && workplacePortTable.getSelectedItems().length > 0 && event.target.type === "radio") {
+            let selectedItem = workplacePortTable.getSelectedItems()[0][0]
+            loadWorkplacePortDetails(selectedItem, "workplace");
+        } else if (tablePortSelectedId === "data-workshift-table" && workshiftTable.getSelectedItems().length > 0 && event.target.type === "radio") {
+            let selectedItem = workshiftTable.getSelectedItems()[0][0]
+            loadWorkshiftDetails(selectedItem, "workplace");
         }
 
     }
 })
+
+
+function saveWorkplace() {
+    if (document.getElementById("workplace-name").value.length === 0) {
+        document.getElementById("workplace-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("workplace-name").style.backgroundColor = ""
+        if (document.getElementById("data-save-button").classList[1] === "primary") {
+            document.getElementById("data-save-button").classList.remove("primary")
+            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("workplace-name").value,
+                        section: document.getElementById("workplace-section-selection").value,
+                        mode: document.getElementById("workplace-mode-selection").value,
+                        code: document.getElementById("code").value,
+                        note: document.getElementById("workplace-note").value,
+                    };
+                    fetch("/save_workplace", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
+            document.getElementById("data-save-button").classList.remove("alert")
+            document.getElementById("data-save-button").classList.add("primary")
+            document.getElementById("data-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+
+function saveWorkplaceSection() {
+    if (document.getElementById("workplace-section-name").value.length === 0) {
+        document.getElementById("workplace-section-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("workplace-section-name").style.backgroundColor = ""
+        if (document.getElementById("data-type-save-button").classList[1] === "primary") {
+            document.getElementById("data-type-save-button").classList.remove("primary")
+            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("workplace-section-name").value,
+                        note: document.getElementById("workplace-section-note").value,
+                    };
+                    fetch("/save_workplace_section", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+            document.getElementById("data-type-save-button").classList.remove("alert")
+            document.getElementById("data-type-save-button").classList.add("primary")
+            document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+function saveWorkplaceMode() {
+    if (document.getElementById("workplace-mode-name").value.length === 0) {
+        document.getElementById("workplace-mode-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("workplace-mode-name").style.backgroundColor = ""
+        if (document.getElementById("data-mode-save-button").classList[1] === "primary") {
+            document.getElementById("data-mode-save-button").classList.remove("primary")
+            document.getElementById("data-mode-save-button").classList.add("alert")
+            document.getElementById("data-mode-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("data-mode-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("data-mode-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#type-table-extended", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#type-table-extended", "table").getSelectedItems()[0][0]
+                    }
+                    let data = {
+                        id: parseId,
+                        name: document.getElementById("workplace-mode-name").value,
+                        downtimeDuration: document.getElementById("downtime-duration").value,
+                        poweroffDuration: document.getElementById("poweroff-duration").value,
+                        note: document.getElementById("workplace-mode-note").value,
+                    };
+                    fetch("/save_workplace_mode", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("settings-container-detail").innerHTML = ""
+                            loadSettings();
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("settings-container-detail").innerHTML = ""
+                        loadSettings();
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("data-mode-save-button").classList[1] === "alert") {
+            document.getElementById("data-mode-save-button").classList.remove("alert")
+            document.getElementById("data-mode-save-button").classList.add("primary")
+            document.getElementById("data-mode-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("data-mode-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
+
+function saveWorkplacePortDetails() {
+    if (document.getElementById("workplace-port-name").value.length === 0) {
+        document.getElementById("workplace-port-name").style.backgroundColor = "#ffcccb"
+    } else {
+        document.getElementById("workplace-port-name").style.backgroundColor = ""
+        if (document.getElementById("workplace-port-save-button").classList[1] === "primary") {
+            document.getElementById("workplace-port-save-button").classList.remove("primary")
+            document.getElementById("workplace-port-save-button").classList.add("alert")
+            document.getElementById("workplace-port-save-button-mif").classList.remove("mif-floppy-disk")
+            document.getElementById("workplace-port-save-button-mif").classList.add("mif-cross")
+
+            setTimeout(function () {
+                if (document.getElementById("workplace-port-save-button").classList[1] === "alert") {
+                    let parseId = ""
+                    if (Metro.getPlugin("#data-workplace-port-table", "table").getSelectedItems().length > 0) {
+                        parseId = Metro.getPlugin("#data-workplace-port-table", "table").getSelectedItems()[0][0]
+                    }
+                    let background = ""
+                    let colorCursor = document.getElementsByClassName("color-cursor")
+                    for (const color of colorCursor) {
+                        background = getComputedStyle(color).background
+                    }
+                    let data = {
+                        id: parseId,
+                        workplaceName: document.getElementById("workplace-name").value,
+                        name: document.getElementById("workplace-port-name").value,
+                        devicePortId: document.getElementById("workplace-port-device-port-selection").value,
+                        stateId: document.getElementById("workplace-port-state-selection").value,
+                        color: background,
+                        counterOk: document.getElementById("workplace-port-counter-ok-selection").value,
+                        counterNok: document.getElementById("workplace-port-counter-nok-selection").value,
+                        highValue: document.getElementById("workplace-port-high-value").value,
+                        lowValue: document.getElementById("workplace-port-low-value").value,
+                        note: document.getElementById("workplace-port-note").value,
+                    };
+                    fetch("/save_workplace_port_details", {
+                        method: "POST",
+                        body: JSON.stringify(data)
+                    }).then((response) => {
+                        response.text().then(function (data) {
+                            document.getElementById("workplace-port-container").innerHTML = ""
+                            let table = Metro.getPlugin("#data-table", "table");
+                            let selectedItem = table.getSelectedItems()[0][0]
+                            loadDetails(selectedItem, "first");
+                        });
+                    }).catch((error) => {
+                        console.log(error)
+                        document.getElementById("workplace-port-container").innerHTML = ""
+                        let table = Metro.getPlugin("#data-table", "table");
+                        let selectedItem = table.getSelectedItems()[0][0]
+                        loadDetails(selectedItem, "first");
+                    });
+                }
+            }, 2500);
+        } else if (document.getElementById("workplace-port-save-button").classList[1] === "alert") {
+            document.getElementById("workplace-port-save-button").classList.remove("alert")
+            document.getElementById("workplace-port-save-button").classList.add("primary")
+            document.getElementById("workplace-port-save-button-mif").classList.remove("mif-cross")
+            document.getElementById("workplace-port-save-button-mif").classList.add("mif-floppy-disk")
+        }
+    }
+}
 
 function saveDevicePortDetails() {
     if (document.getElementById("device-port-name").value.length === 0) {
@@ -175,14 +427,14 @@ function saveDevicePortDetails() {
                             document.getElementById("port-container").innerHTML = ""
                             let table = Metro.getPlugin("#data-table", "table");
                             let selectedItem = table.getSelectedItems()[0][0]
-                            loadDetails(selectedItem, false);
+                            loadDetails(selectedItem, "first");
                         });
                     }).catch((error) => {
                         console.log(error)
                         document.getElementById("port-container").innerHTML = ""
                         let table = Metro.getPlugin("#data-table", "table");
                         let selectedItem = table.getSelectedItems()[0][0]
-                        loadDetails(selectedItem, false);
+                        loadDetails(selectedItem, "first");
                     });
                 }
             }, 2500);
@@ -195,13 +447,36 @@ function saveDevicePortDetails() {
     }
 }
 
-function loadPortDetails(selectedPort, type) {
-    console.log(type + ": loading port details for " + selectedPort)
+function loadWorkplacePortDetails(selectedPort, type) {
+    console.log(type + ": loading workplace port details for " + selectedPort)
     let data = {
         data: selectedPort,
         type: type
     };
-    fetch("/load_port_detail", {
+    fetch("/load_workplace_port_detail", {
+        method: "POST",
+        body: JSON.stringify(data)
+    }).then((response) => {
+        response.text().then(function (data) {
+            document.getElementById("workplace-port-container").innerHTML = data
+            setTimeout(function () {
+                document.getElementById("data-delete-workplace-port-button").hidden = false
+                document.getElementById("workplace-port-container").scrollIntoView();
+            }, 100);
+
+        });
+    }).catch((error) => {
+        console.log(error)
+    });
+}
+
+function loadDevicePortDetails(selectedPort, type) {
+    console.log(type + ": loading device port details for " + selectedPort)
+    let data = {
+        data: selectedPort,
+        type: type
+    };
+    fetch("/load_device_port_detail", {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
@@ -1249,12 +1524,14 @@ function loadSettings() {
 }
 
 function loadDetails(selectedItem, type) {
+    console.log("loading")
     let selection = document.getElementById("data-selection").value
     let data = {
         data: selection,
         name: selectedItem,
         type: type
     };
+    console.log(data)
     fetch("/load_settings_detail", {
         method: "POST",
         body: JSON.stringify(data)

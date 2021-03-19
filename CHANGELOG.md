@@ -14,6 +14,11 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.1.3.19] - 2021-03-19
+
+### Added
+- partially completed workplace settings page
+
 ## [2021.1.3.17] - 2021-03-17
 
 ### Added

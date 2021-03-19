@@ -1,0 +1,68 @@
+<div class="important" style="margin-top: 14px;">
+    <input id="workplace-port-name" type="text" data-role="input" data-prepend="{{.WorkplacePortNamePrepend}}: "
+           value="{{.WorkplacePortName}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-port-device-port-selection" data-filter="false" data-role="select"
+            data-prepend="{{.WorkplacePortDevicePortPrepend}}: ">
+        {{range .WorkplacePortDevicePorts}}
+        <option value="{{.WorkplacePortDevicePortName}}" {{.WorkplacePortDevicePortSelected}}>
+            {{.WorkplacePortDevicePortName}}
+        </option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-port-state-selection" data-filter="false" data-role="select"
+            data-prepend="{{.WorkplacePortStatePrepend}}: ">
+        {{range .WorkplacePortStates}}
+        <option value="{{.WorkplacePortStateName}}" {{.WorkplacePortStateSelected}}>{{.WorkplacePortStateName}}</option>
+        {{end}}
+    </select>
+</div>
+<div id="color" style="margin-top: 14px;width: 100%" data-role="color-selector" data-init-color="{{.Color}}"
+     data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-port-counter-ok-selection" data-filter="false" data-role="select"
+            data-prepend="{{.CounterOkEnabledPrepend}}: ">
+        {{range .CounterOkSelection}}
+        <option value="{{.CounterOk}}" {{.CounterOkSelected}}>{{.CounterOk}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-port-counter-nok-selection" data-filter="false" data-role="select"
+            data-prepend="{{.CounterNokEnabledPrepend}}: ">
+        {{range .CounterNokSelection}}
+        <option value="{{.CounterNok}}" {{.CounterNokSelected}}>{{.CounterNok}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <input id="workplace-port-high-value" type="text" data-role="input" data-prepend="{{.HighValuePrepend}}: "
+           value="{{.HighValue}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="workplace-port-low-value" type="text" data-role="input" data-prepend="{{.LowValuePrepend}}: "
+           value="{{.LowValue}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="workplace-port-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="workplace-port-created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: "
+           value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="workplace-port-updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: "
+           value="{{.UpdatedAt}}">
+</div>
+
+<div style="margin-top: 14px;text-align: right">
+    <button id="workplace-port-save-button" class="button primary"
+            style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="workplace-port-save-button-mif"></span>
+    </button>
+</div>

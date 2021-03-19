@@ -9,7 +9,6 @@ import (
 	"html/template"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -74,12 +73,12 @@ func saveProduct(writer http.ResponseWriter, request *http.Request, params httpr
 		return
 	}
 
-	cycleTime, err := strconv.Atoi(strings.TrimRight(data.Cycle, "s"))
+	cycleTime, err := time.ParseDuration(data.Cycle)
 	if err != nil {
 		logError("SETTINGS-PRODUCTS", "Problem parsing cycle time: "+err.Error())
 		cycleTime = 0
 	}
-	duration, err := strconv.Atoi(strings.TrimRight(data.DowntimeDuration, "s"))
+	duration, err := time.ParseDuration(data.DowntimeDuration)
 	if err != nil {
 		logError("SETTINGS-PRODUCTS", "Problem parsing duration: "+err.Error())
 		duration = 0
@@ -88,8 +87,8 @@ func saveProduct(writer http.ResponseWriter, request *http.Request, params httpr
 	db.Where("id=?", data.Id).Find(&product)
 	product.Name = data.Name
 	product.Barcode = data.Barcode
-	product.CycleTime = cycleTime
-	product.DownTimeDuration = time.Duration(duration * 1000000000)
+	product.CycleTime = int(cycleTime.Seconds())
+	product.DownTimeDuration = duration
 	product.Note = data.Note
 	db.Debug().Save(&product)
 	cacheProducts(db)
@@ -118,7 +117,7 @@ func loadProductDetails(id string, writer http.ResponseWriter, email string) {
 		ProductNamePrepend:      getLocale(email, "product-name"),
 		Barcode:                 product.Barcode,
 		BarcodePrepend:          getLocale(email, "barcode"),
-		CycleTime:               strconv.Itoa(product.CycleTime) + "s",
+		CycleTime:               (time.Duration(product.CycleTime) * time.Second).String(),
 		CycleTimePrepend:        getLocale(email, "cycle-name"),
 		DowntimeDuration:        product.DownTimeDuration.String(),
 		DowntimeDurationPrepend: getLocale(email, "downtime-duration"),

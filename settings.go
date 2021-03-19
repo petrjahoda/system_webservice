@@ -8,15 +8,10 @@ import (
 	"time"
 )
 
-type PortDetailsPageInput struct {
-	Data string
-	Type string
-}
-
 type SettingsPageInput struct {
 	Data string
 	Name string
-	Type bool
+	Type string
 }
 
 type SettingsPageOutput struct {
@@ -214,80 +209,70 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 	}
 
 	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Name)
-	if data.Type {
-		switch data.Data {
-		case "breakdowns":
-			loadBreakdownTypeDetails(data.Name, writer, email)
-		case "downtimes":
-			loadDowntimeTypeDetails(data.Name, writer, email)
-		case "faults":
-			loadFaultTypeDetails(data.Name, writer, email)
-		case "packages":
-			loadPackageTypeDetails(data.Name, writer, email)
-		case "users":
-			loadUserTypeDetails(data.Name, writer, email)
-		}
-	} else {
-		switch data.Data {
-		case "alarms":
-			loadAlarmDetails(data.Name, writer, email)
-		case "breakdowns":
-			loadBreakdownDetails(data.Name, writer, email)
-		case "downtimes":
-			loadDowntimeDetails(data.Name, writer, email)
-		case "faults":
-			loadFaultDetails(data.Name, writer, email)
-		case "operations":
-			loadOperationDetails(data.Name, writer, email)
-		case "orders":
-			loadOrderDetails(data.Name, writer, email)
-		case "packages":
-			loadPackageDetails(data.Name, writer, email)
-		case "parts":
-			loadPartDetails(data.Name, writer, email)
-		case "products":
-			loadProductDetails(data.Name, writer, email)
-		case "states":
-			loadStateDetails(data.Name, writer, email)
-		case "devices":
-			loadDeviceDetails(data.Name, writer, email)
-		case "system-settings":
-			loadSystemSettingsDetails(data.Name, writer, email)
-		case "users":
-			loadUserDetails(data.Name, writer, email)
-		case "workplace":
-			//processWorkplacesSettings(writer, email)
-		case "workshifts":
-			loadWorkshiftDetails(data.Name, writer, email)
-		}
-	}
-	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
-	return
-}
-
-func loadPortDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	timer := time.Now()
-	email, _, _ := request.BasicAuth()
-	logInfo("SETTINGS", "Loading port detail for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
-	var data PortDetailsPageInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS", "Loading settings detail ended")
-		return
-	}
-
-	logInfo("SETTINGS", "Loading details settings for "+data.Data)
 	switch data.Type {
-	case "device":
-		loadDevicePortDetails(data.Data, writer, email)
-	case "workplace":
-		//loadWorkplacePortDetails(data.Data, writer, email)
+	case "first":
+		{
+			switch data.Data {
+			case "alarms":
+				loadAlarmDetails(data.Name, writer, email)
+			case "breakdowns":
+				loadBreakdownDetails(data.Name, writer, email)
+			case "downtimes":
+				loadDowntimeDetails(data.Name, writer, email)
+			case "faults":
+				loadFaultDetails(data.Name, writer, email)
+			case "operations":
+				loadOperationDetails(data.Name, writer, email)
+			case "orders":
+				loadOrderDetails(data.Name, writer, email)
+			case "packages":
+				loadPackageDetails(data.Name, writer, email)
+			case "parts":
+				loadPartDetails(data.Name, writer, email)
+			case "products":
+				loadProductDetails(data.Name, writer, email)
+			case "states":
+				loadStateDetails(data.Name, writer, email)
+			case "devices":
+				loadDeviceDetails(data.Name, writer, email)
+			case "system-settings":
+				loadSystemSettingsDetails(data.Name, writer, email)
+			case "users":
+				loadUserDetails(data.Name, writer, email)
+			case "workplaces":
+				loadWorkplaceDetails(data.Name, writer, email)
+			case "workshifts":
+				loadWorkshiftDetails(data.Name, writer, email)
+			}
+		}
+	case "second":
+		{
+			switch data.Data {
+			case "breakdowns":
+				loadBreakdownTypeDetails(data.Name, writer, email)
+			case "downtimes":
+				loadDowntimeTypeDetails(data.Name, writer, email)
+			case "faults":
+				loadFaultTypeDetails(data.Name, writer, email)
+			case "packages":
+				loadPackageTypeDetails(data.Name, writer, email)
+			case "users":
+				loadUserTypeDetails(data.Name, writer, email)
+			case "workplaces":
+				loadWorkplaceSectionDetails(data.Name, writer, email)
+			}
+
+		}
+	case "third":
+		{
+			switch data.Data {
+			case "workplaces":
+				loadWorkplaceModeDetails(data.Name, writer, email)
+			}
+		}
+
 	}
-	logInfo("SETTINGS", "Port detail loaded in "+time.Since(timer).String())
+
+	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
 	return
 }

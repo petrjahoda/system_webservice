@@ -124,6 +124,11 @@ type DevicePortDetailsDataInput struct {
 	Virtual        string
 }
 
+type DevicePortDetailsPageInput struct {
+	Data string
+	Type string
+}
+
 func saveDevicePortDetails(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	logInfo("SETTINGS-DEVICES", "Saving device port settings started")
@@ -154,7 +159,7 @@ func saveDevicePortDetails(writer http.ResponseWriter, request *http.Request, pa
 	db.Where("id=?", data.Id).Find(&port)
 	port.Name = data.Name
 	port.DevicePortTypeID = int(cachedDevicePortTypesByName[data.Type].ID)
-	port.DeviceID = int(cachedDevicesbyName[data.DeviceName].ID)
+	port.DeviceID = int(cachedDevicesByName[data.DeviceName].ID)
 	port.PortNumber, _ = strconv.Atoi(data.Position)
 	port.PlcDataType = data.PlcDataType
 	port.PlcDataAddress = data.PlcDataAddress
@@ -167,9 +172,10 @@ func saveDevicePortDetails(writer http.ResponseWriter, request *http.Request, pa
 	logInfo("SETTINGS-DEVICES", "Device port settings saved in "+time.Since(timer).String())
 }
 
-func loadDevicePortDetails(id string, writer http.ResponseWriter, email string) {
+func loadDevicePortDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	logInfo("SETTINGS-DEVICES", "Loading device port settings")
+	email, _, _ := request.BasicAuth()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
@@ -182,8 +188,19 @@ func loadDevicePortDetails(id string, writer http.ResponseWriter, email string) 
 		logInfo("SETTINGS-DEVICES", "Loading device port settings ended")
 		return
 	}
+	var data DevicePortDetailsPageInput
+	err = json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-DEVICES", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-DEVICES", "Loading workplace port settings ended")
+		return
+	}
 	var devicePort database.DevicePort
-	db.Where("id=?", id).Find(&devicePort)
+	db.Where("id=?", data.Data).Find(&devicePort)
 
 	var devicePortTypes []DevicePortTypeSelection
 	for _, devicePortType := range cachedDevicePortTypesById {
@@ -201,7 +218,7 @@ func loadDevicePortDetails(id string, writer http.ResponseWriter, email string) 
 	portVirtualSelection = append(portVirtualSelection, PortVirtualSelection{PortVirtual: "true", PortVirtualSelected: checkSelection(devicePort.Virtual, "true")})
 	portVirtualSelection = append(portVirtualSelection, PortVirtualSelection{PortVirtual: "false", PortVirtualSelected: checkSelection(devicePort.Virtual, "false")})
 
-	data := DevicePortDetailsDataOutput{
+	dataOut := DevicePortDetailsDataOutput{
 		DevicePortName:                devicePort.Name,
 		DevicePortNamePrepend:         getLocale(email, "port-name"),
 		DevicePortTypeNamePrepend:     getLocale(email, "port-type-name"),
@@ -226,7 +243,7 @@ func loadDevicePortDetails(id string, writer http.ResponseWriter, email string) 
 		PortVirtualSelection:          portVirtualSelection,
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-device-port.html"))
-	_ = tmpl.Execute(writer, data)
+	_ = tmpl.Execute(writer, dataOut)
 	logInfo("SETTINGS-DEVICES", "Device port settings loaded in "+time.Since(timer).String())
 }
 

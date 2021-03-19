@@ -1,0 +1,106 @@
+<div class="important">
+    <input id="workplace-name" type="text" data-role="input" data-prepend="{{.WorkplaceNamePrepend}}: "
+           value="{{.WorkplaceName}}">
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-section-selection" data-filter="false" data-role="select"
+            data-prepend="{{.WorkplaceSectionPrepend}}: ">
+        {{range .WorkplaceSections}}
+        <option value="{{.WorkplaceSectionName}}" {{.WorkplaceSectionSelected}}>{{.WorkplaceSectionName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <select id="workplace-mode-selection" data-filter="false" data-role="select"
+            data-prepend="{{.WorkplaceModePrepend}}: ">
+        {{range .WorkplaceModes}}
+        <option value="{{.WorkplaceModeName}}" {{.WorkplaceModeSelected}}>{{.WorkplaceModeName}}</option>
+        {{end}}
+    </select>
+</div>
+<div style="margin-top: 14px;">
+    <input id="code" type="text" data-role="input" data-prepend="{{.WorkplaceCodePrepend}}: "
+           value="{{.WorkplaceCode}}">
+</div>
+<div style="margin-top: 14px;">
+    <input id="workplace-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
+           value="{{.Note}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
+</div>
+<div style="margin-top: 14px;" disabled>
+    <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
+</div>
+<div style="margin-top: 14px;text-align: right">
+    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-floppy-disk" id="data-save-button-mif"></span>
+    </button>
+</div>
+<div id="workplace-ports" style="margin-top: 14px;">
+    <table class="table striped row-hover" data-role="table" id="data-workplace-port-table" data-check="true"
+           data-check-type="radio"
+           data-show-search="false" data-show-table-info="false" data-show-pagination="false" data-show-activity="false"
+           data-show-rows-steps="false">
+        <thead data-sortable="true">
+        <tr>
+            {{range .TableHeader}}
+            <th class="sortable-column asc" data-size="{{.HeaderWidth}}">{{.HeaderName}}</th>
+            {{end}}
+        </tr>
+        </thead>
+        <tbody>
+        {{range .TableRows}}
+        <tr>
+            {{range .TableCell}}
+            <td>{{.CellName}}</td>
+            {{end}}
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <div style="margin-top: 14px;text-align: right">
+        <button id="data-delete-workplace-port-button" class="button alert"
+                style="min-width: 100px;max-width: 100px;height: 35px" hidden>
+            <span class="mif-minus" id="data-delete-workplace-port-button-mif"></span>
+        </button>
+        <button id="data-new-workplace-port-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+            <span class="mif-plus" id="data-new-workplace-port-button-mif"></span>
+        </button>
+    </div>
+    <div id="workplace-port-container"></div>
+</div>
+<div id="workshifts" style="margin-top: 14px;">
+    <table class="table striped row-hover" data-role="table" id="data-workshift-table" data-check="true"
+           data-check-type="radio"
+           data-show-search="false" data-show-table-info="false" data-show-pagination="false" data-show-activity="false"
+           data-show-rows-steps="false">
+        <thead data-sortable="true">
+        <tr>
+            {{range .WorkshiftTableHeader}}
+            <th class="sortable-column asc" data-size="{{.WorkshiftHeaderWidth}}">{{.WorkshiftHeaderName}}</th>
+            {{end}}
+        </tr>
+        </thead>
+        <tbody>
+        {{range .WorkshiftTableRows}}
+        <tr>
+            {{range .WorkshiftTableCell}}
+            <td>{{.WorkshiftCellName}}</td>
+            {{end}}
+        </tr>
+        {{end}}
+        </tbody>
+    </table>
+    <div style="margin-top: 14px;text-align: right">
+        <button id="data-delete-workshift-button" class="button alert"
+                style="min-width: 100px;max-width: 100px;height: 35px" hidden>
+            <span class="mif-minus" id="data-delete-workshift-button-mif"></span>
+        </button>
+        <button id="data-new-workshift-button" class="button primary"
+                style="min-width: 100px;max-width: 100px;height: 35px">
+            <span class="mif-plus" id="data-new-workshift-button-mif"></span>
+        </button>
+    </div>
+    <div id="workshift-container"></div>
+</div>

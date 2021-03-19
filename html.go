@@ -19,6 +19,11 @@ type TableOutput struct {
 	TableRows               []TableRow
 }
 
+type WorkshiftHeaderCell struct {
+	WorkshiftHeaderWidth string
+	WorkshiftHeaderName  string
+}
+
 type HeaderCell struct {
 	HeaderWidth string
 	HeaderName  string
@@ -29,12 +34,28 @@ type HeaderCellType struct {
 	HeaderNameType  string
 }
 
+type HeaderCellTypeExtended struct {
+	HeaderWidthTypeExtended string
+	HeaderNameTypeExtended  string
+}
+
 type TableRow struct {
 	TableCell []TableCell
 }
 
+type WorkshiftTableRow struct {
+	WorkshiftTableCell []WorkshiftTableCell
+}
 type TableRowType struct {
 	TableCellType []TableCellType
+}
+
+type TableRowTypeExtended struct {
+	TableCellTypeExtended []TableCellTypeExtended
+}
+
+type WorkshiftTableCell struct {
+	WorkshiftCellName string
 }
 
 type TableCell struct {
@@ -43,6 +64,9 @@ type TableCell struct {
 
 type TableCellType struct {
 	CellNameType string
+}
+type TableCellTypeExtended struct {
+	CellNameTypeExtended string
 }
 
 func updateProgramVersion() {

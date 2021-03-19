@@ -85,7 +85,7 @@ func saveWorkshift(writer http.ResponseWriter, request *http.Request, params htt
 	shift.WorkshiftStart = time.Date(2000, 1, 1, workshiftStartHour, workshiftStartMinute, workshiftStartSecond, 0, time.UTC)
 	shift.WorkshiftEnd = time.Date(2000, 1, 1, workshiftEndHour, workshiftEndMinute, workshiftEndSecond, 0, time.UTC)
 	db.Save(&shift)
-	cacheWorkshifts(db)
+	cacheWorkShifts(db)
 	logInfo("SETTINGS-WORKSHIFTS", "Workshift saved in "+time.Since(timer).String())
 }
 

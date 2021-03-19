@@ -270,6 +270,7 @@ func loadDowntimesSettings(writer http.ResponseWriter, email string) {
 	for _, record := range typeRecords {
 		addDowntimeSettingsTypeTableRow(record, &data)
 	}
+
 	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("SETTINGS-DOWNTIMES", "Downtimes settings loaded in "+time.Since(timer).String())
