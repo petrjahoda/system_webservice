@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
-	"gopkg.in/go-playground/colors.v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"html/template"
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -140,13 +138,7 @@ func saveDowntime(writer http.ResponseWriter, request *http.Request, params http
 	db.Where("id=?", data.Id).Find(&downtime)
 	downtime.Name = data.Name
 	downtime.DowntimeTypeID = int(cachedDowntimeTypesByName[data.Type].ID)
-	result := strings.TrimRight(data.Color, " none repeat scroll 0% 0% / auto padding-box border-box")
-	rgb, err := colors.ParseRGB(result)
-	if err != nil {
-		logError("SETTINGS-DOWNTIMES", "Problem parsing color: "+err.Error())
-	} else {
-		downtime.Color = rgb.ToHEX().String()
-	}
+	downtime.Color = data.Color
 	downtime.Barcode = data.Barcode
 	downtime.Note = data.Note
 	db.Save(&downtime)

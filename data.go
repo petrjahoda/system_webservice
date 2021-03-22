@@ -35,6 +35,8 @@ type DataPageOutput struct {
 	Compacted             string
 	DataFilterPlaceholder string
 	DateLocale            string
+	UserEmail             string
+	UserName              string
 }
 
 type TableSelection struct {
@@ -55,6 +57,8 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	var data DataPageOutput
 	data.Version = version
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
+	data.UserEmail = email
+	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.Company = cachedCompanyName
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")

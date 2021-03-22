@@ -4,13 +4,11 @@ import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
-	"gopkg.in/go-playground/colors.v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"html/template"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -70,13 +68,7 @@ func saveState(writer http.ResponseWriter, request *http.Request, params httprou
 	}
 	var state database.State
 	db.Where("id=?", data.Id).Find(&state)
-	result := strings.TrimRight(data.Color, " none repeat scroll 0% 0% / auto padding-box border-box")
-	rgb, err := colors.ParseRGB(result)
-	if err != nil {
-		logError("SETTINGS-STATES", "Problem parsing color: "+err.Error())
-	} else {
-		state.Color = rgb.ToHEX().String()
-	}
+	state.Color = data.Color
 	state.Name = data.Name
 	state.Note = data.Note
 	db.Save(&state)

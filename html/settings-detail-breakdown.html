@@ -14,12 +14,11 @@
     <input id="barcode" type="text" data-role="input" data-prepend="{{.BarcodePrepend}}: "
            value="{{.Barcode}}">
 </div>
-<div id="color" style="margin-top: 14px;width: 100%" data-role="color-selector" data-init-color="{{.Color}}"
-     data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
-</div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 14px;margin-right: 0;margin-left: 0;" class="row">
     <input id="breakdown-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
-           value="{{.Note}}">
+           value="{{.Note}}" class="cell-10">
+    <div class="cell-1"></div>
+    <input id="breakdown-color" type="color" class="cell-1" style="height: 36px;border:none" value="{{.Color}}">
 </div>
 <div style="margin-top: 14px;" disabled>
     <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">

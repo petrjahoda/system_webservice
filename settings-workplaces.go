@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
@@ -10,6 +11,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -52,27 +54,45 @@ type WorkplaceSectionDetailsDataOutput struct {
 }
 
 type WorkplaceDetailsDataOutput struct {
-	WorkplaceName           string
-	WorkplaceNamePrepend    string
-	WorkplaceSectionPrepend string
-	WorkplaceModePrepend    string
-	WorkplaceCode           string
-	WorkplaceCodePrepend    string
-	Note                    string
-	NotePrepend             string
-	CreatedAt               string
-	CreatedAtPrepend        string
-	UpdatedAt               string
-	UpdatedAtPrepend        string
-	WorkplaceSections       []WorkplaceSectionSelection
-	WorkplaceModes          []WorkplaceModeSelection
-	DataTableSearchTitle    string
-	DataTableInfoTitle      string
-	DataTableRowsCountTitle string
-	TableHeader             []HeaderCell
-	TableRows               []TableRow
-	WorkshiftTableHeader    []WorkshiftHeaderCell
-	WorkshiftTableRows      []WorkshiftTableRow
+	WorkplaceName             string
+	WorkplaceNamePrepend      string
+	WorkplaceSectionPrepend   string
+	WorkplaceModePrepend      string
+	ProductionDowntimePrepend string
+	PoweronPoweroffPrepend    string
+	CountOkPrepend            string
+	CountNokPrepend           string
+	WorkplaceCode             string
+	WorkplaceCodePrepend      string
+	Note                      string
+	NotePrepend               string
+	CreatedAt                 string
+	CreatedAtPrepend          string
+	UpdatedAt                 string
+	UpdatedAtPrepend          string
+	ProductionColorValue      string
+	PoweroffColorValue        string
+	OkColorValue              string
+	NokColorValue             string
+	WorkplaceSections         []WorkplaceSectionSelection
+	WorkplaceModes            []WorkplaceModeSelection
+	ProductionDowntimes       []WorkplacePortSelection
+	PoweronPoweroffs          []WorkplacePortSelection
+	CountOks                  []WorkplacePortSelection
+	CountNoks                 []WorkplacePortSelection
+	DataTableSearchTitle      string
+	DataTableInfoTitle        string
+	DataTableRowsCountTitle   string
+	TableHeader               []HeaderCell
+	TableRows                 []TableRow
+	WorkshiftTableHeader      []WorkshiftHeaderCell
+	WorkshiftTableRows        []WorkshiftTableRow
+}
+
+type WorkplacePortSelection struct {
+	WorkplacePortName     string
+	WorkplacePortId       uint
+	WorkplacePortSelected string
 }
 
 type WorkplaceSectionSelection struct {
@@ -102,12 +122,20 @@ type WorkplaceSectionDetailsDataInput struct {
 }
 
 type WorkplaceDetailsDataInput struct {
-	Id      string
-	Name    string
-	Section string
-	Mode    string
-	Code    string
-	Note    string
+	Id                          string
+	Name                        string
+	Section                     string
+	ProductionDowntimeSelection string
+	ProductionDowntimeColor     string
+	PoweronPoweroffSelection    string
+	PoweronPoweroffColor        string
+	CountOkSelection            string
+	CountOkColor                string
+	CountNokSelection           string
+	CountNokColor               string
+	Mode                        string
+	Code                        string
+	Note                        string
 }
 
 type WorkplacePortDetailsPageInput struct {
@@ -213,7 +241,7 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 
 	var states []WorkplacePortStateSelection
 	for _, state := range cachedStatesById {
-		if state.ID == cachedStatesById[uint(workplacePort.StateID)].ID {
+		if state.ID == cachedStatesById[uint(workplacePort.StateID.Int32)].ID {
 			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name, WorkplacePortStateId: state.ID, WorkplacePortStateSelected: "selected"})
 		} else {
 			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name, WorkplacePortStateId: state.ID})
@@ -285,7 +313,65 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 	workplace.WorkplaceSectionID = int(cachedWorkplaceSectionsByName[data.Section].ID)
 	workplace.Code = data.Code
 	workplace.Note = data.Note
-	db.Debug().Save(&workplace)
+	db.Save(&workplace)
+
+	var workplacePorts []database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Find(&workplacePorts)
+	for _, port := range workplacePorts {
+		db.Model(&port).Select("counter_ok", "counter_nok", "state_id").Updates(map[string]interface{}{"counter_ok": false, "counter_nok": false, "state_id": nil})
+	}
+	if len(data.ProductionDowntimeSelection) > 1 {
+		productionDowntimeId := strings.TrimRight(strings.Split(data.ProductionDowntimeSelection, "[")[1], "]")
+		var devicePort database.DevicePort
+		db.Where("id = ?", productionDowntimeId).Find(&devicePort)
+		var port database.WorkplacePort
+		db.Where("device_port_id = ?", productionDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&port)
+		port.StateID = sql.NullInt32{Int32: 1, Valid: true}
+		port.DevicePortID, _ = strconv.Atoi(productionDowntimeId)
+		port.Name = devicePort.Name
+		port.WorkplaceID = int(workplace.ID)
+		port.Color = data.ProductionDowntimeColor
+		db.Save(&port)
+	}
+	if len(data.PoweronPoweroffSelection) > 1 {
+		poweroffDowntimeId := strings.TrimRight(strings.Split(data.PoweronPoweroffSelection, "[")[1], "]")
+		var devicePort database.DevicePort
+		db.Where("id = ?", poweroffDowntimeId).Find(&devicePort)
+		var port database.WorkplacePort
+		db.Where("device_port_id = ?", poweroffDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&port)
+		port.StateID = sql.NullInt32{Int32: 3, Valid: true}
+		port.DevicePortID, _ = strconv.Atoi(poweroffDowntimeId)
+		port.Name = devicePort.Name
+		port.WorkplaceID = int(workplace.ID)
+		port.Color = data.PoweronPoweroffColor
+		db.Save(&port)
+	}
+	if len(data.CountOkSelection) > 1 {
+		countOkId := strings.TrimRight(strings.Split(data.CountOkSelection, "[")[1], "]")
+		var devicePort database.DevicePort
+		db.Where("id = ?", countOkId).Find(&devicePort)
+		var port database.WorkplacePort
+		db.Where("device_port_id = ?", countOkId).Where("workplace_id = ?", workplace.ID).Find(&port)
+		port.DevicePortID, _ = strconv.Atoi(countOkId)
+		port.Name = devicePort.Name
+		port.WorkplaceID = int(workplace.ID)
+		port.Color = data.CountOkColor
+		port.CounterOK = true
+		db.Save(&port)
+	}
+	if len(data.CountNokSelection) > 1 {
+		countNokId := strings.TrimRight(strings.Split(data.CountNokSelection, "[")[1], "]")
+		var devicePort database.DevicePort
+		db.Where("id = ?", countNokId).Find(&devicePort)
+		var port database.WorkplacePort
+		db.Where("device_port_id = ?", countNokId).Where("workplace_id = ?", workplace.ID).Find(&port)
+		port.DevicePortID, _ = strconv.Atoi(countNokId)
+		port.Name = devicePort.Name
+		port.WorkplaceID = int(workplace.ID)
+		port.Color = data.CountNokColor
+		port.CounterNOK = true
+		db.Save(&port)
+	}
 	cacheWorkplaces(db)
 	logInfo("SETTINGS-WORKPLACES", "Workplace saved in "+time.Since(timer).String())
 }
@@ -415,34 +501,106 @@ func loadWorkplaceDetails(id string, writer http.ResponseWriter, email string) {
 		return workplaceModes[i].WorkplaceModeName < workplaceModes[j].WorkplaceModeName
 	})
 
-	var records []database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Order("id desc").Find(&records)
-	var workshifts []database.WorkplaceWorkshift
-	db.Where("workplace_id = ?", workplace.ID).Order("id desc").Find(&workshifts)
+	var digitalPorts []database.DevicePort
+	db.Where("device_port_type_id = 1").Find(&digitalPorts)
+	var analogPorts []database.DevicePort
+	db.Where("device_port_type_id = 2").Find(&analogPorts)
 
 	data := WorkplaceDetailsDataOutput{
-		WorkplaceName:           workplace.Name,
-		WorkplaceNamePrepend:    getLocale(email, "workplace-name"),
-		WorkplaceSectionPrepend: getLocale(email, "section-name"),
-		WorkplaceModePrepend:    getLocale(email, "type-name"),
-		WorkplaceCode:           workplace.Code,
-		WorkplaceCodePrepend:    getLocale(email, "code-name"),
-		Note:                    workplace.Note,
-		NotePrepend:             getLocale(email, "note-name"),
-		CreatedAt:               workplace.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:        getLocale(email, "created-at"),
-		UpdatedAt:               workplace.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:        getLocale(email, "updated-at"),
-		WorkplaceSections:       workplaceSections,
-		WorkplaceModes:          workplaceModes,
+		WorkplaceName:             workplace.Name,
+		WorkplaceNamePrepend:      getLocale(email, "workplace-name"),
+		WorkplaceSectionPrepend:   getLocale(email, "section-name"),
+		WorkplaceModePrepend:      getLocale(email, "type-name"),
+		ProductionDowntimePrepend: getLocale(email, "production-downtime"),
+		PoweronPoweroffPrepend:    getLocale(email, "poweron-poweroff"),
+		CountOkPrepend:            getLocale(email, "good-pieces-name"),
+		CountNokPrepend:           getLocale(email, "bad-pieces-name"),
+		WorkplaceCode:             workplace.Code,
+		WorkplaceCodePrepend:      getLocale(email, "code-name"),
+		Note:                      workplace.Note,
+		NotePrepend:               getLocale(email, "note-name"),
+		CreatedAt:                 workplace.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:          getLocale(email, "created-at"),
+		UpdatedAt:                 workplace.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:          getLocale(email, "updated-at"),
+		WorkplaceSections:         workplaceSections,
+		WorkplaceModes:            workplaceModes,
 	}
+	var workplaceProductionPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 1").Find(&workplaceProductionPort)
+	var productionDowntimes []WorkplacePortSelection
+	for _, port := range digitalPorts {
+		if int(port.ID) == workplaceProductionPort.DevicePortID {
+			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.ProductionColorValue = workplacePort.Color
+		} else {
+			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.ProductionDowntimes = productionDowntimes
+
+	var workplacePoweroffPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 3").Find(&workplacePoweroffPort)
+	var poweronPoweroffs []WorkplacePortSelection
+	for _, port := range analogPorts {
+		if int(port.ID) == workplacePoweroffPort.DevicePortID {
+			poweronPoweroffs = append(poweronPoweroffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.PoweroffColorValue = workplacePort.Color
+		} else {
+			poweronPoweroffs = append(poweronPoweroffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.PoweronPoweroffs = poweronPoweroffs
+
+	var countOkPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("counter_ok is true").Find(&countOkPort)
+	var countOks []WorkplacePortSelection
+	countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: ""})
+	for _, port := range digitalPorts {
+		if int(port.ID) == countOkPort.DevicePortID {
+			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.OkColorValue = workplacePort.Color
+		} else {
+			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.CountOks = countOks
+
+	var countNokPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("counter_nok is true").Find(&countNokPort)
+	var countNoks []WorkplacePortSelection
+	countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: ""})
+	for _, port := range digitalPorts {
+		if int(port.ID) == countNokPort.DevicePortID {
+			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.NokColorValue = workplacePort.Color
+		} else {
+			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.CountNoks = countNoks
+
+	var records []database.WorkplacePort
+	db.Debug().Where("workplace_id = ?", workplace.ID).Find(&records)
+	var workshifts []database.WorkplaceWorkshift
+	db.Where("workplace_id = ?", workplace.ID).Order("id desc").Find(&workshifts)
 	addWorkplacePortDetailsTableHeaders(email, &data)
 	for _, record := range records {
-		addWorkplacePortDetailsTableRow(record, &data)
+		if record.StateID.Valid || record.CounterNOK || record.CounterOK {
+			continue
+		} else {
+			addWorkplacePortDetailsTableRow(record, &data)
+		}
 	}
-
 	addWorkplaceWorkshiftDetailsTableHeaders(email, &data)
-
 	for _, workshift := range workshifts {
 		addWorkplaceWorkshiftDetailsTableRow(workshift, &data)
 	}

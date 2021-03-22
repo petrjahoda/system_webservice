@@ -189,12 +189,12 @@ function saveWorkplace() {
         document.getElementById("workplace-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -203,6 +203,14 @@ function saveWorkplace() {
                         id: parseId,
                         name: document.getElementById("workplace-name").value,
                         section: document.getElementById("workplace-section-selection").value,
+                        productionDowntimeSelection: document.getElementById("production-downtime-selection").value,
+                        productionDowntimeColor: document.getElementById("production-color").value,
+                        poweronPoweroffSelection: document.getElementById("poweron-poweroff-selection").value,
+                        poweronPoweroffColor: document.getElementById("poweroff-color").value,
+                        countOkSelection : document.getElementById("count-ok-selection").value,
+                        countOkColor : document.getElementById("ok-color").value,
+                        countNokSelection : document.getElementById("count-nok-selection").value,
+                        countNokColor : document.getElementById("nok-color").value,
                         mode: document.getElementById("workplace-mode-selection").value,
                         code: document.getElementById("code").value,
                         note: document.getElementById("workplace-note").value,
@@ -222,8 +230,8 @@ function saveWorkplace() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -239,12 +247,12 @@ function saveWorkplaceSection() {
         document.getElementById("workplace-section-name").style.backgroundColor = ""
         if (document.getElementById("data-type-save-button").classList[1] === "primary") {
             document.getElementById("data-type-save-button").classList.remove("primary")
-            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button").classList.add("warning")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-type-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
@@ -269,8 +277,8 @@ function saveWorkplaceSection() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
-            document.getElementById("data-type-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-type-save-button").classList[1] === "warning") {
+            document.getElementById("data-type-save-button").classList.remove("warning")
             document.getElementById("data-type-save-button").classList.add("primary")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
@@ -285,12 +293,12 @@ function saveWorkplaceMode() {
         document.getElementById("workplace-mode-name").style.backgroundColor = ""
         if (document.getElementById("data-mode-save-button").classList[1] === "primary") {
             document.getElementById("data-mode-save-button").classList.remove("primary")
-            document.getElementById("data-mode-save-button").classList.add("alert")
+            document.getElementById("data-mode-save-button").classList.add("warning")
             document.getElementById("data-mode-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-mode-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-mode-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-mode-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table-extended", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table-extended", "table").getSelectedItems()[0][0]
@@ -317,8 +325,8 @@ function saveWorkplaceMode() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-mode-save-button").classList[1] === "alert") {
-            document.getElementById("data-mode-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-mode-save-button").classList[1] === "warning") {
+            document.getElementById("data-mode-save-button").classList.remove("warning")
             document.getElementById("data-mode-save-button").classList.add("primary")
             document.getElementById("data-mode-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-mode-save-button-mif").classList.add("mif-floppy-disk")
@@ -333,12 +341,12 @@ function saveWorkplacePortDetails() {
         document.getElementById("workplace-port-name").style.backgroundColor = ""
         if (document.getElementById("workplace-port-save-button").classList[1] === "primary") {
             document.getElementById("workplace-port-save-button").classList.remove("primary")
-            document.getElementById("workplace-port-save-button").classList.add("alert")
+            document.getElementById("workplace-port-save-button").classList.add("warning")
             document.getElementById("workplace-port-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("workplace-port-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("workplace-port-save-button").classList[1] === "alert") {
+                if (document.getElementById("workplace-port-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-workplace-port-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-workplace-port-table", "table").getSelectedItems()[0][0]
@@ -380,8 +388,8 @@ function saveWorkplacePortDetails() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("workplace-port-save-button").classList[1] === "alert") {
-            document.getElementById("workplace-port-save-button").classList.remove("alert")
+        } else if (document.getElementById("workplace-port-save-button").classList[1] === "warning") {
+            document.getElementById("workplace-port-save-button").classList.remove("warning")
             document.getElementById("workplace-port-save-button").classList.add("primary")
             document.getElementById("workplace-port-save-button-mif").classList.remove("mif-cross")
             document.getElementById("workplace-port-save-button-mif").classList.add("mif-floppy-disk")
@@ -396,12 +404,12 @@ function saveDevicePortDetails() {
         document.getElementById("device-port-name").style.backgroundColor = ""
         if (document.getElementById("port-save-button").classList[1] === "primary") {
             document.getElementById("port-save-button").classList.remove("primary")
-            document.getElementById("port-save-button").classList.add("alert")
+            document.getElementById("port-save-button").classList.add("warning")
             document.getElementById("port-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("port-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("port-save-button").classList[1] === "alert") {
+                if (document.getElementById("port-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-port-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-port-table", "table").getSelectedItems()[0][0]
@@ -438,8 +446,8 @@ function saveDevicePortDetails() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("port-save-button").classList[1] === "alert") {
-            document.getElementById("port-save-button").classList.remove("alert")
+        } else if (document.getElementById("port-save-button").classList[1] === "warning") {
+            document.getElementById("port-save-button").classList.remove("warning")
             document.getElementById("port-save-button").classList.add("primary")
             document.getElementById("port-save-button-mif").classList.remove("mif-cross")
             document.getElementById("port-save-button-mif").classList.add("mif-floppy-disk")
@@ -499,12 +507,12 @@ function saveDevice() {
         document.getElementById("device-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -535,8 +543,8 @@ function saveDevice() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -551,12 +559,12 @@ function saveSystemSettings() {
         document.getElementById("system-settings-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -583,8 +591,8 @@ function saveSystemSettings() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -601,12 +609,12 @@ function saveUserSettings() {
         document.getElementById("second-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let data = {
                         firstName: document.getElementById("first-name").value,
                         secondName: document.getElementById("second-name").value,
@@ -631,8 +639,8 @@ function saveUserSettings() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -647,12 +655,12 @@ function saveUserType() {
         document.getElementById("user-type-name").style.backgroundColor = ""
         if (document.getElementById("data-type-save-button").classList[1] === "primary") {
             document.getElementById("data-type-save-button").classList.remove("primary")
-            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button").classList.add("warning")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-type-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
@@ -677,8 +685,8 @@ function saveUserType() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
-            document.getElementById("data-type-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-type-save-button").classList[1] === "warning") {
+            document.getElementById("data-type-save-button").classList.remove("warning")
             document.getElementById("data-type-save-button").classList.add("primary")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
@@ -696,12 +704,12 @@ function saveUser() {
         document.getElementById("second-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -737,8 +745,8 @@ function saveUser() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -753,12 +761,12 @@ function savePackageType() {
         document.getElementById("package-type-name").style.backgroundColor = ""
         if (document.getElementById("data-type-save-button").classList[1] === "primary") {
             document.getElementById("data-type-save-button").classList.remove("primary")
-            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button").classList.add("warning")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-type-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
@@ -784,8 +792,8 @@ function savePackageType() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
-            document.getElementById("data-type-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-type-save-button").classList[1] === "warning") {
+            document.getElementById("data-type-save-button").classList.remove("warning")
             document.getElementById("data-type-save-button").classList.add("primary")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
@@ -801,12 +809,12 @@ function savePackage() {
         document.getElementById("package-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -834,8 +842,8 @@ function savePackage() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -850,12 +858,12 @@ function saveFaultType() {
         document.getElementById("fault-type-name").style.backgroundColor = ""
         if (document.getElementById("data-type-save-button").classList[1] === "primary") {
             document.getElementById("data-type-save-button").classList.remove("primary")
-            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button").classList.add("warning")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-type-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
@@ -880,8 +888,8 @@ function saveFaultType() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
-            document.getElementById("data-type-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-type-save-button").classList[1] === "warning") {
+            document.getElementById("data-type-save-button").classList.remove("warning")
             document.getElementById("data-type-save-button").classList.add("primary")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
@@ -897,12 +905,12 @@ function saveFault() {
         document.getElementById("fault-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -929,8 +937,8 @@ function saveFault() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -945,12 +953,12 @@ function saveDowntimeType() {
         document.getElementById("downtime-type-name").style.backgroundColor = ""
         if (document.getElementById("data-type-save-button").classList[1] === "primary") {
             document.getElementById("data-type-save-button").classList.remove("primary")
-            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button").classList.add("warning")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-type-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
@@ -975,8 +983,8 @@ function saveDowntimeType() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
-            document.getElementById("data-type-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-type-save-button").classList[1] === "warning") {
+            document.getElementById("data-type-save-button").classList.remove("warning")
             document.getElementById("data-type-save-button").classList.add("primary")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
@@ -992,27 +1000,23 @@ function saveDowntime() {
         document.getElementById("downtime-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
                     }
-                    let background = ""
-                    let colorCursor = document.getElementsByClassName("color-cursor")
-                    for (const color of colorCursor) {
-                        background = getComputedStyle(color).background
-                    }
+
                     let data = {
                         id: parseId,
                         name: document.getElementById("downtime-name").value,
                         type: document.getElementById("downtime-type-selection").value,
                         barcode: document.getElementById("barcode").value,
-                        color: background,
+                        color: document.getElementById("downtime-color").value,
                         note: document.getElementById("downtime-note").value,
                     };
                     fetch("/save_downtime", {
@@ -1030,8 +1034,8 @@ function saveDowntime() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1046,12 +1050,12 @@ function saveBreakdownType() {
         document.getElementById("breakdown-type-name").style.backgroundColor = ""
         if (document.getElementById("data-type-save-button").classList[1] === "primary") {
             document.getElementById("data-type-save-button").classList.remove("primary")
-            document.getElementById("data-type-save-button").classList.add("alert")
+            document.getElementById("data-type-save-button").classList.add("warning")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-type-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-type-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-type-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#type-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#type-table", "table").getSelectedItems()[0][0]
@@ -1076,8 +1080,8 @@ function saveBreakdownType() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-type-save-button").classList[1] === "alert") {
-            document.getElementById("data-type-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-type-save-button").classList[1] === "warning") {
+            document.getElementById("data-type-save-button").classList.remove("warning")
             document.getElementById("data-type-save-button").classList.add("primary")
             document.getElementById("data-type-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-type-save-button-mif").classList.add("mif-floppy-disk")
@@ -1092,27 +1096,22 @@ function saveBreakdown() {
         document.getElementById("breakdown-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
-                    }
-                    let background = ""
-                    let colorCursor = document.getElementsByClassName("color-cursor")
-                    for (const color of colorCursor) {
-                        background = getComputedStyle(color).background
                     }
                     let data = {
                         id: parseId,
                         name: document.getElementById("breakdown-name").value,
                         type: document.getElementById("breakdown-type-selection").value,
                         barcode: document.getElementById("barcode").value,
-                        color: background,
+                        color: document.getElementById("breakdown-color").value,
                         note: document.getElementById("breakdown-note").value,
                     };
                     fetch("/save_breakdown", {
@@ -1130,8 +1129,8 @@ function saveBreakdown() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1153,12 +1152,12 @@ function saveWorkshift() {
         document.getElementById("workshift-end").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -1190,8 +1189,8 @@ function saveWorkshift() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1206,25 +1205,20 @@ function saveState() {
         document.getElementById("state-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
                     }
-                    let background = ""
-                    let colorCursor = document.getElementsByClassName("color-cursor")
-                    for (const color of colorCursor) {
-                        background = getComputedStyle(color).background
-                    }
                     let data = {
                         id: parseId,
                         name: document.getElementById("state-name").value,
-                        color: background,
+                        color: document.getElementById("state-color").value,
                         note: document.getElementById("state-note").value,
                     };
                     fetch("/save_state", {
@@ -1242,8 +1236,8 @@ function saveState() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1258,12 +1252,12 @@ function savePart() {
         document.getElementById("part-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -1289,8 +1283,8 @@ function savePart() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1305,12 +1299,12 @@ function saveProduct() {
         document.getElementById("product-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -1338,8 +1332,8 @@ function saveProduct() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1357,12 +1351,12 @@ function saveOrder() {
         document.getElementById("date-time-request").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -1393,8 +1387,8 @@ function saveOrder() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1410,12 +1404,12 @@ function saveOperation() {
         document.getElementById("operation-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -1442,8 +1436,8 @@ function saveOperation() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")
@@ -1458,12 +1452,12 @@ function saveAlarm() {
         document.getElementById("alarm-name").style.backgroundColor = ""
         if (document.getElementById("data-save-button").classList[1] === "primary") {
             document.getElementById("data-save-button").classList.remove("primary")
-            document.getElementById("data-save-button").classList.add("alert")
+            document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
 
             setTimeout(function () {
-                if (document.getElementById("data-save-button").classList[1] === "alert") {
+                if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
@@ -1494,8 +1488,8 @@ function saveAlarm() {
                     });
                 }
             }, 2500);
-        } else if (document.getElementById("data-save-button").classList[1] === "alert") {
-            document.getElementById("data-save-button").classList.remove("alert")
+        } else if (document.getElementById("data-save-button").classList[1] === "warning") {
+            document.getElementById("data-save-button").classList.remove("warning")
             document.getElementById("data-save-button").classList.add("primary")
             document.getElementById("data-save-button-mif").classList.remove("mif-cross")
             document.getElementById("data-save-button-mif").classList.add("mif-floppy-disk")

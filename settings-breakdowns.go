@@ -4,14 +4,12 @@ import (
 	"encoding/json"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
-	"gopkg.in/go-playground/colors.v1"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"html/template"
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -140,13 +138,7 @@ func saveBreakdown(writer http.ResponseWriter, request *http.Request, params htt
 	db.Where("id=?", data.Id).Find(&breakdown)
 	breakdown.Name = data.Name
 	breakdown.BreakdownTypeID = int(cachedBreakdownTypesByName[data.Type].ID)
-	result := strings.TrimRight(data.Color, " none repeat scroll 0% 0% / auto padding-box border-box")
-	rgb, err := colors.ParseRGB(result)
-	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Problem parsing color: "+err.Error())
-	} else {
-		breakdown.Color = rgb.ToHEX().String()
-	}
+	breakdown.Color = data.Color
 	breakdown.Barcode = data.Barcode
 	breakdown.Note = data.Note
 	db.Save(&breakdown)

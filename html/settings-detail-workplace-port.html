@@ -13,18 +13,15 @@
     </select>
 </div>
 <div style="margin-top: 14px;">
-    <select id="workplace-port-state-selection" data-filter="false" data-role="select"
+    <select id="workplace-port-state-selection" data-filter="false" data-role="select" data-add-empty-value="true"
             data-prepend="{{.WorkplacePortStatePrepend}}: ">
         {{range .WorkplacePortStates}}
         <option value="{{.WorkplacePortStateName}}" {{.WorkplacePortStateSelected}}>{{.WorkplacePortStateName}}</option>
         {{end}}
     </select>
 </div>
-<div id="color" style="margin-top: 14px;width: 100%" data-role="color-selector" data-init-color="{{.Color}}"
-     data-show-user-colors="false" data-show-alpha-channel="false" data-show-values="hex" data-default-swatches="">
-</div>
 <div style="margin-top: 14px;">
-    <select id="workplace-port-counter-ok-selection" data-filter="false" data-role="select"
+    <select id="workplace-port-counter-ok-selection" data-filter="false" data-role="select" data-add-empty-value="true"
             data-prepend="{{.CounterOkEnabledPrepend}}: ">
         {{range .CounterOkSelection}}
         <option value="{{.CounterOk}}" {{.CounterOkSelected}}>{{.CounterOk}}</option>
@@ -32,7 +29,7 @@
     </select>
 </div>
 <div style="margin-top: 14px;">
-    <select id="workplace-port-counter-nok-selection" data-filter="false" data-role="select"
+    <select id="workplace-port-counter-nok-selection" data-filter="false" data-role="select" data-add-empty-value="true"
             data-prepend="{{.CounterNokEnabledPrepend}}: ">
         {{range .CounterNokSelection}}
         <option value="{{.CounterNok}}" {{.CounterNokSelected}}>{{.CounterNok}}</option>
@@ -47,9 +44,11 @@
     <input id="workplace-port-low-value" type="text" data-role="input" data-prepend="{{.LowValuePrepend}}: "
            value="{{.LowValue}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 14px;margin-right: 0;margin-left: 0;" class="row">
     <input id="workplace-port-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
-           value="{{.Note}}">
+           value="{{.Note}}" class="cell-10">
+    <div class="cell-1"></div>
+    <input id="port-color" type="color" class="cell-1" style="height: 36px;border:none" value="{{.Color}}">
 </div>
 <div style="margin-top: 14px;" disabled>
     <input id="workplace-port-created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: "
@@ -61,6 +60,9 @@
 </div>
 
 <div style="margin-top: 14px;text-align: right">
+    <button id="data-delete-workplace-port-button" class="button alert" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-minus" id="data-delete-workplace-port-button-mif"></span>
+    </button>
     <button id="workplace-port-save-button" class="button primary"
             style="min-width: 100px;max-width: 100px;height: 35px">
         <span class="mif-floppy-disk" id="workplace-port-save-button-mif"></span>

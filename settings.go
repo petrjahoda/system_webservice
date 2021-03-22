@@ -27,6 +27,8 @@ type SettingsPageOutput struct {
 	Compacted      string
 	SelectionMenu  []TableSelection
 	DateLocale     string
+	UserEmail      string
+	UserName       string
 }
 
 func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -36,6 +38,8 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	var data SettingsPageOutput
 	data.Version = version
 	data.Company = cachedCompanyName
+	data.UserEmail = email
+	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
