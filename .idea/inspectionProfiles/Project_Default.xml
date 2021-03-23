@@ -21,7 +21,7 @@
     <inspection_tool class="HtmlUnknownAttribute" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="myValues">
         <value>
-          <list size="29">
+          <list size="30">
             <item index="0" class="java.lang.String" itemvalue="{{.selection}}" />
             <item index="1" class="java.lang.String" itemvalue="{{.workplaceselected}}" />
             <item index="2" class="java.lang.String" itemvalue="{{.orderselected}}" />
@@ -51,6 +51,7 @@
             <item index="26" class="java.lang.String" itemvalue="{{.countnokselected}}" />
             <item index="27" class="java.lang.String" itemvalue="{{.countokselected}}" />
             <item index="28" class="java.lang.String" itemvalue="{{.workplaceportselected}}" />
+            <item index="29" class="java.lang.String" itemvalue="{{.workshiftselection}}" />
           </list>
         </value>
       </option>

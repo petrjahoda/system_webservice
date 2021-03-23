@@ -10,7 +10,7 @@ import (
 
 type SettingsPageInput struct {
 	Data string
-	Name string
+	Id   string
 	Type string
 }
 
@@ -212,58 +212,58 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		return
 	}
 
-	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Name)
+	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Id)
 	switch data.Type {
 	case "first":
 		{
 			switch data.Data {
 			case "alarms":
-				loadAlarmDetails(data.Name, writer, email)
+				loadAlarmDetails(data.Id, writer, email)
 			case "breakdowns":
-				loadBreakdownDetails(data.Name, writer, email)
+				loadBreakdownDetails(data.Id, writer, email)
 			case "downtimes":
-				loadDowntimeDetails(data.Name, writer, email)
+				loadDowntimeDetails(data.Id, writer, email)
 			case "faults":
-				loadFaultDetails(data.Name, writer, email)
+				loadFaultDetails(data.Id, writer, email)
 			case "operations":
-				loadOperationDetails(data.Name, writer, email)
+				loadOperationDetails(data.Id, writer, email)
 			case "orders":
-				loadOrderDetails(data.Name, writer, email)
+				loadOrderDetails(data.Id, writer, email)
 			case "packages":
-				loadPackageDetails(data.Name, writer, email)
+				loadPackageDetails(data.Id, writer, email)
 			case "parts":
-				loadPartDetails(data.Name, writer, email)
+				loadPartDetails(data.Id, writer, email)
 			case "products":
-				loadProductDetails(data.Name, writer, email)
+				loadProductDetails(data.Id, writer, email)
 			case "states":
-				loadStateDetails(data.Name, writer, email)
+				loadStateDetails(data.Id, writer, email)
 			case "devices":
-				loadDeviceDetails(data.Name, writer, email)
+				loadDeviceDetails(data.Id, writer, email)
 			case "system-settings":
-				loadSystemSettingsDetails(data.Name, writer, email)
+				loadSystemSettingsDetails(data.Id, writer, email)
 			case "users":
-				loadUserDetails(data.Name, writer, email)
+				loadUserDetails(data.Id, writer, email)
 			case "workplaces":
-				loadWorkplaceDetails(data.Name, writer, email)
+				loadWorkplaceDetails(data.Id, writer, email)
 			case "workshifts":
-				loadWorkshiftDetails(data.Name, writer, email)
+				loadWorkshiftDetails(data.Id, writer, email)
 			}
 		}
 	case "second":
 		{
 			switch data.Data {
 			case "breakdowns":
-				loadBreakdownTypeDetails(data.Name, writer, email)
+				loadBreakdownTypeDetails(data.Id, writer, email)
 			case "downtimes":
-				loadDowntimeTypeDetails(data.Name, writer, email)
+				loadDowntimeTypeDetails(data.Id, writer, email)
 			case "faults":
-				loadFaultTypeDetails(data.Name, writer, email)
+				loadFaultTypeDetails(data.Id, writer, email)
 			case "packages":
-				loadPackageTypeDetails(data.Name, writer, email)
+				loadPackageTypeDetails(data.Id, writer, email)
 			case "users":
-				loadUserTypeDetails(data.Name, writer, email)
+				loadUserTypeDetails(data.Id, writer, email)
 			case "workplaces":
-				loadWorkplaceSectionDetails(data.Name, writer, email)
+				loadWorkplaceSectionDetails(data.Id, writer, email)
 			}
 
 		}
@@ -271,7 +271,7 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		{
 			switch data.Data {
 			case "workplaces":
-				loadWorkplaceModeDetails(data.Name, writer, email)
+				loadWorkplaceModeDetails(data.Id, writer, email)
 			}
 		}
 

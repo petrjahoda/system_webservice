@@ -20,30 +20,6 @@
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;">
-    <select id="workplace-port-counter-ok-selection" data-filter="false" data-role="select" data-add-empty-value="true"
-            data-prepend="{{.CounterOkEnabledPrepend}}: ">
-        {{range .CounterOkSelection}}
-        <option value="{{.CounterOk}}" {{.CounterOkSelected}}>{{.CounterOk}}</option>
-        {{end}}
-    </select>
-</div>
-<div style="margin-top: 14px;">
-    <select id="workplace-port-counter-nok-selection" data-filter="false" data-role="select" data-add-empty-value="true"
-            data-prepend="{{.CounterNokEnabledPrepend}}: ">
-        {{range .CounterNokSelection}}
-        <option value="{{.CounterNok}}" {{.CounterNokSelected}}>{{.CounterNok}}</option>
-        {{end}}
-    </select>
-</div>
-<div style="margin-top: 14px;">
-    <input id="workplace-port-high-value" type="text" data-role="input" data-prepend="{{.HighValuePrepend}}: "
-           value="{{.HighValue}}">
-</div>
-<div style="margin-top: 14px;">
-    <input id="workplace-port-low-value" type="text" data-role="input" data-prepend="{{.LowValuePrepend}}: "
-           value="{{.LowValue}}">
-</div>
 <div style="margin-top: 14px;margin-right: 0;margin-left: 0;" class="row">
     <input id="workplace-port-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}" class="cell-10">
@@ -60,8 +36,8 @@
 </div>
 
 <div style="margin-top: 14px;text-align: right">
-    <button id="data-delete-workplace-port-button" class="button alert" style="min-width: 100px;max-width: 100px;height: 35px">
-        <span class="mif-minus" id="data-delete-workplace-port-button-mif"></span>
+    <button id="workplace-port-delete-button" class="button alert" style="min-width: 100px;max-width: 100px;height: 35px">
+        <span class="mif-minus" id="workplace-port-delete-button-mif"></span>
     </button>
     <button id="workplace-port-save-button" class="button primary"
             style="min-width: 100px;max-width: 100px;height: 35px">

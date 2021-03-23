@@ -18,44 +18,53 @@
         {{end}}
     </select>
 </div>
-
-
+<div style="margin-top: 14px;">
+    <select id="workshifts" data-role="select" data-prepend="{{.WorkshiftsPrepend}}: " multiple data-clear-button="false"
+            data-filter="false" data-filter-placeholder="{{.DataFilterPlaceholder}}">
+        {{range .Workshifts}}
+        <option value="{{.WorkshiftName}}" {{.WorkshiftSelection}}>{{.WorkshiftName}}</option>
+        {{end}}
+    </select>
+</div>
 <div style="margin-top: 14px;margin-left: 0;margin-right: 0" class="row">
-    <select id="production-downtime-selection" data-filter="false" data-role="select"
+    <select id="production-downtime-selection" data-filter="true" data-role="select"
             data-prepend="{{.ProductionDowntimePrepend}}: " data-add-empty-value="true" class="cell-10">
         {{range .ProductionDowntimes}}
         <option value="{{.WorkplacePortName}}" {{.WorkplacePortSelected}}>{{.WorkplacePortName}}</option>
         {{end}}
     </select>
     <div class="cell-1"></div>
-    <input id="production-color" type="color" class="cell-1" style="height: 36px;margin-top: 0;border:none" value="{{.ProductionColorValue}}">
+    <input id="production-color" type="color" class="cell-1" style="height: 36px;margin-top: 0;border:none"
+           value="{{.ProductionColorValue}}">
 </div>
 
 <div style="margin-top: 14px;margin-left: 0;margin-right: 0" class="row">
-    <select id="poweron-poweroff-selection" data-filter="false" data-role="select"
-             data-prepend="{{.PoweronPoweroffPrepend}}: " data-add-empty-value="true" class="cell-10">
+    <select id="poweron-poweroff-selection" data-filter="true" data-role="select"
+            data-prepend="{{.PoweronPoweroffPrepend}}: " data-add-empty-value="true" class="cell-10">
         {{range .PoweronPoweroffs}}
         <option value="{{.WorkplacePortName}}" {{.WorkplacePortSelected}}>{{.WorkplacePortName}}</option>
         {{end}}
     </select>
     <div class="cell-1"></div>
-    <input id="poweroff-color" type="color" class="cell-1" style="height: 36px;margin-top: 0;border:none;width: 10px" value="{{.PoweroffColorValue}}">
+    <input id="poweroff-color" type="color" class="cell-1" style="height: 36px;margin-top: 0;border:none;width: 10px"
+           value="{{.PoweroffColorValue}}">
 </div>
 
 <div style="margin-top: 14px;margin-left: 0;margin-right: 0" class="row">
-    <select id="count-ok-selection" data-filter="false" data-role="select"
+    <select id="count-ok-selection" data-filter="true" data-role="select"
             data-prepend="{{.CountOkPrepend}}: " data-add-empty-value="true" class="cell-10">
         {{range .CountOks}}
         <option value="{{.WorkplacePortName}}" {{.WorkplacePortSelected}}>{{.WorkplacePortName}}</option>
         {{end}}
     </select>
     <div class="cell-1"></div>
-    <input id="ok-color" type="color" class="cell-1" style="height: 36px;margin-top: 0;border:none;width: 20px" value="{{.OkColorValue}}">
+    <input id="ok-color" type="color" class="cell-1" style="height: 36px;margin-top: 0;border:none;width: 20px"
+           value="{{.OkColorValue}}">
 </div>
 
 <div style="margin-top: 14px;margin-right: 0;margin-left: 0;" class="row">
-    <select id="count-nok-selection" data-filter="false" data-role="select"
-    data-prepend="{{.CountNokPrepend}}: " data-add-empty-value="true" class="cell-10">
+    <select id="count-nok-selection" data-filter="true" data-role="select"
+            data-prepend="{{.CountNokPrepend}}: " data-add-empty-value="true" class="cell-10">
         {{range .CountNoks}}
         <option value="{{.WorkplacePortName}}" {{.WorkplacePortSelected}}>{{.WorkplacePortName}}</option>
         {{end}}
@@ -84,40 +93,6 @@
         <span class="mif-floppy-disk" id="data-save-button-mif"></span>
     </button>
 </div>
-<!--<div id="workshifts" style="margin-top: 14px;">-->
-<!--    <table class="table striped row-hover" data-role="table" id="data-workshift-table" data-check="true"-->
-<!--           data-check-type="radio"-->
-<!--           data-show-search="false" data-show-table-info="false" data-show-pagination="false" data-show-activity="false"-->
-<!--           data-show-rows-steps="false">-->
-<!--        <thead data-sortable="true">-->
-<!--        <tr>-->
-<!--            {{range .WorkshiftTableHeader}}-->
-<!--            <th class="sortable-column asc" data-size="{{.WorkshiftHeaderWidth}}">{{.WorkshiftHeaderName}}</th>-->
-<!--            {{end}}-->
-<!--        </tr>-->
-<!--        </thead>-->
-<!--        <tbody>-->
-<!--        {{range .WorkshiftTableRows}}-->
-<!--        <tr>-->
-<!--            {{range .WorkshiftTableCell}}-->
-<!--            <td>{{.WorkshiftCellName}}</td>-->
-<!--            {{end}}-->
-<!--        </tr>-->
-<!--        {{end}}-->
-<!--        </tbody>-->
-<!--    </table>-->
-<!--    <div style="margin-top: 14px;text-align: right">-->
-<!--        <button id="data-delete-workshift-button" class="button alert"-->
-<!--                style="min-width: 100px;max-width: 100px;height: 35px" hidden>-->
-<!--            <span class="mif-minus" id="data-delete-workshift-button-mif"></span>-->
-<!--        </button>-->
-<!--        <button id="data-new-workshift-button" class="button primary"-->
-<!--                style="min-width: 100px;max-width: 100px;height: 35px">-->
-<!--            <span class="mif-plus" id="data-new-workshift-button-mif"></span>-->
-<!--        </button>-->
-<!--    </div>-->
-<!--    <div id="workshift-container"></div>-->
-<!--</div>-->
 <div id="workplace-ports" style="margin-top: 14px;">
     <table class="table striped row-hover" data-role="table" id="data-workplace-port-table" data-check="true"
            data-check-type="radio"
@@ -141,7 +116,8 @@
         </tbody>
     </table>
     <div style="margin-top: 14px;text-align: right">
-        <button id="data-new-workplace-port-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        <button id="data-new-workplace-port-button" class="button primary"
+                style="min-width: 100px;max-width: 100px;height: 35px">
             <span class="mif-plus" id="data-new-workplace-port-button-mif"></span>
         </button>
     </div>

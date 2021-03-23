@@ -57,6 +57,7 @@ type WorkplaceDetailsDataOutput struct {
 	WorkplaceName             string
 	WorkplaceNamePrepend      string
 	WorkplaceSectionPrepend   string
+	WorkshiftsPrepend         string
 	WorkplaceModePrepend      string
 	ProductionDowntimePrepend string
 	PoweronPoweroffPrepend    string
@@ -80,6 +81,8 @@ type WorkplaceDetailsDataOutput struct {
 	PoweronPoweroffs          []WorkplacePortSelection
 	CountOks                  []WorkplacePortSelection
 	CountNoks                 []WorkplacePortSelection
+	Workshifts                []WorkshiftSelection
+	DataFilterPlaceholder     string
 	DataTableSearchTitle      string
 	DataTableInfoTitle        string
 	DataTableRowsCountTitle   string
@@ -87,6 +90,11 @@ type WorkplaceDetailsDataOutput struct {
 	TableRows                 []TableRow
 	WorkshiftTableHeader      []WorkshiftHeaderCell
 	WorkshiftTableRows        []WorkshiftTableRow
+}
+
+type WorkshiftSelection struct {
+	WorkshiftName      string
+	WorkshiftSelection string
 }
 
 type WorkplacePortSelection struct {
@@ -129,6 +137,7 @@ type WorkplaceDetailsDataInput struct {
 	ProductionDowntimeColor     string
 	PoweronPoweroffSelection    string
 	PoweronPoweroffColor        string
+	Workshifts                  []string
 	CountOkSelection            string
 	CountOkColor                string
 	CountNokSelection           string
@@ -139,8 +148,19 @@ type WorkplaceDetailsDataInput struct {
 }
 
 type WorkplacePortDetailsPageInput struct {
-	Data string
-	Type string
+	Data        string
+	Type        string
+	WorkplaceId string
+}
+
+type WorkplacePortDetailsDataInput struct {
+	Id            string
+	WorkplaceName string
+	Name          string
+	DevicePortId  string
+	StateId       string
+	Color         string
+	Note          string
 }
 
 type WorkplacePortDetailsDataOutput struct {
@@ -149,12 +169,6 @@ type WorkplacePortDetailsDataOutput struct {
 	WorkplacePortDevicePortPrepend string
 	WorkplacePortStatePrepend      string
 	Color                          string
-	CounterOkEnabledPrepend        string
-	CounterNokEnabledPrepend       string
-	HighValue                      float32
-	HighValuePrepend               string
-	LowValue                       float32
-	LowValuePrepend                string
 	Note                           string
 	NotePrepend                    string
 	CreatedAt                      string
@@ -163,8 +177,6 @@ type WorkplacePortDetailsDataOutput struct {
 	UpdatedAtPrepend               string
 	WorkplacePortDevicePorts       []WorkplacePortDevicePortSelection
 	WorkplacePortStates            []WorkplacePortStateSelection
-	CounterOkSelection             []CounterOkSelection
-	CounterNokSelection            []CounterNokSelection
 }
 
 type WorkplacePortDevicePortSelection struct {
@@ -179,14 +191,81 @@ type WorkplacePortStateSelection struct {
 	WorkplacePortStateSelected string
 }
 
-type CounterOkSelection struct {
-	CounterOk         string
-	CounterOkSelected string
+func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS-WORKPLACES", "Deleting workplace port started")
+	var data WorkplacePortDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-WORKPLACES", "Deleting workplace port ended")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-WORKPLACES", "Deleting workplace port ended")
+		return
+	}
+
+	var workplacePort database.WorkplacePort
+	db.Where("id=?", data.Id).Find(&workplacePort)
+	db.Delete(&workplacePort)
+	cacheWorkplaces(db)
+	logInfo("SETTINGS-WORKPLACES", "Workplace port deleted in "+time.Since(timer).String())
 }
 
-type CounterNokSelection struct {
-	CounterNok         string
-	CounterNokSelected string
+func saveWorkplacePortDetails(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS-WORKPLACES", "Saving workplace port started")
+	var data WorkplacePortDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-WORKPLACES", "Saving workplace port ended")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-WORKPLACES", "Saving workplace port ended")
+		return
+	}
+
+	var workplacePort database.WorkplacePort
+	db.Where("id=?", data.Id).Find(&workplacePort)
+	workplacePort.Name = data.Name
+	workplacePort.DevicePortID, _ = strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+	workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
+	if len(data.StateId) > 0 {
+		stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+		workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
+	}
+	workplacePort.Color = data.Color
+	workplacePort.Note = data.Note
+	db.Save(&workplacePort)
+	cacheWorkplaces(db)
+	logInfo("SETTINGS-WORKPLACES", "Workplace port saved in "+time.Since(timer).String())
 }
 
 func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -218,21 +297,14 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 	}
 	var workplacePort database.WorkplacePort
 	db.Where("id=?", data.Data).Find(&workplacePort)
-
-	var counterOkSelections []CounterOkSelection
-	counterOkSelections = append(counterOkSelections, CounterOkSelection{CounterOk: "true", CounterOkSelected: checkSelection(workplacePort.CounterOK, "true")})
-	counterOkSelections = append(counterOkSelections, CounterOkSelection{CounterOk: "false", CounterOkSelected: checkSelection(workplacePort.CounterOK, "false")})
-
-	var counterNokSelections []CounterNokSelection
-	counterNokSelections = append(counterNokSelections, CounterNokSelection{CounterNok: "true", CounterNokSelected: checkSelection(workplacePort.CounterOK, "true")})
-	counterNokSelections = append(counterNokSelections, CounterNokSelection{CounterNok: "false", CounterNokSelected: checkSelection(workplacePort.CounterOK, "false")})
-
+	var devicePorts []database.DevicePort
+	db.Raw("select * from device_ports where id not in (select device_port_id from workplace_ports where workplace_id=? and (state_id in (1,3) or counter_ok is true or counter_nok is true))", data.WorkplaceId).Find(&devicePorts)
 	var workplacePortDevicePorts []WorkplacePortDevicePortSelection
-	for _, devicePort := range cachedDevicePortsById {
-		if devicePort.ID == cachedDevicePortsById[uint(workplacePort.DevicePortID)].ID {
-			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: cachedDevicesById[uint(devicePort.DeviceID)].Name + ": [" + strconv.Itoa(devicePort.PortNumber) + "]" + devicePort.Name, WorkplacePortDevicePortId: devicePort.ID, WorkplacePortDevicePortSelected: "selected"})
+	for _, port := range devicePorts {
+		if port.ID == cachedDevicePortsById[uint(workplacePort.DevicePortID)].ID {
+			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortDevicePortId: port.ID, WorkplacePortDevicePortSelected: "selected"})
 		} else {
-			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: cachedDevicesById[uint(devicePort.DeviceID)].Name + ": [" + strconv.Itoa(devicePort.PortNumber) + "]" + devicePort.Name, WorkplacePortDevicePortId: devicePort.ID})
+			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortDevicePortId: port.ID})
 		}
 	}
 	sort.Slice(workplacePortDevicePorts, func(i, j int) bool {
@@ -242,9 +314,9 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 	var states []WorkplacePortStateSelection
 	for _, state := range cachedStatesById {
 		if state.ID == cachedStatesById[uint(workplacePort.StateID.Int32)].ID {
-			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name, WorkplacePortStateId: state.ID, WorkplacePortStateSelected: "selected"})
+			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name + " [" + strconv.Itoa(int(state.ID)) + "]", WorkplacePortStateId: state.ID, WorkplacePortStateSelected: "selected"})
 		} else {
-			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name, WorkplacePortStateId: state.ID})
+			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name + " [" + strconv.Itoa(int(state.ID)) + "]", WorkplacePortStateId: state.ID})
 		}
 	}
 	sort.Slice(states, func(i, j int) bool {
@@ -257,20 +329,12 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 		WorkplacePortDevicePortPrepend: getLocale(email, "device-name"),
 		WorkplacePortStatePrepend:      getLocale(email, "state-name"),
 		Color:                          workplacePort.Color,
-		CounterOkEnabledPrepend:        getLocale(email, "counter-ok"),
-		CounterNokEnabledPrepend:       getLocale(email, "counter-nok"),
-		HighValue:                      workplacePort.HighValue,
-		HighValuePrepend:               getLocale(email, "high-value"),
-		LowValue:                       workplacePort.LowValue,
-		LowValuePrepend:                getLocale(email, "low-value"),
 		Note:                           workplacePort.Note,
 		NotePrepend:                    getLocale(email, "note-name"),
 		CreatedAt:                      workplacePort.CreatedAt.Format("2006-01-02T15:04:05"),
 		CreatedAtPrepend:               getLocale(email, "created-at"),
 		UpdatedAt:                      workplacePort.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:               getLocale(email, "updated-at"),
-		CounterOkSelection:             counterOkSelections,
-		CounterNokSelection:            counterNokSelections,
 		WorkplacePortDevicePorts:       workplacePortDevicePorts,
 		WorkplacePortStates:            states,
 	}
@@ -373,6 +437,32 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 		db.Save(&port)
 	}
 	cacheWorkplaces(db)
+
+	var databaseWorkplaceWorkshifts []database.WorkplaceWorkshift
+	db.Where("workplace_id = ?", workplace.ID).Find(&databaseWorkplaceWorkshifts)
+	pageWorkshiftIds := make(map[int]string)
+	for _, workshift := range data.Workshifts {
+		workshiftAsInt, _ := strconv.Atoi(strings.TrimRight(strings.Split(workshift, "[")[1], "]"))
+		pageWorkshiftIds[workshiftAsInt] = workshift
+	}
+
+	for _, workplaceWorkshift := range databaseWorkplaceWorkshifts {
+		_, found := pageWorkshiftIds[workplaceWorkshift.WorkshiftID]
+		if found {
+			delete(pageWorkshiftIds, workplaceWorkshift.WorkshiftID)
+		} else {
+			logInfo("SETTINGS-WORKPLACES", "Deleting workplace workshift record id "+strconv.Itoa(int(workplaceWorkshift.ID)))
+			db.Delete(&workplaceWorkshift)
+		}
+	}
+	for _, name := range pageWorkshiftIds {
+		logInfo("SETTINGS-WORKPLACES", "Creating workplace workshift record for "+name+" and "+workplace.Name)
+		var workplaceWorkshift database.WorkplaceWorkshift
+		workplaceWorkshift.WorkshiftID, _ = strconv.Atoi(strings.TrimRight(strings.Split(name, "[")[1], "]"))
+		workplaceWorkshift.WorkplaceID = int(workplace.ID)
+		db.Save(&workplaceWorkshift)
+	}
+	cacheWorkShifts(db)
 	logInfo("SETTINGS-WORKPLACES", "Workplace saved in "+time.Since(timer).String())
 }
 
@@ -510,11 +600,13 @@ func loadWorkplaceDetails(id string, writer http.ResponseWriter, email string) {
 		WorkplaceName:             workplace.Name,
 		WorkplaceNamePrepend:      getLocale(email, "workplace-name"),
 		WorkplaceSectionPrepend:   getLocale(email, "section-name"),
+		WorkshiftsPrepend:         getLocale(email, "workshifts"),
 		WorkplaceModePrepend:      getLocale(email, "type-name"),
 		ProductionDowntimePrepend: getLocale(email, "production-downtime"),
 		PoweronPoweroffPrepend:    getLocale(email, "poweron-poweroff"),
 		CountOkPrepend:            getLocale(email, "good-pieces-name"),
 		CountNokPrepend:           getLocale(email, "bad-pieces-name"),
+		DataFilterPlaceholder:     getLocale(email, "data-table-search-title"),
 		WorkplaceCode:             workplace.Code,
 		WorkplaceCodePrepend:      getLocale(email, "code-name"),
 		Note:                      workplace.Note,
@@ -589,7 +681,7 @@ func loadWorkplaceDetails(id string, writer http.ResponseWriter, email string) {
 	data.CountNoks = countNoks
 
 	var records []database.WorkplacePort
-	db.Debug().Where("workplace_id = ?", workplace.ID).Find(&records)
+	db.Where("workplace_id = ?", workplace.ID).Find(&records)
 	var workshifts []database.WorkplaceWorkshift
 	db.Where("workplace_id = ?", workplace.ID).Order("id desc").Find(&workshifts)
 	addWorkplacePortDetailsTableHeaders(email, &data)
@@ -604,6 +696,27 @@ func loadWorkplaceDetails(id string, writer http.ResponseWriter, email string) {
 	for _, workshift := range workshifts {
 		addWorkplaceWorkshiftDetailsTableRow(workshift, &data)
 	}
+
+	var workshiftSelection []WorkshiftSelection
+
+	for _, workshift := range cachedWorkshiftsById {
+		workshiftAdded := false
+		for _, workplaceWorkshift := range cachedWorkplaceWorkshiftsById {
+			if int(workshift.ID) == workplaceWorkshift.WorkshiftID && int(workplace.ID) == workplaceWorkshift.WorkplaceID {
+				workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]", WorkshiftSelection: "selected"})
+				workshiftAdded = true
+				break
+			}
+		}
+		if !workshiftAdded {
+			workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]"})
+		}
+	}
+	sort.Slice(workshiftSelection, func(i, j int) bool {
+		return workshiftSelection[i].WorkshiftName < workshiftSelection[j].WorkshiftName
+	})
+	data.Workshifts = workshiftSelection
+
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("SETTINGS-WORKPLACES", "Workplace details loaded in "+time.Since(timer).String())

@@ -91,6 +91,8 @@ func (p *program) run() {
 	router.POST("/save_workplace_mode", saveWorkplaceMode)
 	router.POST("/save_workplace_section", saveWorkplaceSection)
 	router.POST("/save_workplace", saveWorkplace)
+	router.POST("/delete_workplace_port", deleteWorkplacePort)
+	router.POST("/save_workplace_port_details", saveWorkplacePortDetails)
 	go cacheData()
 	err := http.ListenAndServe(":82", router)
 	if err != nil {

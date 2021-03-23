@@ -1,10 +1,15 @@
-const dataSelection = document.getElementById("data-selection")
-dataSelection.addEventListener("change", (event) => {
+const settingsSelection = document.getElementById("data-selection")
+settingsSelection.addEventListener("change", (event) => {
     loadSettings();
     document.getElementById("settings-container-detail").innerHTML = ""
 })
 
 const container = document.getElementById("settings-container")
+container.addEventListener("mouseover", (event) => {
+    document.getElementById("settings-container-detail").style.opacity = "0.8"
+    document.getElementById("settings-container").style.opacity = "1"
+})
+
 container.addEventListener("click", (event) => {
     const tableSelectedId = event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id
     let table = Metro.getPlugin("#data-table", "table");
@@ -36,12 +41,18 @@ container.addEventListener("click", (event) => {
                 saveUserSettings();
                 break
             }
-
         }
     }
 })
 
 const containerDetail = document.getElementById("settings-container-detail")
+
+containerDetail.addEventListener("mouseover", (event) => {
+    if (containerDetail.innerHTML.length>0) {
+        document.getElementById("settings-container-detail").style.opacity = "1"
+        document.getElementById("settings-container").style.opacity = "0.8"
+    }
+})
 containerDetail.addEventListener("click", (event) => {
     if (event.target.id === "data-save-button" || event.target.id === "data-save-button-mif") {
         let selection = document.getElementById("data-selection").value
@@ -139,7 +150,6 @@ containerDetail.addEventListener("click", (event) => {
         }
     } else if (event.target.id === "data-mode-save-button" || event.target.id === "data-mode-save-button-mif") {
         let selection = document.getElementById("data-selection").value
-        console.log("Saving mode of " + selection)
         switch (selection) {
             case "workplaces" : {
                 saveWorkplaceMode();
@@ -150,34 +160,23 @@ containerDetail.addEventListener("click", (event) => {
         loadDevicePortDetails(null, "device");
     } else if (event.target.id === "data-new-workplace-port-button" || event.target.id === "data-new-workplace-port-button-mif") {
         loadWorkplacePortDetails(null, "workplace");
-    } else if (event.target.id === "data-delete-workplace-port-button" || event.target.id === "data-delete-workplace-port-button-mif") {
-        deleteWorkplacePortFromWorkplace(null, "workplace");
-    } else if (event.target.id === "data-new-workshift-button" || event.target.id === "data-new-workshift-button-mif") {
-        loadWorkshiftDetails(null, "workshift");
-    } else if (event.target.id === "data-delete-workshift-button" || event.target.id === "data-delete-workshift-button-mif") {
-        deleteWorkshiftFromWorkplace(null, "workshift");
+    } else if (event.target.id === "workplace-port-delete-button" || event.target.id === "workplace-port-delete-button-mif") {
+        deleteWorkplacePort();
     } else if (event.target.id === "port-save-button" || event.target.id === "port-save-button-mif") {
         saveDevicePortDetails();
     } else if (event.target.id === "workplace-port-save-button" || event.target.id === "workplace-port-save-button-mif") {
         saveWorkplacePortDetails();
-    } else if (event.target.id === "workshift-save-button" || event.target.id === "workshift-save-button-mif") {
-        saveWorkshiftDetails();
     } else {
         const tablePortSelectedId = event.target.parentElement.parentElement.parentElement.parentElement.parentElement.id
         let portTable = Metro.getPlugin("#data-port-table", "table");
         let workplacePortTable = Metro.getPlugin("#data-workplace-port-table", "table");
-        let workshiftTable = Metro.getPlugin("#data-workshift-table", "table");
         if (tablePortSelectedId === "data-port-table" && portTable.getSelectedItems().length > 0 && event.target.type === "radio") {
             let selectedItem = portTable.getSelectedItems()[0][0]
             loadDevicePortDetails(selectedItem, "device");
         } else if (tablePortSelectedId === "data-workplace-port-table" && workplacePortTable.getSelectedItems().length > 0 && event.target.type === "radio") {
             let selectedItem = workplacePortTable.getSelectedItems()[0][0]
             loadWorkplacePortDetails(selectedItem, "workplace");
-        } else if (tablePortSelectedId === "data-workshift-table" && workshiftTable.getSelectedItems().length > 0 && event.target.type === "radio") {
-            let selectedItem = workshiftTable.getSelectedItems()[0][0]
-            loadWorkshiftDetails(selectedItem, "workplace");
         }
-
     }
 })
 
@@ -192,12 +191,16 @@ function saveWorkplace() {
             document.getElementById("data-save-button").classList.add("warning")
             document.getElementById("data-save-button-mif").classList.remove("mif-floppy-disk")
             document.getElementById("data-save-button-mif").classList.add("mif-cross")
-
             setTimeout(function () {
                 if (document.getElementById("data-save-button").classList[1] === "warning") {
                     let parseId = ""
                     if (Metro.getPlugin("#data-table", "table").getSelectedItems().length > 0) {
                         parseId = Metro.getPlugin("#data-table", "table").getSelectedItems()[0][0]
+                    }
+                    const workshiftElement = document.getElementsByClassName("tag short-tag");
+                    let workshiftsFromPage = []
+                    for (let index = 0; index < workshiftElement.length; index++) {
+                        workshiftsFromPage.push(workshiftElement[index].children[0].innerHTML)
                     }
                     let data = {
                         id: parseId,
@@ -207,10 +210,11 @@ function saveWorkplace() {
                         productionDowntimeColor: document.getElementById("production-color").value,
                         poweronPoweroffSelection: document.getElementById("poweron-poweroff-selection").value,
                         poweronPoweroffColor: document.getElementById("poweroff-color").value,
-                        countOkSelection : document.getElementById("count-ok-selection").value,
-                        countOkColor : document.getElementById("ok-color").value,
-                        countNokSelection : document.getElementById("count-nok-selection").value,
-                        countNokColor : document.getElementById("nok-color").value,
+                        workshifts: workshiftsFromPage,
+                        countOkSelection: document.getElementById("count-ok-selection").value,
+                        countOkColor: document.getElementById("ok-color").value,
+                        countNokSelection: document.getElementById("count-nok-selection").value,
+                        countNokColor: document.getElementById("nok-color").value,
                         mode: document.getElementById("workplace-mode-selection").value,
                         code: document.getElementById("code").value,
                         note: document.getElementById("workplace-note").value,
@@ -334,6 +338,56 @@ function saveWorkplaceMode() {
     }
 }
 
+function deleteWorkplacePort() {
+
+    if (document.getElementById("workplace-port-delete-button").classList[1] === "alert") {
+        document.getElementById("workplace-port-delete-button").classList.remove("alert")
+        document.getElementById("workplace-port-delete-button").classList.add("warning")
+        document.getElementById("workplace-port-delete-button-mif").classList.remove("mif-floppy-disk")
+        document.getElementById("workplace-port-delete-button-mif").classList.add("mif-cross")
+
+        setTimeout(function () {
+            if (document.getElementById("workplace-port-delete-button").classList[1] === "warning") {
+                let parseId = ""
+                if (Metro.getPlugin("#data-workplace-port-table", "table").getSelectedItems().length > 0) {
+                    parseId = Metro.getPlugin("#data-workplace-port-table", "table").getSelectedItems()[0][0]
+                }
+                let background = ""
+                let colorCursor = document.getElementsByClassName("color-cursor")
+                for (const color of colorCursor) {
+                    background = getComputedStyle(color).background
+                }
+                let data = {
+                    id: parseId,
+                };
+                console.log(data)
+                fetch("/delete_workplace_port", {
+                    method: "POST",
+                    body: JSON.stringify(data)
+                }).then((response) => {
+                    response.text().then(function (data) {
+                        document.getElementById("workplace-port-container").innerHTML = ""
+                        let table = Metro.getPlugin("#data-table", "table");
+                        let selectedItem = table.getSelectedItems()[0][0]
+                        loadDetails(selectedItem, "first");
+                    });
+                }).catch((error) => {
+                    console.log(error)
+                    document.getElementById("workplace-port-container").innerHTML = ""
+                    let table = Metro.getPlugin("#data-table", "table");
+                    let selectedItem = table.getSelectedItems()[0][0]
+                    loadDetails(selectedItem, "first");
+                });
+            }
+        }, 2500);
+    } else if (document.getElementById("workplace-port-delete-button").classList[1] === "warning") {
+        document.getElementById("workplace-port-delete-button").classList.remove("warning")
+        document.getElementById("workplace-port-delete-button").classList.add("alert")
+        document.getElementById("workplace-port-delete-button-mif").classList.remove("mif-cross")
+        document.getElementById("workplace-port-delete-button-mif").classList.add("mif-minus")
+    }
+}
+
 function saveWorkplacePortDetails() {
     if (document.getElementById("workplace-port-name").value.length === 0) {
         document.getElementById("workplace-port-name").style.backgroundColor = "#ffcccb"
@@ -363,10 +417,6 @@ function saveWorkplacePortDetails() {
                         devicePortId: document.getElementById("workplace-port-device-port-selection").value,
                         stateId: document.getElementById("workplace-port-state-selection").value,
                         color: background,
-                        counterOk: document.getElementById("workplace-port-counter-ok-selection").value,
-                        counterNok: document.getElementById("workplace-port-counter-nok-selection").value,
-                        highValue: document.getElementById("workplace-port-high-value").value,
-                        lowValue: document.getElementById("workplace-port-low-value").value,
                         note: document.getElementById("workplace-port-note").value,
                     };
                     fetch("/save_workplace_port_details", {
@@ -459,7 +509,8 @@ function loadWorkplacePortDetails(selectedPort, type) {
     console.log(type + ": loading workplace port details for " + selectedPort)
     let data = {
         data: selectedPort,
-        type: type
+        type: type,
+        workplaceId: sessionStorage.getItem("selected_id")
     };
     fetch("/load_workplace_port_detail", {
         method: "POST",
@@ -468,9 +519,11 @@ function loadWorkplacePortDetails(selectedPort, type) {
         response.text().then(function (data) {
             document.getElementById("workplace-port-container").innerHTML = data
             setTimeout(function () {
-                document.getElementById("data-delete-workplace-port-button").hidden = false
                 document.getElementById("workplace-port-container").scrollIntoView();
             }, 100);
+            if (document.getElementById("workplace-port-created-at").value === "0001-01-01T00:00:00") {
+                document.getElementById("workplace-port-delete-button").hidden = true
+            }
 
         });
     }).catch((error) => {
@@ -1518,14 +1571,13 @@ function loadSettings() {
 }
 
 function loadDetails(selectedItem, type) {
-    console.log("loading")
     let selection = document.getElementById("data-selection").value
     let data = {
         data: selection,
-        name: selectedItem,
+        id: selectedItem,
         type: type
     };
-    console.log(data)
+    sessionStorage.setItem("selected_id", selectedItem)
     fetch("/load_settings_detail", {
         method: "POST",
         body: JSON.stringify(data)
