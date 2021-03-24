@@ -365,28 +365,8 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	}
 	var workplace database.Workplace
 	db.Where("id = ?", id).Find(&workplace)
-	var workplaceSections []WorkplaceSectionSelection
-	for _, workplaceSection := range cachedWorkplaceSectionsById {
-		if workplaceSection.Name == cachedWorkplaceSectionsById[uint(workplace.WorkplaceSectionID)].Name {
-			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID, WorkplaceSectionSelected: "selected"})
-		} else {
-			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID})
-		}
-	}
-	sort.Slice(workplaceSections, func(i, j int) bool {
-		return workplaceSections[i].WorkplaceSectionName < workplaceSections[j].WorkplaceSectionName
-	})
-	var workplaceModes []WorkplaceModeSelection
-	for _, workplaceMode := range cachedWorkplaceModesById {
-		if workplaceMode.Name == cachedWorkplaceModesById[uint(workplace.WorkplaceModeID)].Name {
-			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID, WorkplaceModeSelected: "selected"})
-		} else {
-			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID})
-		}
-	}
-	sort.Slice(workplaceModes, func(i, j int) bool {
-		return workplaceModes[i].WorkplaceModeName < workplaceModes[j].WorkplaceModeName
-	})
+	workplaceSections := loadWorkplaceSections(workplace)
+	workplaceModes := loadWorkplaceModes(workplace)
 	var digitalPorts []database.DevicePort
 	db.Where("device_port_type_id = 1").Find(&digitalPorts)
 	var analogPorts []database.DevicePort
@@ -509,6 +489,36 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("SETTINGS", "Workplace "+workplace.Name+" loaded in "+time.Since(timer).String())
+}
+
+func loadWorkplaceModes(workplace database.Workplace) []WorkplaceModeSelection {
+	var workplaceModes []WorkplaceModeSelection
+	for _, workplaceMode := range cachedWorkplaceModesById {
+		if workplaceMode.Name == cachedWorkplaceModesById[uint(workplace.WorkplaceModeID)].Name {
+			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID, WorkplaceModeSelected: "selected"})
+		} else {
+			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID})
+		}
+	}
+	sort.Slice(workplaceModes, func(i, j int) bool {
+		return workplaceModes[i].WorkplaceModeName < workplaceModes[j].WorkplaceModeName
+	})
+	return workplaceModes
+}
+
+func loadWorkplaceSections(workplace database.Workplace) []WorkplaceSectionSelection {
+	var workplaceSections []WorkplaceSectionSelection
+	for _, workplaceSection := range cachedWorkplaceSectionsById {
+		if workplaceSection.Name == cachedWorkplaceSectionsById[uint(workplace.WorkplaceSectionID)].Name {
+			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID, WorkplaceSectionSelected: "selected"})
+		} else {
+			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID})
+		}
+	}
+	sort.Slice(workplaceSections, func(i, j int) bool {
+		return workplaceSections[i].WorkplaceSectionName < workplaceSections[j].WorkplaceSectionName
+	})
+	return workplaceSections
 }
 
 func addWorkplaceWorkshiftsTableRow(record database.WorkplaceWorkshift, data *WorkplaceDetailsDataOutput) {
