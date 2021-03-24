@@ -125,8 +125,8 @@ type DevicePortDetailsDataInput struct {
 }
 
 type DevicePortDetailsPageInput struct {
-	Data string
-	Type string
+	Data     string
+	DeviceId string
 }
 
 func saveDevicePortDetails(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

@@ -119,7 +119,7 @@ type WorkplaceModeDetailsDataInput struct {
 	Id               string
 	Name             string
 	DowntimeDuration string
-	PoweroffDuration string
+	PowerOffDuration string
 	Note             string
 }
 
@@ -135,9 +135,9 @@ type WorkplaceDetailsDataInput struct {
 	Section                     string
 	ProductionDowntimeSelection string
 	ProductionDowntimeColor     string
-	PoweronPoweroffSelection    string
-	PoweronPoweroffColor        string
-	Workshifts                  []string
+	PowerOnPowerOffSelection    string
+	PowerOnPowerOffColor        string
+	WorkShifts                  []string
 	CountOkSelection            string
 	CountOkColor                string
 	CountNokSelection           string
@@ -149,7 +149,6 @@ type WorkplaceDetailsDataInput struct {
 
 type WorkplacePortDetailsPageInput struct {
 	Data        string
-	Type        string
 	WorkplaceId string
 }
 
@@ -397,8 +396,8 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 		port.Color = data.ProductionDowntimeColor
 		db.Save(&port)
 	}
-	if len(data.PoweronPoweroffSelection) > 1 {
-		poweroffDowntimeId := strings.TrimRight(strings.Split(data.PoweronPoweroffSelection, "[")[1], "]")
+	if len(data.PowerOnPowerOffSelection) > 1 {
+		poweroffDowntimeId := strings.TrimRight(strings.Split(data.PowerOnPowerOffSelection, "[")[1], "]")
 		var devicePort database.DevicePort
 		db.Where("id = ?", poweroffDowntimeId).Find(&devicePort)
 		var port database.WorkplacePort
@@ -407,7 +406,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 		port.DevicePortID, _ = strconv.Atoi(poweroffDowntimeId)
 		port.Name = devicePort.Name
 		port.WorkplaceID = int(workplace.ID)
-		port.Color = data.PoweronPoweroffColor
+		port.Color = data.PowerOnPowerOffColor
 		db.Save(&port)
 	}
 	if len(data.CountOkSelection) > 1 {
@@ -441,7 +440,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 	var databaseWorkplaceWorkshifts []database.WorkplaceWorkshift
 	db.Where("workplace_id = ?", workplace.ID).Find(&databaseWorkplaceWorkshifts)
 	pageWorkshiftIds := make(map[int]string)
-	for _, workshift := range data.Workshifts {
+	for _, workshift := range data.WorkShifts {
 		workshiftAsInt, _ := strconv.Atoi(strings.TrimRight(strings.Split(workshift, "[")[1], "]"))
 		pageWorkshiftIds[workshiftAsInt] = workshift
 	}
@@ -533,7 +532,7 @@ func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, params
 		logError("SETTINGS-PRODUCTS", "Problem parsing downtime duration: "+err.Error())
 		downtimeParsed = 0
 	}
-	poweroffParsed, err := time.ParseDuration(data.PoweroffDuration)
+	poweroffParsed, err := time.ParseDuration(data.PowerOffDuration)
 	if err != nil {
 		logError("SETTINGS-PRODUCTS", "Problem parsing poweroff duration: "+err.Error())
 		poweroffParsed = 0

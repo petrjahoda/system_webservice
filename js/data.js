@@ -1,17 +1,19 @@
+let now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById('to-date').value = now.toISOString().slice(0, 16);
+now.setMonth(now.getMonth() - 1);
+document.getElementById('from-date').value = now.toISOString().slice(0, 16);
+
+
 const dataSelection = document.getElementById("data-selection")
 dataSelection.addEventListener("change", (event) => {
     loadData();
 })
 
-
-let now = new Date();
-now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-document.getElementById('to-date').value = now.toISOString().slice(0,16);
-now.setMonth(now.getMonth() - 1);
-document.getElementById('from-date').value = now.toISOString().slice(0,16);
-
 const dataOkButton = document.getElementById("data-ok-button")
-
+dataOkButton.addEventListener("click", (event) => {
+    loadData();
+})
 
 function loadData() {
     const workplacesElement = document.getElementsByClassName("tag short-tag");
@@ -36,10 +38,6 @@ function loadData() {
         console.log(error)
     });
 }
-
-dataOkButton.addEventListener("click", (event) => {
-    loadData();
-})
 
 function addDate(dt, amount, dateType) {
     switch (dateType) {
@@ -77,6 +75,5 @@ function load() {
         console.log(error)
     });
 }
+
 document.addEventListener('DOMContentLoaded', load, false);
-
-
