@@ -105,7 +105,7 @@ func loadWorkshiftDetails(id string, writer http.ResponseWriter, email string) {
 		return
 	}
 	workshiftId, _ := strconv.Atoi(id)
-	workshift := cachedWorkshiftsById[uint(workshiftId)]
+	workshift := cachedWorkShiftsById[uint(workshiftId)]
 
 	data := WorkshiftDetailsDataOutput{
 		WorkshiftName:        workshift.Name,

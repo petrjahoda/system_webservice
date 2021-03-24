@@ -181,6 +181,6 @@ func saveOperation(writer http.ResponseWriter, request *http.Request, params htt
 	operation.Barcode = data.Barcode
 	operation.Note = data.Note
 	db.Save(&operation)
-	cacheAlarms(db)
+	cacheOperations(db)
 	logInfo("SETTINGS-OPERATIONS", "Operation saved in "+time.Since(timer).String())
 }

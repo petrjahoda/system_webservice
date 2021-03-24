@@ -96,7 +96,7 @@ func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int
 	}
 	workplaceModeNameCell := TableCell{CellName: cachedWorkplaceModesById[uint(record.WorkplaceModeID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceModeNameCell)
-	workshiftName := TableCell{CellName: cachedWorkshiftsById[uint(record.WorkshiftID)].Name}
+	workshiftName := TableCell{CellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workshiftName)
 	actualUserId := userRecordsByRecordId[int(record.ID)].UserID
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}

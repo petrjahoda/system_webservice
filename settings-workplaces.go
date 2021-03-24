@@ -698,9 +698,9 @@ func loadWorkplaceDetails(id string, writer http.ResponseWriter, email string) {
 
 	var workshiftSelection []WorkshiftSelection
 
-	for _, workshift := range cachedWorkshiftsById {
+	for _, workshift := range cachedWorkShiftsById {
 		workshiftAdded := false
-		for _, workplaceWorkshift := range cachedWorkplaceWorkshiftsById {
+		for _, workplaceWorkshift := range cachedWorkplaceWorkShiftsById {
 			if int(workshift.ID) == workplaceWorkshift.WorkshiftID && int(workplace.ID) == workplaceWorkshift.WorkplaceID {
 				workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]", WorkshiftSelection: "selected"})
 				workshiftAdded = true
@@ -725,7 +725,7 @@ func addWorkplaceWorkshiftDetailsTableRow(record database.WorkplaceWorkshift, da
 	var tableRow WorkshiftTableRow
 	id := WorkshiftTableCell{WorkshiftCellName: strconv.Itoa(int(record.ID))}
 	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, id)
-	name := WorkshiftTableCell{WorkshiftCellName: cachedWorkshiftsById[uint(record.WorkshiftID)].Name}
+	name := WorkshiftTableCell{WorkshiftCellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
 	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, name)
 	data.WorkshiftTableRows = append(data.WorkshiftTableRows, tableRow)
 }

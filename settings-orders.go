@@ -233,6 +233,6 @@ func saveOrder(writer http.ResponseWriter, request *http.Request, params httprou
 	order.Cavity, _ = strconv.Atoi(data.Cavity)
 	order.Note = data.Note
 	db.Save(&order)
-	cacheAlarms(db)
+	cacheOrders(db)
 	logInfo("SETTINGS-ORDERS", "Order saved in "+time.Since(timer).String())
 }
