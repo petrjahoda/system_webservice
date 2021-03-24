@@ -22,6 +22,9 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - go caching code reformat
 - go settings (all files) code reformat
 
+### Fixed
+- proper saving new workplace ports (when deleted old are found, they are updated)
+
 ## [2021.1.3.23] - 2021-03-23
 
 ### Changed

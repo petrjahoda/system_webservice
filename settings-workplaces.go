@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -858,18 +859,41 @@ func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 
 	var workplacePort database.WorkplacePort
 	db.Where("id=?", data.Id).Find(&workplacePort)
-	workplacePort.Name = data.Name
-	workplacePort.DevicePortID, _ = strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
-	workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
-	if len(data.StateId) > 0 {
-		stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
-		workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
+	devicePortId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+	fmt.Println(workplacePort.ID)
+	if workplacePort.ID > 0 {
+		workplacePort.Name = data.Name
+		workplacePort.DevicePortID = devicePortId
+		workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
+		if len(data.StateId) > 0 {
+			stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+			workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
+		}
+		workplacePort.Color = data.Color
+		workplacePort.Note = data.Note
+		db.Save(&workplacePort)
+		cacheWorkplaces(db)
+		logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+	} else {
+		db.Raw("SELECT * from workplace_ports where name = ? and workplace_id = ? and device_port_id = ? and deleted_at is not null", data.Name, int(cachedWorkplacesByName[data.WorkplaceName].ID), devicePortId).Find(&workplacePort)
+		workplacePort.Name = data.Name
+		workplacePort.DevicePortID = devicePortId
+		workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
+		if len(data.StateId) > 0 {
+			stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+			workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
+		}
+		workplacePort.Color = data.Color
+		workplacePort.Note = data.Note
+		workplacePort.DeletedAt = gorm.DeletedAt{
+			Time:  time.Time{},
+			Valid: false,
+		}
+		db.Save(&workplacePort)
+		cacheWorkplaces(db)
+		logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 	}
-	workplacePort.Color = data.Color
-	workplacePort.Note = data.Note
-	db.Save(&workplacePort)
-	cacheWorkplaces(db)
-	logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+
 }
 
 func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
