@@ -73,97 +73,90 @@ type BreakdownTypeDetailsDataInput struct {
 	Note string
 }
 
-func saveBreakdownType(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadBreakdowns(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-BREAKDOWNS", "Saving breakdown type started")
-	var data BreakdownTypeDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Saving breakdown type ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading breakdowns")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Saving breakdown ended")
+		logInfo("SETTINGS", "Loading breakdowns ended with error")
 		return
 	}
-	var breakdownType database.BreakdownType
-	db.Where("id=?", data.Id).Find(&breakdownType)
-	breakdownType.Name = data.Name
-	breakdownType.Note = data.Note
-	db.Save(&breakdownType)
-	cacheBreakdowns(db)
-	logInfo("SETTINGS-BREAKDOWNS", "Breakdown type saved in "+time.Since(timer).String())
+	var data BreakdownsSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	var records []database.Breakdown
+	db.Order("id desc").Find(&records)
+	addBreakdownsTableHeaders(email, &data)
+	for _, record := range records {
+		addBreakdownsTableRow(record, &data)
+	}
+	var typeRecords []database.BreakdownType
+	db.Order("id desc").Find(&typeRecords)
+	addBreakdownTypesTableHeaders(email, &data)
+	for _, record := range typeRecords {
+		addBreakdownTypesTableRow(record, &data)
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Breakdowns loaded in "+time.Since(timer).String())
 }
 
-func saveBreakdown(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	timer := time.Now()
-	logInfo("SETTINGS-BREAKDOWNS", "Saving breakdown started")
-	var data BreakdownDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Saving breakdown ended")
-		return
-	}
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Saving breakdown ended")
-		return
-	}
-	var breakdown database.Breakdown
-	db.Where("id=?", data.Id).Find(&breakdown)
-	breakdown.Name = data.Name
-	breakdown.BreakdownTypeID = int(cachedBreakdownTypesByName[data.Type].ID)
-	breakdown.Color = data.Color
-	breakdown.Barcode = data.Barcode
-	breakdown.Note = data.Note
-	db.Save(&breakdown)
-	cacheBreakdowns(db)
-	logInfo("SETTINGS-BREAKDOWNS", "Breakdown saved in "+time.Since(timer).String())
+func addBreakdownsTableRow(record database.Breakdown, data *BreakdownsSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+func addBreakdownsTableHeaders(email string, data *BreakdownsSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "breakdown-name")}
+	data.TableHeader = append(data.TableHeader, name)
 }
 
-func loadBreakdownTypeDetails(id string, writer http.ResponseWriter, email string) {
+func addBreakdownTypesTableRow(record database.BreakdownType, data *BreakdownsSettingsDataOutput) {
+	var tableRow TableRowType
+	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
+	tableRow.TableCellType = append(tableRow.TableCellType, id)
+	name := TableCellType{CellNameType: record.Name}
+	tableRow.TableCellType = append(tableRow.TableCellType, name)
+	data.TableRowsType = append(data.TableRowsType, tableRow)
+}
+
+func addBreakdownTypesTableHeaders(email string, data *BreakdownsSettingsDataOutput) {
+	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
+	data.TableHeaderType = append(data.TableHeaderType, id)
+	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
+	data.TableHeaderType = append(data.TableHeaderType, name)
+}
+
+func loadBreakdownTypes(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-BREAKDOWNS", "Loading breakdown type details")
+	logInfo("SETTINGS", "Loading breakdown types")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Loading breakdown type details ended")
+		logInfo("SETTINGS", "Loading breakdown types ended with error")
 		return
 	}
 	var breakdownType database.BreakdownType
 	db.Where("id = ?", id).Find(&breakdownType)
-
 	data := BreakdownTypeDetailsDataOutput{
 		BreakdownTypeName:        breakdownType.Name,
 		BreakdownTypeNamePrepend: getLocale(email, "type-name"),
@@ -176,22 +169,22 @@ func loadBreakdownTypeDetails(id string, writer http.ResponseWriter, email strin
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-breakdown-type.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-BREAKDOWNS", "Breakdown type details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Breakdown types loaded in "+time.Since(timer).String())
 }
 
-func loadBreakdownDetails(id string, writer http.ResponseWriter, email string) {
+func loadBreakdown(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-BREAKDOWNS", "Loading breakdown details")
+	logInfo("SETTINGS", "Loading breakdown")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Loading breakdown details ended")
+		logInfo("SETTINGS", "Loading breakdown ended with error")
 		return
 	}
 	var breakdown database.Breakdown
@@ -226,76 +219,78 @@ func loadBreakdownDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-breakdown.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-BREAKDOWNS", "Breakdown details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Breakdown "+breakdown.Name+" loaded in "+time.Since(timer).String())
 }
 
-func loadBreakdownsSettings(writer http.ResponseWriter, email string) {
+func saveBreakdownType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-BREAKDOWNS", "Loading breakdowns settings")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
+	logInfo("SETTINGS", "Saving breakdown type started")
+	var data BreakdownTypeDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-BREAKDOWNS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-BREAKDOWNS", "Loading breakdowns settings ended")
+		logInfo("SETTINGS", "Saving breakdown type ended with error")
 		return
 	}
-
-	var data BreakdownsSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-
-	var records []database.Breakdown
-	db.Order("id desc").Find(&records)
-	addBreakdownSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addBreakdownSettingsTableRow(record, &data)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving breakdown type ended with error")
+		return
 	}
+	var breakdownType database.BreakdownType
+	db.Where("id=?", data.Id).Find(&breakdownType)
+	breakdownType.Name = data.Name
+	breakdownType.Note = data.Note
+	db.Save(&breakdownType)
+	cacheBreakdowns(db)
+	logInfo("SETTINGS", "Breakdown type "+breakdownType.Name+" saved in "+time.Since(timer).String())
+}
 
-	var typeRecords []database.BreakdownType
-	db.Order("id desc").Find(&typeRecords)
-	addBreakdownSettingsTypeTableHeaders(email, &data)
-	for _, record := range typeRecords {
-		addBreakdownSettingsTypeTableRow(record, &data)
+func saveBreakdown(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving breakdown started")
+	var data BreakdownDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving breakdown ended with error")
+		return
 	}
-
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-BREAKDOWNS", "Breakdowns settings loaded in "+time.Since(timer).String())
-}
-
-func addBreakdownSettingsTableRow(record database.Breakdown, data *BreakdownsSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-func addBreakdownSettingsTableHeaders(email string, data *BreakdownsSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "breakdown-name")}
-	data.TableHeader = append(data.TableHeader, name)
-}
-
-func addBreakdownSettingsTypeTableRow(record database.BreakdownType, data *BreakdownsSettingsDataOutput) {
-	var tableRow TableRowType
-	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
-	tableRow.TableCellType = append(tableRow.TableCellType, id)
-	name := TableCellType{CellNameType: record.Name}
-	tableRow.TableCellType = append(tableRow.TableCellType, name)
-	data.TableRowsType = append(data.TableRowsType, tableRow)
-}
-
-func addBreakdownSettingsTypeTableHeaders(email string, data *BreakdownsSettingsDataOutput) {
-	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
-	data.TableHeaderType = append(data.TableHeaderType, id)
-	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
-	data.TableHeaderType = append(data.TableHeaderType, name)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving breakdown ended with error")
+		return
+	}
+	var breakdown database.Breakdown
+	db.Where("id=?", data.Id).Find(&breakdown)
+	breakdown.Name = data.Name
+	breakdown.BreakdownTypeID = int(cachedBreakdownTypesByName[data.Type].ID)
+	breakdown.Color = data.Color
+	breakdown.Barcode = data.Barcode
+	breakdown.Note = data.Note
+	db.Save(&breakdown)
+	cacheBreakdowns(db)
+	logInfo("SETTINGS", "Breakdown "+breakdown.Name+" saved in "+time.Since(timer).String())
 }

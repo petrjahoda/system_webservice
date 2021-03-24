@@ -46,68 +46,65 @@ type ProductDetailsDataInput struct {
 	Note             string
 }
 
-func saveProduct(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadProducts(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-PRODUCTS", "Saving product started")
-	var data ProductDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PRODUCTS", "Saving product ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading products")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PRODUCTS", "Saving product ended")
+		logInfo("SETTINGS", "Loading products ended with error")
 		return
 	}
-
-	cycleTime, err := time.ParseDuration(data.Cycle)
-	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Problem parsing cycle time: "+err.Error())
-		cycleTime = 0
+	var records []database.Product
+	db.Order("id desc").Find(&records)
+	var data ProductsSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	addProductsTableHeaders(email, &data)
+	for _, record := range records {
+		addProductsTableRow(record, &data)
 	}
-	duration, err := time.ParseDuration(data.DowntimeDuration)
-	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Problem parsing duration: "+err.Error())
-		duration = 0
-	}
-	var product database.Product
-	db.Where("id=?", data.Id).Find(&product)
-	product.Name = data.Name
-	product.Barcode = data.Barcode
-	product.CycleTime = int(cycleTime.Seconds())
-	product.DownTimeDuration = duration
-	product.Note = data.Note
-	db.Debug().Save(&product)
-	cacheProducts(db)
-	logInfo("SETTINGS-PRODUCTS", "Product saved in "+time.Since(timer).String())
+	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Products loaded in "+time.Since(timer).String())
 }
 
-func loadProductDetails(id string, writer http.ResponseWriter, email string) {
+func addProductsTableRow(record database.Product, data *ProductsSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addProductsTableHeaders(email string, data *ProductsSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "product-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func loadProduct(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-PRODUCTS", "Loading product details")
+	logInfo("SETTINGS", "Loading product")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PRODUCTS", "Loading product details ended")
+		logInfo("SETTINGS", "Loading product ended with error")
 		return
 	}
 	productId, _ := strconv.Atoi(id)
@@ -130,51 +127,54 @@ func loadProductDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-product.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-PRODUCTS", "Product details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Product "+product.Name+" loaded in "+time.Since(timer).String())
 }
 
-func loadProductsSettings(writer http.ResponseWriter, email string) {
+func saveProduct(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-PRODUCTS", "Loading products settings")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
+	logInfo("SETTINGS", "Saving product")
+	var data ProductDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PRODUCTS", "Loading products settings ended")
+		logInfo("SETTINGS", "Saving product ended with error")
 		return
 	}
-	var records []database.Product
-	db.Order("id desc").Find(&records)
-	var data ProductsSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	addProductSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addProductSettingsTableRow(record, &data)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving product ended with error")
+		return
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-PRODUCTS", "Products settings loaded in "+time.Since(timer).String())
-}
 
-func addProductSettingsTableRow(record database.Product, data *ProductsSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addProductSettingsTableHeaders(email string, data *ProductsSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "product-name")}
-	data.TableHeader = append(data.TableHeader, name)
+	cycleTime, err := time.ParseDuration(data.Cycle)
+	if err != nil {
+		logError("SETTINGS", "Problem parsing cycle time: "+err.Error())
+		cycleTime = 0
+	}
+	duration, err := time.ParseDuration(data.DowntimeDuration)
+	if err != nil {
+		logError("SETTINGS", "Problem parsing duration: "+err.Error())
+		duration = 0
+	}
+	var product database.Product
+	db.Where("id=?", data.Id).Find(&product)
+	product.Name = data.Name
+	product.Barcode = data.Barcode
+	product.CycleTime = int(cycleTime.Seconds())
+	product.DownTimeDuration = duration
+	product.Note = data.Note
+	db.Debug().Save(&product)
+	cacheProducts(db)
+	logInfo("SETTINGS", "Product "+product.Name+" saved in "+time.Since(timer).String())
 }

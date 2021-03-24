@@ -72,124 +72,87 @@ type FaultTypeDetailsDataInput struct {
 	Note string
 }
 
-func saveFaultType(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadFaults(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-FAULTS", "Saving fault type started")
-	var data FaultTypeDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-FAULTS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Saving fault type ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading faults")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-FAULTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Saving fault type ended")
+		logInfo("SETTINGS", "Loading faults ended with error")
 		return
 	}
-	var faultType database.FaultType
-	db.Where("id=?", data.Id).Find(&faultType)
-	faultType.Name = data.Name
-	faultType.Note = data.Note
-	db.Save(&faultType)
-	cacheFaults(db)
-	logInfo("SETTINGS-FAULTS", "Fault type saved in "+time.Since(timer).String())
-}
-
-func saveFault(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	timer := time.Now()
-	logInfo("SETTINGS-FAULTS", "Saving fault started")
-	var data FaultDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-FAULTS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Saving fault ended")
-		return
+	var data FaultSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	var records []database.Fault
+	db.Order("id desc").Find(&records)
+	addFaultsTableHeaders(email, &data)
+	for _, record := range records {
+		addFaultsTableRow(record, &data)
 	}
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-FAULTS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Saving fault ended")
-		return
+	var typeRecords []database.FaultType
+	db.Order("id desc").Find(&typeRecords)
+	addFaultTypesTableHeaders(email, &data)
+	for _, record := range typeRecords {
+		addFaultTypesTableRow(record, &data)
 	}
-	var fault database.Fault
-	db.Where("id=?", data.Id).Find(&fault)
-	fault.Name = data.Name
-	fault.FaultTypeID = int(cachedFaultTypesByName[data.Type].ID)
-	fault.Barcode = data.Barcode
-	fault.Note = data.Note
-	db.Save(&fault)
-	cacheFaults(db)
-	logInfo("SETTINGS-FAULTS", "Fault saved in "+time.Since(timer).String())
-}
-
-func loadFaultTypeDetails(id string, writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-FAULTS", "Loading fault type details")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-FAULTS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Loading fault type details ended")
-		return
-	}
-	var faultType database.FaultType
-	db.Where("id = ?", id).Find(&faultType)
-
-	data := FaultTypeDetailsDataOutput{
-		FaultTypeName:        faultType.Name,
-		FaultTypeNamePrepend: getLocale(email, "type-name"),
-		Note:                 faultType.Note,
-		NotePrepend:          getLocale(email, "note-name"),
-		CreatedAt:            faultType.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:     getLocale(email, "created-at"),
-		UpdatedAt:            faultType.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:     getLocale(email, "updated-at"),
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-fault-type.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-FAULTS", "Fault type details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Faults loaded in "+time.Since(timer).String())
 }
 
-func loadFaultDetails(id string, writer http.ResponseWriter, email string) {
+func addFaultsTableRow(record database.Fault, data *FaultSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addFaultsTableHeaders(email string, data *FaultSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "fault-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func addFaultTypesTableRow(record database.FaultType, data *FaultSettingsDataOutput) {
+	var tableRow TableRowType
+	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
+	tableRow.TableCellType = append(tableRow.TableCellType, id)
+	name := TableCellType{CellNameType: record.Name}
+	tableRow.TableCellType = append(tableRow.TableCellType, name)
+	data.TableRowsType = append(data.TableRowsType, tableRow)
+}
+
+func addFaultTypesTableHeaders(email string, data *FaultSettingsDataOutput) {
+	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
+	data.TableHeaderType = append(data.TableHeaderType, id)
+	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
+	data.TableHeaderType = append(data.TableHeaderType, name)
+}
+
+func loadFault(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-FAULTS", "Loading fault details")
+	logInfo("SETTINGS", "Loading fault")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-FAULTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Loading fault details ended")
+		logInfo("SETTINGS", "Loading fault ended with error")
 		return
 	}
 	var fault database.Fault
@@ -222,76 +185,110 @@ func loadFaultDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-fault.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-FAULTS", "Fault details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Fault "+fault.Name+" loaded in "+time.Since(timer).String())
 }
 
-func loadFaultsSettings(writer http.ResponseWriter, email string) {
+func loadFaultType(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-FAULTS", "Loading faults settings")
+	logInfo("SETTINGS", "Loading fault type")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-FAULTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-FAULTS", "Loading faults settings ended")
+		logInfo("SETTINGS", "Loading fault type ended with error")
 		return
 	}
+	var faultType database.FaultType
+	db.Where("id = ?", id).Find(&faultType)
 
-	var data FaultSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-
-	var records []database.Fault
-	db.Order("id desc").Find(&records)
-	addFaultSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addFaultSettingsTableRow(record, &data)
+	data := FaultTypeDetailsDataOutput{
+		FaultTypeName:        faultType.Name,
+		FaultTypeNamePrepend: getLocale(email, "type-name"),
+		Note:                 faultType.Note,
+		NotePrepend:          getLocale(email, "note-name"),
+		CreatedAt:            faultType.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:     getLocale(email, "created-at"),
+		UpdatedAt:            faultType.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 	}
-
-	var typeRecords []database.FaultType
-	db.Order("id desc").Find(&typeRecords)
-	addFaultSettingsTypeTableHeaders(email, &data)
-	for _, record := range typeRecords {
-		addFaultSettingsTypeTableRow(record, &data)
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-fault-type.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-FAULTS", "Faults settings loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Fault type "+faultType.Name+" loaded in "+time.Since(timer).String())
 }
 
-func addFaultSettingsTableRow(record database.Fault, data *FaultSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
+func saveFault(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving fault")
+	var data FaultDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving fault ended with error")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving fault ended with error")
+		return
+	}
+	var fault database.Fault
+	db.Where("id=?", data.Id).Find(&fault)
+	fault.Name = data.Name
+	fault.FaultTypeID = int(cachedFaultTypesByName[data.Type].ID)
+	fault.Barcode = data.Barcode
+	fault.Note = data.Note
+	db.Save(&fault)
+	cacheFaults(db)
+	logInfo("SETTINGS", "Fault "+fault.Name+" saved in "+time.Since(timer).String())
 }
 
-func addFaultSettingsTableHeaders(email string, data *FaultSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "fault-name")}
-	data.TableHeader = append(data.TableHeader, name)
-}
-
-func addFaultSettingsTypeTableRow(record database.FaultType, data *FaultSettingsDataOutput) {
-	var tableRow TableRowType
-	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
-	tableRow.TableCellType = append(tableRow.TableCellType, id)
-	name := TableCellType{CellNameType: record.Name}
-	tableRow.TableCellType = append(tableRow.TableCellType, name)
-	data.TableRowsType = append(data.TableRowsType, tableRow)
-}
-
-func addFaultSettingsTypeTableHeaders(email string, data *FaultSettingsDataOutput) {
-	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
-	data.TableHeaderType = append(data.TableHeaderType, id)
-	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
-	data.TableHeaderType = append(data.TableHeaderType, name)
+func saveFaultType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving fault type")
+	var data FaultTypeDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving fault type ended with error")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving fault type ended with error")
+		return
+	}
+	var faultType database.FaultType
+	db.Where("id=?", data.Id).Find(&faultType)
+	faultType.Name = data.Name
+	faultType.Note = data.Note
+	db.Save(&faultType)
+	cacheFaults(db)
+	logInfo("SETTINGS", "Fault type "+faultType.Name+" saved in "+time.Since(timer).String())
 }

@@ -48,65 +48,72 @@ type SystemSettingsDataInput struct {
 	Note    string
 }
 
-func saveSystemSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadSystemSettings(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-SYSTEM", "Saving system settings started")
-	var data SystemSettingsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-SYSTEM", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-SYSTEM", "Saving system settings ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading system settings")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-SYSTEM", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-SYSTEM", "Saving system settings ended")
+		logInfo("SETTINGS", "Loading system settings ended with error")
 		return
 	}
-	var settings database.Setting
-	db.Where("id=?", data.Id).Find(&settings)
-	settings.Name = data.Name
-	settings.Value = data.Value
-	settings.Enabled, _ = strconv.ParseBool(data.Enabled)
-	settings.Note = data.Note
-	db.Save(&settings)
-	cacheUsers(db)
-	logInfo("SETTINGS-SYSTEM", "System settings saved in "+time.Since(timer).String())
+	var data SystemSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	var records []database.Setting
+	db.Order("id desc").Find(&records)
+	addSystemSettingsTableHeaders(email, &data)
+	for _, record := range records {
+		addSystemSettingsTableRow(record, &data)
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "System settings loaded in "+time.Since(timer).String())
+}
+
+func addSystemSettingsTableRow(record database.Setting, data *SystemSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addSystemSettingsTableHeaders(email string, data *SystemSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "name")}
+	data.TableHeader = append(data.TableHeader, name)
 }
 
 func loadSystemSettingsDetails(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-SYSTEM", "Loading system settings details")
+	logInfo("SETTINGS", "Loading system settings details")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-SYSTEM", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-SYSTEM", "Loading system settings details ended")
+		logInfo("SETTINGS", "Loading system settings details ended with error")
 		return
 	}
 	var settings database.Setting
 	db.Where("id = ?", id).Find(&settings)
-
 	var systemSettingsSelection []SystemSettingsSelection
 	systemSettingsSelection = append(systemSettingsSelection, SystemSettingsSelection{SystemSettingsValue: "true", SystemSettingsSelected: checkSelection(settings.Enabled, "true")})
 	systemSettingsSelection = append(systemSettingsSelection, SystemSettingsSelection{SystemSettingsValue: "false", SystemSettingsSelected: checkSelection(settings.Enabled, "false")})
-
 	data := SystemSettingsDetailsDataOutput{
 		SystemSettingsName:         settings.Name,
 		SystemSettingsNamePrepend:  getLocale(email, "name"),
@@ -124,7 +131,7 @@ func loadSystemSettingsDetails(id string, writer http.ResponseWriter, email stri
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-system.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-SYSTEM", "System settings details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "System settings details for "+settings.Name+" loaded in "+time.Since(timer).String())
 }
 
 func checkSelection(enabled bool, selection string) string {
@@ -134,50 +141,39 @@ func checkSelection(enabled bool, selection string) string {
 	return ""
 }
 
-func loadSystemSettings(writer http.ResponseWriter, email string) {
+func saveSystemSettingsDetails(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-SYSTEM", "Loading system settings")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
+	logInfo("SETTINGS", "Saving system settings details")
+	var data SystemSettingsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-SYSTEM", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-SYSTEM", "Loading system settings ended")
+		logInfo("SETTINGS", "Saving system settings details ended with error")
 		return
 	}
-
-	var data SystemSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-
-	var records []database.Setting
-	db.Order("id desc").Find(&records)
-	addSystemSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addSystemSettingsTableRow(record, &data)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving system settings details ended with error")
+		return
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-SYSTEM", "System settings loaded in "+time.Since(timer).String())
-}
-
-func addSystemSettingsTableRow(record database.Setting, data *SystemSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addSystemSettingsTableHeaders(email string, data *SystemSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "name")}
-	data.TableHeader = append(data.TableHeader, name)
+	var settings database.Setting
+	db.Where("id=?", data.Id).Find(&settings)
+	settings.Name = data.Name
+	settings.Value = data.Value
+	settings.Enabled, _ = strconv.ParseBool(data.Enabled)
+	settings.Note = data.Note
+	db.Save(&settings)
+	cacheUsers(db)
+	logInfo("SETTINGS", "System settings details for "+settings.Name+" saved in "+time.Since(timer).String())
 }

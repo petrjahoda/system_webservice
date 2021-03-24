@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type WorkshiftsSettingsDataOutput struct {
+type WorkShiftsSettingsDataOutput struct {
 	DataTableSearchTitle    string
 	DataTableInfoTitle      string
 	DataTableRowsCountTitle string
@@ -21,7 +21,7 @@ type WorkshiftsSettingsDataOutput struct {
 	TableRows               []TableRow
 }
 
-type WorkshiftDetailsDataOutput struct {
+type WorkShiftDetailsDataOutput struct {
 	WorkshiftName        string
 	WorkshiftNamePrepend string
 	Start                string
@@ -36,7 +36,7 @@ type WorkshiftDetailsDataOutput struct {
 	UpdatedAtPrepend     string
 }
 
-type WorkshiftDetailsDataInput struct {
+type WorkShiftDetailsDataInput struct {
 	Id    string
 	Name  string
 	Start string
@@ -44,30 +44,112 @@ type WorkshiftDetailsDataInput struct {
 	Note  string
 }
 
-func saveWorkshift(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadWorkShifts(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKSHIFTS", "Saving workshift started")
-	var data WorkshiftDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
+	logInfo("SETTINGS", "Loading workshifts")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKSHIFTS", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKSHIFTS", "Saving workshift ended")
+		logInfo("SETTINGS", "Loading workshifts ended with error")
+		return
+	}
+	var records []database.Workshift
+	db.Order("id desc").Find(&records)
+	var data WorkShiftsSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	addWorkShiftsTableHeaders(email, &data)
+	for _, record := range records {
+		addWorkShiftsTableRow(record, &data)
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Workshifts loaded in "+time.Since(timer).String())
+}
+
+func addWorkShiftsTableRow(record database.Workshift, data *WorkShiftsSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addWorkShiftsTableHeaders(email string, data *WorkShiftsSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "workshift-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func loadWorkshift(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Loading workshift")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Loading workshift ended with error")
+		return
+	}
+	workshiftId, _ := strconv.Atoi(id)
+	workshift := cachedWorkShiftsById[uint(workshiftId)]
+	data := WorkShiftDetailsDataOutput{
+		WorkshiftName:        workshift.Name,
+		WorkshiftNamePrepend: getLocale(email, "workshift-name"),
+		Start:                workshift.WorkshiftStart.In(time.UTC).Format("15:04:05"),
+		StartPrepend:         getLocale(email, "workshift-start"),
+		End:                  workshift.WorkshiftEnd.In(time.UTC).Format("15:04:05"),
+		EndPrepend:           getLocale(email, "workshift-end"),
+		Note:                 workshift.Note,
+		NotePrepend:          getLocale(email, "note-name"),
+		CreatedAt:            workshift.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:     getLocale(email, "created-at"),
+		UpdatedAt:            workshift.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:     getLocale(email, "updated-at"),
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workshift.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Workshift "+workshift.Name+" loaded in "+time.Since(timer).String())
+}
+
+func saveWorkshift(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving workshift")
+	var data WorkShiftDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving workshift ended with error")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKSHIFTS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKSHIFTS", "Saving workshift ended")
+		logInfo("SETTINGS", "Saving workshift ended with error")
 		return
 
 	}
@@ -86,88 +168,5 @@ func saveWorkshift(writer http.ResponseWriter, request *http.Request, params htt
 	shift.WorkshiftEnd = time.Date(2000, 1, 1, workshiftEndHour, workshiftEndMinute, workshiftEndSecond, 0, time.UTC)
 	db.Save(&shift)
 	cacheWorkShifts(db)
-	logInfo("SETTINGS-WORKSHIFTS", "Workshift saved in "+time.Since(timer).String())
-}
-
-func loadWorkshiftDetails(id string, writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-WORKSHIFTS", "Loading workshift details")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-WORKSHIFTS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKSHIFTS", "Loading workshift details ended")
-		return
-	}
-	workshiftId, _ := strconv.Atoi(id)
-	workshift := cachedWorkShiftsById[uint(workshiftId)]
-
-	data := WorkshiftDetailsDataOutput{
-		WorkshiftName:        workshift.Name,
-		WorkshiftNamePrepend: getLocale(email, "workshift-name"),
-		Start:                workshift.WorkshiftStart.In(time.UTC).Format("15:04:05"),
-		StartPrepend:         getLocale(email, "workshift-start"),
-		End:                  workshift.WorkshiftEnd.In(time.UTC).Format("15:04:05"),
-		EndPrepend:           getLocale(email, "workshift-end"),
-		Note:                 workshift.Note,
-		NotePrepend:          getLocale(email, "note-name"),
-		CreatedAt:            workshift.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:     getLocale(email, "created-at"),
-		UpdatedAt:            workshift.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:     getLocale(email, "updated-at"),
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workshift.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-WORKSHIFTS", "Workshift details loaded in "+time.Since(timer).String())
-}
-
-func loadWorkshiftsSettings(writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-WORKSHIFTS", "Loading workshifts settings")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-WORKSHIFTS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKSHIFTS", "Loading workshifts settings ended")
-		return
-	}
-	var records []database.Workshift
-	db.Order("id desc").Find(&records)
-	var data WorkshiftsSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	addWorkshiftSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addWorkshiftSettingsTableRow(record, &data)
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-WORKSHIFTS", "Workshifts settings loaded in "+time.Since(timer).String())
-}
-
-func addWorkshiftSettingsTableRow(record database.Workshift, data *WorkshiftsSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addWorkshiftSettingsTableHeaders(email string, data *WorkshiftsSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "workshift-name")}
-	data.TableHeader = append(data.TableHeader, name)
+	logInfo("SETTINGS", "Workshift "+shift.Name+" saved in "+time.Since(timer).String())
 }

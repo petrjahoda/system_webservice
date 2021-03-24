@@ -190,108 +190,384 @@ type WorkplacePortStateSelection struct {
 	WorkplacePortStateSelected string
 }
 
-func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadWorkplaces(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Deleting workplace port started")
-	var data WorkplacePortDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Deleting workplace port ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading workplaces")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Deleting workplace port ended")
+		logInfo("SETTINGS", "Loading workplaces ended with error")
 		return
 	}
-
-	var workplacePort database.WorkplacePort
-	db.Where("id=?", data.Id).Find(&workplacePort)
-	db.Delete(&workplacePort)
-	cacheWorkplaces(db)
-	logInfo("SETTINGS-WORKPLACES", "Workplace port deleted in "+time.Since(timer).String())
+	var records []database.Workplace
+	db.Order("id desc").Find(&records)
+	var data WorkplacesSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	addWorkplacesTableHeaders(email, &data)
+	for _, record := range records {
+		addWorkplacesTableRow(record, &data)
+	}
+	var typeRecords []database.WorkplaceSection
+	db.Order("id desc").Find(&typeRecords)
+	addWorkplaceSectionsTableHeaders(email, &data)
+	for _, record := range typeRecords {
+		addWorkplaceSectionsTableRow(record, &data)
+	}
+	var extendedRecords []database.WorkplaceMode
+	db.Order("id desc").Find(&extendedRecords)
+	addWorkplaceModesTableHeaders(email, &data)
+	for _, record := range extendedRecords {
+		addWorkplaceModesTableRow(record, &data)
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-table-type-extended.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Workplaces loaded in "+time.Since(timer).String())
 }
 
-func saveWorkplacePortDetails(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func addWorkplaceModesTableRow(record database.WorkplaceMode, data *WorkplacesSettingsDataOutput) {
+	var tableRow TableRowTypeExtended
+	id := TableCellTypeExtended{CellNameTypeExtended: strconv.Itoa(int(record.ID))}
+	tableRow.TableCellTypeExtended = append(tableRow.TableCellTypeExtended, id)
+	name := TableCellTypeExtended{CellNameTypeExtended: record.Name}
+	tableRow.TableCellTypeExtended = append(tableRow.TableCellTypeExtended, name)
+	data.TableRowsTypeExtended = append(data.TableRowsTypeExtended, tableRow)
+}
+
+func addWorkplaceModesTableHeaders(email string, data *WorkplacesSettingsDataOutput) {
+	id := HeaderCellTypeExtended{HeaderNameTypeExtended: "#", HeaderWidthTypeExtended: "30"}
+	data.TableHeaderTypeExtended = append(data.TableHeaderTypeExtended, id)
+	name := HeaderCellTypeExtended{HeaderNameTypeExtended: getLocale(email, "type-name")}
+	data.TableHeaderTypeExtended = append(data.TableHeaderTypeExtended, name)
+}
+
+func addWorkplaceSectionsTableRow(record database.WorkplaceSection, data *WorkplacesSettingsDataOutput) {
+	var tableRow TableRowType
+	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
+	tableRow.TableCellType = append(tableRow.TableCellType, id)
+	name := TableCellType{CellNameType: record.Name}
+	tableRow.TableCellType = append(tableRow.TableCellType, name)
+	data.TableRowsType = append(data.TableRowsType, tableRow)
+}
+
+func addWorkplaceSectionsTableHeaders(email string, data *WorkplacesSettingsDataOutput) {
+	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
+	data.TableHeaderType = append(data.TableHeaderType, id)
+	name := HeaderCellType{HeaderNameType: getLocale(email, "section-name")}
+	data.TableHeaderType = append(data.TableHeaderType, name)
+}
+
+func addWorkplacesTableRow(record database.Workplace, data *WorkplacesSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addWorkplacesTableHeaders(email string, data *WorkplacesSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func loadWorkplaceSection(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Saving workplace port started")
-	var data WorkplacePortDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace port ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading workplace section")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace port ended")
+		logInfo("SETTINGS-USERS", "Loading workplace section ended with error")
 		return
 	}
-
-	var workplacePort database.WorkplacePort
-	db.Where("id=?", data.Id).Find(&workplacePort)
-	workplacePort.Name = data.Name
-	workplacePort.DevicePortID, _ = strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
-	workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
-	if len(data.StateId) > 0 {
-		stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
-		workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
+	var workplaceSection database.WorkplaceSection
+	db.Where("id = ?", id).Find(&workplaceSection)
+	data := WorkplaceSectionDetailsDataOutput{
+		WorkplaceSectionName:        workplaceSection.Name,
+		WorkplaceSectionNamePrepend: getLocale(email, "section-name"),
+		Note:                        workplaceSection.Note,
+		NotePrepend:                 getLocale(email, "note-name"),
+		CreatedAt:                   workplaceSection.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:            getLocale(email, "created-at"),
+		UpdatedAt:                   workplaceSection.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:            getLocale(email, "updated-at"),
 	}
-	workplacePort.Color = data.Color
-	workplacePort.Note = data.Note
-	db.Save(&workplacePort)
-	cacheWorkplaces(db)
-	logInfo("SETTINGS-WORKPLACES", "Workplace port saved in "+time.Since(timer).String())
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-section.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Workplace section "+workplaceSection.Name+" loaded in "+time.Since(timer).String())
 }
 
-func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadWorkplaceMode(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Loading workplace port settings")
+	logInfo("SETTINGS", "Loading workplace mode")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS-USERS", "Loading workplace mode ended with error")
+		return
+	}
+	var workplaceMode database.WorkplaceMode
+	db.Where("id = ?", id).Find(&workplaceMode)
+	data := WorkplaceModeDetailsDataOutput{
+		WorkplaceModeName:        workplaceMode.Name,
+		WorkplaceModeNamePrepend: getLocale(email, "type-name"),
+		DowntimeDuration:         workplaceMode.DowntimeDuration.String(),
+		DowntimeDurationPrepend:  getLocale(email, "downtime-duration"),
+		PoweroffDuration:         workplaceMode.PoweroffDuration.String(),
+		PoweroffDurationPrepend:  getLocale(email, "poweroff-duration"),
+		Note:                     workplaceMode.Note,
+		NotePrepend:              getLocale(email, "note-name"),
+		CreatedAt:                workplaceMode.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:         getLocale(email, "created-at"),
+		UpdatedAt:                workplaceMode.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:         getLocale(email, "updated-at"),
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-mode.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Workplace mode "+workplaceMode.Name+" loaded in "+time.Since(timer).String())
+}
+
+func loadWorkplace(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Loading workplace")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Loading workplace ended with error")
+		return
+	}
+	var workplace database.Workplace
+	db.Where("id = ?", id).Find(&workplace)
+	var workplaceSections []WorkplaceSectionSelection
+	for _, workplaceSection := range cachedWorkplaceSectionsById {
+		if workplaceSection.Name == cachedWorkplaceSectionsById[uint(workplace.WorkplaceSectionID)].Name {
+			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID, WorkplaceSectionSelected: "selected"})
+		} else {
+			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID})
+		}
+	}
+	sort.Slice(workplaceSections, func(i, j int) bool {
+		return workplaceSections[i].WorkplaceSectionName < workplaceSections[j].WorkplaceSectionName
+	})
+	var workplaceModes []WorkplaceModeSelection
+	for _, workplaceMode := range cachedWorkplaceModesById {
+		if workplaceMode.Name == cachedWorkplaceModesById[uint(workplace.WorkplaceModeID)].Name {
+			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID, WorkplaceModeSelected: "selected"})
+		} else {
+			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID})
+		}
+	}
+	sort.Slice(workplaceModes, func(i, j int) bool {
+		return workplaceModes[i].WorkplaceModeName < workplaceModes[j].WorkplaceModeName
+	})
+	var digitalPorts []database.DevicePort
+	db.Where("device_port_type_id = 1").Find(&digitalPorts)
+	var analogPorts []database.DevicePort
+	db.Where("device_port_type_id = 2").Find(&analogPorts)
+	data := WorkplaceDetailsDataOutput{
+		WorkplaceName:             workplace.Name,
+		WorkplaceNamePrepend:      getLocale(email, "workplace-name"),
+		WorkplaceSectionPrepend:   getLocale(email, "section-name"),
+		WorkshiftsPrepend:         getLocale(email, "workshifts"),
+		WorkplaceModePrepend:      getLocale(email, "type-name"),
+		ProductionDowntimePrepend: getLocale(email, "production-downtime"),
+		PoweronPoweroffPrepend:    getLocale(email, "poweron-poweroff"),
+		CountOkPrepend:            getLocale(email, "good-pieces-name"),
+		CountNokPrepend:           getLocale(email, "bad-pieces-name"),
+		DataFilterPlaceholder:     getLocale(email, "data-table-search-title"),
+		WorkplaceCode:             workplace.Code,
+		WorkplaceCodePrepend:      getLocale(email, "code-name"),
+		Note:                      workplace.Note,
+		NotePrepend:               getLocale(email, "note-name"),
+		CreatedAt:                 workplace.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:          getLocale(email, "created-at"),
+		UpdatedAt:                 workplace.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:          getLocale(email, "updated-at"),
+		WorkplaceSections:         workplaceSections,
+		WorkplaceModes:            workplaceModes,
+	}
+	var workplaceProductionPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 1").Find(&workplaceProductionPort)
+	var productionDowntimes []WorkplacePortSelection
+	for _, port := range digitalPorts {
+		if int(port.ID) == workplaceProductionPort.DevicePortID {
+			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.ProductionColorValue = workplacePort.Color
+		} else {
+			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.ProductionDowntimes = productionDowntimes
+	var workplacePowerOffPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 3").Find(&workplacePowerOffPort)
+	var powerOnPowerOffs []WorkplacePortSelection
+	for _, port := range analogPorts {
+		if int(port.ID) == workplacePowerOffPort.DevicePortID {
+			powerOnPowerOffs = append(powerOnPowerOffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.PoweroffColorValue = workplacePort.Color
+		} else {
+			powerOnPowerOffs = append(powerOnPowerOffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.PoweronPoweroffs = powerOnPowerOffs
+	var countOkPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("counter_ok is true").Find(&countOkPort)
+	var countOks []WorkplacePortSelection
+	countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: ""})
+	for _, port := range digitalPorts {
+		if int(port.ID) == countOkPort.DevicePortID {
+			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.OkColorValue = workplacePort.Color
+		} else {
+			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.CountOks = countOks
+	var countNokPort database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Where("counter_nok is true").Find(&countNokPort)
+	var countNoks []WorkplacePortSelection
+	countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: ""})
+	for _, port := range digitalPorts {
+		if int(port.ID) == countNokPort.DevicePortID {
+			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			var workplacePort database.WorkplacePort
+			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+			data.NokColorValue = workplacePort.Color
+		} else {
+			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+		}
+	}
+	data.CountNoks = countNoks
+	var records []database.WorkplacePort
+	db.Where("workplace_id = ?", workplace.ID).Find(&records)
+	var workshifts []database.WorkplaceWorkshift
+	db.Where("workplace_id = ?", workplace.ID).Order("id desc").Find(&workshifts)
+	addWorkplacePortsTableHeaders(email, &data)
+	for _, record := range records {
+		if record.StateID.Valid || record.CounterNOK || record.CounterOK {
+			continue
+		} else {
+			addWorkplacePortsTableRow(record, &data)
+		}
+	}
+	addWorkplaceWorkshiftsTableHeaders(email, &data)
+	for _, workshift := range workshifts {
+		addWorkplaceWorkshiftsTableRow(workshift, &data)
+	}
+	var workshiftSelection []WorkshiftSelection
+	for _, workshift := range cachedWorkShiftsById {
+		workshiftAdded := false
+		for _, workplaceWorkshift := range cachedWorkplaceWorkShiftsById {
+			if int(workshift.ID) == workplaceWorkshift.WorkshiftID && int(workplace.ID) == workplaceWorkshift.WorkplaceID {
+				workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]", WorkshiftSelection: "selected"})
+				workshiftAdded = true
+				break
+			}
+		}
+		if !workshiftAdded {
+			workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]"})
+		}
+	}
+	sort.Slice(workshiftSelection, func(i, j int) bool {
+		return workshiftSelection[i].WorkshiftName < workshiftSelection[j].WorkshiftName
+	})
+	data.Workshifts = workshiftSelection
+
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "Workplace "+workplace.Name+" loaded in "+time.Since(timer).String())
+}
+
+func addWorkplaceWorkshiftsTableRow(record database.WorkplaceWorkshift, data *WorkplaceDetailsDataOutput) {
+	var tableRow WorkshiftTableRow
+	id := WorkshiftTableCell{WorkshiftCellName: strconv.Itoa(int(record.ID))}
+	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, id)
+	name := WorkshiftTableCell{WorkshiftCellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
+	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, name)
+	data.WorkshiftTableRows = append(data.WorkshiftTableRows, tableRow)
+}
+
+func addWorkplaceWorkshiftsTableHeaders(email string, data *WorkplaceDetailsDataOutput) {
+	id := WorkshiftHeaderCell{WorkshiftHeaderName: "#", WorkshiftHeaderWidth: "30"}
+	data.WorkshiftTableHeader = append(data.WorkshiftTableHeader, id)
+	name := WorkshiftHeaderCell{WorkshiftHeaderName: getLocale(email, "workshift-name")}
+	data.WorkshiftTableHeader = append(data.WorkshiftTableHeader, name)
+}
+
+func addWorkplacePortsTableRow(record database.WorkplacePort, data *WorkplaceDetailsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addWorkplacePortsTableHeaders(email string, data *WorkplaceDetailsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "port-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func loadWorkplacePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Loading workplace port")
 	email, _, _ := request.BasicAuth()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Loading workplace port settings ended")
+		logInfo("SETTINGS", "Loading workplace port ended with error")
 		return
 	}
 	var data WorkplacePortDetailsPageInput
 	err = json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Loading workplace port ended")
+		logInfo("SETTINGS", "Loading workplace port ended with error")
 		return
 	}
 	var workplacePort database.WorkplacePort
@@ -309,7 +585,6 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 	sort.Slice(workplacePortDevicePorts, func(i, j int) bool {
 		return workplacePortDevicePorts[i].WorkplacePortDevicePortName < workplacePortDevicePorts[j].WorkplacePortDevicePortName
 	})
-
 	var states []WorkplacePortStateSelection
 	for _, state := range cachedStatesById {
 		if state.ID == cachedStatesById[uint(workplacePort.StateID.Int32)].ID {
@@ -321,7 +596,6 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 	sort.Slice(states, func(i, j int) bool {
 		return states[i].WorkplacePortStateName < states[j].WorkplacePortStateName
 	})
-
 	dataOut := WorkplacePortDetailsDataOutput{
 		WorkplacePortName:              workplacePort.Name,
 		WorkplacePortNamePrepend:       getLocale(email, "port-name"),
@@ -339,36 +613,35 @@ func loadWorkplacePortDetail(writer http.ResponseWriter, request *http.Request, 
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-port.html"))
 	_ = tmpl.Execute(writer, dataOut)
-	logInfo("SETTINGS-WORKPLACES", "Workplace port settings loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" loaded in "+time.Since(timer).String())
 }
 
-func saveWorkplace(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Saving workplace started")
+	logInfo("SETTINGS", "Saving workplace")
 	var data WorkplaceDetailsDataInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace ended")
+		logInfo("SETTINGS", "Saving workplace ended with error")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace ended")
+		logInfo("SETTINGS", "Saving workplace ended with error")
 		return
 	}
-
 	var workplace database.Workplace
 	db.Where("id=?", data.Id).Find(&workplace)
 	workplace.Name = data.Name
@@ -377,7 +650,6 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 	workplace.Code = data.Code
 	workplace.Note = data.Note
 	db.Save(&workplace)
-
 	var workplacePorts []database.WorkplacePort
 	db.Where("workplace_id = ?", workplace.ID).Find(&workplacePorts)
 	for _, port := range workplacePorts {
@@ -450,81 +722,80 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, params htt
 		if found {
 			delete(pageWorkshiftIds, workplaceWorkshift.WorkshiftID)
 		} else {
-			logInfo("SETTINGS-WORKPLACES", "Deleting workplace workshift record id "+strconv.Itoa(int(workplaceWorkshift.ID)))
+			logInfo("SETTINGS", "Deleting workplace workshift record id "+strconv.Itoa(int(workplaceWorkshift.ID)))
 			db.Delete(&workplaceWorkshift)
 		}
 	}
 	for _, name := range pageWorkshiftIds {
-		logInfo("SETTINGS-WORKPLACES", "Creating workplace workshift record for "+name+" and "+workplace.Name)
+		logInfo("SETTINGS", "Creating workplace workshift record for "+name+" and "+workplace.Name)
 		var workplaceWorkshift database.WorkplaceWorkshift
 		workplaceWorkshift.WorkshiftID, _ = strconv.Atoi(strings.TrimRight(strings.Split(name, "[")[1], "]"))
 		workplaceWorkshift.WorkplaceID = int(workplace.ID)
 		db.Save(&workplaceWorkshift)
 	}
 	cacheWorkShifts(db)
-	logInfo("SETTINGS-WORKPLACES", "Workplace saved in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Workplace "+workplace.Name+" saved in "+time.Since(timer).String())
 }
 
-func saveWorkplaceSection(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func saveWorkplaceSection(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Saving workplace section started")
+	logInfo("SETTINGS", "Saving workplace section")
 	var data WorkplaceSectionDetailsDataInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace section ended")
+		logInfo("SETTINGS", "Saving workplace section ended with error")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace section ended")
+		logInfo("SETTINGS", "Saving workplace section ended with error")
 		return
 	}
-
 	var workplaceSection database.WorkplaceSection
 	db.Where("id=?", data.Id).Find(&workplaceSection)
 	workplaceSection.Name = data.Name
 	workplaceSection.Note = data.Note
 	db.Save(&workplaceSection)
 	cacheWorkplaces(db)
-	logInfo("SETTINGS-WORKPLACES", "Workplace section saved in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Workplace section "+workplaceSection.Name+" saved in "+time.Since(timer).String())
 }
 
-func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Saving workplace mode started")
+	logInfo("SETTINGS", "Saving workplace mode")
 	var data WorkplaceModeDetailsDataInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace mode ended")
+		logInfo("SETTINGS", "Saving workplace mode ended with error")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Saving workplace mode ended")
+		logInfo("SETTINGS", "Saving workplace mode ended with error")
 		return
 	}
 	downtimeParsed, err := time.ParseDuration(data.DowntimeDuration)
@@ -534,7 +805,7 @@ func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, params
 	}
 	poweroffParsed, err := time.ParseDuration(data.PowerOffDuration)
 	if err != nil {
-		logError("SETTINGS-PRODUCTS", "Problem parsing poweroff duration: "+err.Error())
+		logError("SETTINGS-PRODUCTS", "Problem parsing powerOff duration: "+err.Error())
 		poweroffParsed = 0
 	}
 	var workplaceMode database.WorkplaceMode
@@ -545,374 +816,82 @@ func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, params
 	workplaceMode.Note = data.Note
 	db.Save(&workplaceMode)
 	cacheWorkplaces(db)
-	logInfo("SETTINGS-WORKPLACES", "Workplace mode saved in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Workplace mode "+workplaceMode.Name+" saved in "+time.Since(timer).String())
 }
 
-func loadWorkplaceDetails(id string, writer http.ResponseWriter, email string) {
+func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Loading workplace details")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
+	logInfo("SETTINGS", "Saving workplace port")
+	var data WorkplacePortDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Loading workplace details ended")
+		logInfo("SETTINGS", "Saving workplace port ended with error")
 		return
 	}
-	var workplace database.Workplace
-	db.Where("id = ?", id).Find(&workplace)
-
-	var workplaceSections []WorkplaceSectionSelection
-	for _, workplaceSection := range cachedWorkplaceSectionsById {
-		if workplaceSection.Name == cachedWorkplaceSectionsById[uint(workplace.WorkplaceSectionID)].Name {
-			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID, WorkplaceSectionSelected: "selected"})
-		} else {
-			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID})
-		}
-	}
-	sort.Slice(workplaceSections, func(i, j int) bool {
-		return workplaceSections[i].WorkplaceSectionName < workplaceSections[j].WorkplaceSectionName
-	})
-
-	var workplaceModes []WorkplaceModeSelection
-	for _, workplaceMode := range cachedWorkplaceModesById {
-		if workplaceMode.Name == cachedWorkplaceModesById[uint(workplace.WorkplaceModeID)].Name {
-			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID, WorkplaceModeSelected: "selected"})
-		} else {
-			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID})
-		}
-	}
-	sort.Slice(workplaceModes, func(i, j int) bool {
-		return workplaceModes[i].WorkplaceModeName < workplaceModes[j].WorkplaceModeName
-	})
-
-	var digitalPorts []database.DevicePort
-	db.Where("device_port_type_id = 1").Find(&digitalPorts)
-	var analogPorts []database.DevicePort
-	db.Where("device_port_type_id = 2").Find(&analogPorts)
-
-	data := WorkplaceDetailsDataOutput{
-		WorkplaceName:             workplace.Name,
-		WorkplaceNamePrepend:      getLocale(email, "workplace-name"),
-		WorkplaceSectionPrepend:   getLocale(email, "section-name"),
-		WorkshiftsPrepend:         getLocale(email, "workshifts"),
-		WorkplaceModePrepend:      getLocale(email, "type-name"),
-		ProductionDowntimePrepend: getLocale(email, "production-downtime"),
-		PoweronPoweroffPrepend:    getLocale(email, "poweron-poweroff"),
-		CountOkPrepend:            getLocale(email, "good-pieces-name"),
-		CountNokPrepend:           getLocale(email, "bad-pieces-name"),
-		DataFilterPlaceholder:     getLocale(email, "data-table-search-title"),
-		WorkplaceCode:             workplace.Code,
-		WorkplaceCodePrepend:      getLocale(email, "code-name"),
-		Note:                      workplace.Note,
-		NotePrepend:               getLocale(email, "note-name"),
-		CreatedAt:                 workplace.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:          getLocale(email, "created-at"),
-		UpdatedAt:                 workplace.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:          getLocale(email, "updated-at"),
-		WorkplaceSections:         workplaceSections,
-		WorkplaceModes:            workplaceModes,
-	}
-	var workplaceProductionPort database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 1").Find(&workplaceProductionPort)
-	var productionDowntimes []WorkplacePortSelection
-	for _, port := range digitalPorts {
-		if int(port.ID) == workplaceProductionPort.DevicePortID {
-			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
-			var workplacePort database.WorkplacePort
-			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
-			data.ProductionColorValue = workplacePort.Color
-		} else {
-			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
-		}
-	}
-	data.ProductionDowntimes = productionDowntimes
-
-	var workplacePoweroffPort database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 3").Find(&workplacePoweroffPort)
-	var poweronPoweroffs []WorkplacePortSelection
-	for _, port := range analogPorts {
-		if int(port.ID) == workplacePoweroffPort.DevicePortID {
-			poweronPoweroffs = append(poweronPoweroffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
-			var workplacePort database.WorkplacePort
-			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
-			data.PoweroffColorValue = workplacePort.Color
-		} else {
-			poweronPoweroffs = append(poweronPoweroffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
-		}
-	}
-	data.PoweronPoweroffs = poweronPoweroffs
-
-	var countOkPort database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Where("counter_ok is true").Find(&countOkPort)
-	var countOks []WorkplacePortSelection
-	countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: ""})
-	for _, port := range digitalPorts {
-		if int(port.ID) == countOkPort.DevicePortID {
-			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
-			var workplacePort database.WorkplacePort
-			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
-			data.OkColorValue = workplacePort.Color
-		} else {
-			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
-		}
-	}
-	data.CountOks = countOks
-
-	var countNokPort database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Where("counter_nok is true").Find(&countNokPort)
-	var countNoks []WorkplacePortSelection
-	countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: ""})
-	for _, port := range digitalPorts {
-		if int(port.ID) == countNokPort.DevicePortID {
-			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
-			var workplacePort database.WorkplacePort
-			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
-			data.NokColorValue = workplacePort.Color
-		} else {
-			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
-		}
-	}
-	data.CountNoks = countNoks
-
-	var records []database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Find(&records)
-	var workshifts []database.WorkplaceWorkshift
-	db.Where("workplace_id = ?", workplace.ID).Order("id desc").Find(&workshifts)
-	addWorkplacePortDetailsTableHeaders(email, &data)
-	for _, record := range records {
-		if record.StateID.Valid || record.CounterNOK || record.CounterOK {
-			continue
-		} else {
-			addWorkplacePortDetailsTableRow(record, &data)
-		}
-	}
-	addWorkplaceWorkshiftDetailsTableHeaders(email, &data)
-	for _, workshift := range workshifts {
-		addWorkplaceWorkshiftDetailsTableRow(workshift, &data)
-	}
-
-	var workshiftSelection []WorkshiftSelection
-
-	for _, workshift := range cachedWorkShiftsById {
-		workshiftAdded := false
-		for _, workplaceWorkshift := range cachedWorkplaceWorkShiftsById {
-			if int(workshift.ID) == workplaceWorkshift.WorkshiftID && int(workplace.ID) == workplaceWorkshift.WorkplaceID {
-				workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]", WorkshiftSelection: "selected"})
-				workshiftAdded = true
-				break
-			}
-		}
-		if !workshiftAdded {
-			workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]"})
-		}
-	}
-	sort.Slice(workshiftSelection, func(i, j int) bool {
-		return workshiftSelection[i].WorkshiftName < workshiftSelection[j].WorkshiftName
-	})
-	data.Workshifts = workshiftSelection
-
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-WORKPLACES", "Workplace details loaded in "+time.Since(timer).String())
-}
-
-func addWorkplaceWorkshiftDetailsTableRow(record database.WorkplaceWorkshift, data *WorkplaceDetailsDataOutput) {
-	var tableRow WorkshiftTableRow
-	id := WorkshiftTableCell{WorkshiftCellName: strconv.Itoa(int(record.ID))}
-	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, id)
-	name := WorkshiftTableCell{WorkshiftCellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
-	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, name)
-	data.WorkshiftTableRows = append(data.WorkshiftTableRows, tableRow)
-}
-
-func addWorkplaceWorkshiftDetailsTableHeaders(email string, data *WorkplaceDetailsDataOutput) {
-	id := WorkshiftHeaderCell{WorkshiftHeaderName: "#", WorkshiftHeaderWidth: "30"}
-	data.WorkshiftTableHeader = append(data.WorkshiftTableHeader, id)
-	name := WorkshiftHeaderCell{WorkshiftHeaderName: getLocale(email, "workshift-name")}
-	data.WorkshiftTableHeader = append(data.WorkshiftTableHeader, name)
-}
-
-func addWorkplacePortDetailsTableRow(record database.WorkplacePort, data *WorkplaceDetailsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addWorkplacePortDetailsTableHeaders(email string, data *WorkplaceDetailsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "port-name")}
-	data.TableHeader = append(data.TableHeader, name)
-}
-
-func loadWorkplaceSectionDetails(id string, writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Loading workplace section details")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Loading workplace section details ended")
+		logInfo("SETTINGS", "Saving workplace port ended with error")
 		return
 	}
-	var workplaceSection database.WorkplaceSection
-	db.Where("id = ?", id).Find(&workplaceSection)
 
-	data := WorkplaceSectionDetailsDataOutput{
-		WorkplaceSectionName:        workplaceSection.Name,
-		WorkplaceSectionNamePrepend: getLocale(email, "section-name"),
-		Note:                        workplaceSection.Note,
-		NotePrepend:                 getLocale(email, "note-name"),
-		CreatedAt:                   workplaceSection.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:            getLocale(email, "created-at"),
-		UpdatedAt:                   workplaceSection.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:            getLocale(email, "updated-at"),
+	var workplacePort database.WorkplacePort
+	db.Where("id=?", data.Id).Find(&workplacePort)
+	workplacePort.Name = data.Name
+	workplacePort.DevicePortID, _ = strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+	workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
+	if len(data.StateId) > 0 {
+		stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
+		workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-section.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-WORKPLACES", "Workplace mode section loaded in "+time.Since(timer).String())
+	workplacePort.Color = data.Color
+	workplacePort.Note = data.Note
+	db.Save(&workplacePort)
+	cacheWorkplaces(db)
+	logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 }
 
-func loadWorkplaceModeDetails(id string, writer http.ResponseWriter, email string) {
+func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Loading workplace mode details")
+	logInfo("SETTINGS", "Deleting workplace port")
+	var data WorkplacePortDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Deleting workplace port ended with error")
+		return
+	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Loading workplace mode details ended")
+		logInfo("SETTINGS", "Deleting workplace port ended with error")
 		return
 	}
-	var workplaceMode database.WorkplaceMode
-	db.Where("id = ?", id).Find(&workplaceMode)
 
-	data := WorkplaceModeDetailsDataOutput{
-		WorkplaceModeName:        workplaceMode.Name,
-		WorkplaceModeNamePrepend: getLocale(email, "type-name"),
-		DowntimeDuration:         workplaceMode.DowntimeDuration.String(),
-		DowntimeDurationPrepend:  getLocale(email, "downtime-duration"),
-		PoweroffDuration:         workplaceMode.PoweroffDuration.String(),
-		PoweroffDurationPrepend:  getLocale(email, "poweroff-duration"),
-		Note:                     workplaceMode.Note,
-		NotePrepend:              getLocale(email, "note-name"),
-		CreatedAt:                workplaceMode.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:         getLocale(email, "created-at"),
-		UpdatedAt:                workplaceMode.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:         getLocale(email, "updated-at"),
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-mode.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-WORKPLACES", "Workplace mode details loaded in "+time.Since(timer).String())
-}
-
-func loadWorkplacesSettings(writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-WORKPLACES", "Loading workplaces settings")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-WORKPLACES", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-WORKPLACES", "Loading workplaces settings ended")
-		return
-	}
-	var records []database.Workplace
-	db.Order("id desc").Find(&records)
-	var data WorkplacesSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-
-	addWorkplaceSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addWorkplaceSettingsTableRow(record, &data)
-	}
-
-	var typeRecords []database.WorkplaceSection
-	db.Order("id desc").Find(&typeRecords)
-	addWorkplaceSectionSettingsTypeTableHeaders(email, &data)
-	for _, record := range typeRecords {
-		addWorkplaceSectionSettingsTypeTableRow(record, &data)
-	}
-
-	var extendedRecords []database.WorkplaceMode
-	db.Order("id desc").Find(&extendedRecords)
-	addWorkplaceModeSettingsTypeTableHeaders(email, &data)
-	for _, record := range extendedRecords {
-		addWorkplaceModeSettingsTypeTableRow(record, &data)
-	}
-
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type-extended.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-WORKPLACES", "Workplaces settings loaded in "+time.Since(timer).String())
-}
-
-func addWorkplaceModeSettingsTypeTableRow(record database.WorkplaceMode, data *WorkplacesSettingsDataOutput) {
-	var tableRow TableRowTypeExtended
-	id := TableCellTypeExtended{CellNameTypeExtended: strconv.Itoa(int(record.ID))}
-	tableRow.TableCellTypeExtended = append(tableRow.TableCellTypeExtended, id)
-	name := TableCellTypeExtended{CellNameTypeExtended: record.Name}
-	tableRow.TableCellTypeExtended = append(tableRow.TableCellTypeExtended, name)
-	data.TableRowsTypeExtended = append(data.TableRowsTypeExtended, tableRow)
-}
-
-func addWorkplaceModeSettingsTypeTableHeaders(email string, data *WorkplacesSettingsDataOutput) {
-	id := HeaderCellTypeExtended{HeaderNameTypeExtended: "#", HeaderWidthTypeExtended: "30"}
-	data.TableHeaderTypeExtended = append(data.TableHeaderTypeExtended, id)
-	name := HeaderCellTypeExtended{HeaderNameTypeExtended: getLocale(email, "type-name")}
-	data.TableHeaderTypeExtended = append(data.TableHeaderTypeExtended, name)
-}
-
-func addWorkplaceSectionSettingsTypeTableRow(record database.WorkplaceSection, data *WorkplacesSettingsDataOutput) {
-	var tableRow TableRowType
-	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
-	tableRow.TableCellType = append(tableRow.TableCellType, id)
-	name := TableCellType{CellNameType: record.Name}
-	tableRow.TableCellType = append(tableRow.TableCellType, name)
-	data.TableRowsType = append(data.TableRowsType, tableRow)
-}
-
-func addWorkplaceSectionSettingsTypeTableHeaders(email string, data *WorkplacesSettingsDataOutput) {
-	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
-	data.TableHeaderType = append(data.TableHeaderType, id)
-	name := HeaderCellType{HeaderNameType: getLocale(email, "section-name")}
-	data.TableHeaderType = append(data.TableHeaderType, name)
-}
-
-func addWorkplaceSettingsTableRow(record database.Workplace, data *WorkplacesSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addWorkplaceSettingsTableHeaders(email string, data *WorkplacesSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "workplace-name")}
-	data.TableHeader = append(data.TableHeader, name)
+	var workplacePort database.WorkplacePort
+	db.Where("id=?", data.Id).Find(&workplacePort)
+	db.Delete(&workplacePort)
+	cacheWorkplaces(db)
+	logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" deleted in "+time.Since(timer).String())
 }

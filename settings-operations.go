@@ -53,19 +53,19 @@ type OperationDetailsDataInput struct {
 	Pdf     string
 }
 
-func loadOperationsSettings(writer http.ResponseWriter, email string) {
+func loadOperations(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-OPERATIONS", "Loading operations settings")
+	logInfo("SETTINGS", "Loading operations")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-OPERATIONS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-OPERATIONS", "Loading operations settings ended")
+		logInfo("SETTINGS", "Loading operations ended with error")
 		return
 	}
 	var records []database.Operation
@@ -74,16 +74,16 @@ func loadOperationsSettings(writer http.ResponseWriter, email string) {
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	addOperationSettingsTableHeaders(email, &data)
+	addOperationsTableHeaders(email, &data)
 	for _, record := range records {
-		addOperationSettingsTableRow(record, &data)
+		addOperationsTableRow(record, &data)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-OPERATIONS", "Operations settings loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Operations loaded in "+time.Since(timer).String())
 }
 
-func addOperationSettingsTableRow(record database.Operation, data *OperationsSettingsDataOutput) {
+func addOperationsTableRow(record database.Operation, data *OperationsSettingsDataOutput) {
 	var tableRow TableRow
 	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
 	tableRow.TableCell = append(tableRow.TableCell, id)
@@ -92,26 +92,26 @@ func addOperationSettingsTableRow(record database.Operation, data *OperationsSet
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addOperationSettingsTableHeaders(email string, data *OperationsSettingsDataOutput) {
+func addOperationsTableHeaders(email string, data *OperationsSettingsDataOutput) {
 	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
 	data.TableHeader = append(data.TableHeader, id)
 	name := HeaderCell{HeaderName: getLocale(email, "operation-name")}
 	data.TableHeader = append(data.TableHeader, name)
 }
 
-func loadOperationDetails(id string, writer http.ResponseWriter, email string) {
+func loadOperation(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-OPERATIONS", "Loading operation details")
+	logInfo("SETTINGS", "Loading operation")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-OPERATIONS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-OPERATIONS", "Loading operation details ended")
+		logInfo("SETTINGS", "Loading operation ended with error")
 		return
 	}
 	var operation database.Operation
@@ -127,7 +127,6 @@ func loadOperationDetails(id string, writer http.ResponseWriter, email string) {
 	sort.Slice(orders, func(i, j int) bool {
 		return orders[i].OrderName < orders[j].OrderName
 	})
-
 	data := OperationDetailsDataOutput{
 		OperationName:        operation.Name,
 		OperationNamePrepend: getLocale(email, "operation-name"),
@@ -145,33 +144,33 @@ func loadOperationDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-operation.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-OPERATIONS", "Operation details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Operation "+operation.Name+" loaded in "+time.Since(timer).String())
 }
 
-func saveOperation(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func saveOperation(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-OPERATIONS", "Saving operation started")
+	logInfo("SETTINGS", "Saving operation")
 	var data OperationDetailsDataInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-OPERATIONS", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-OPERATIONS", "Saving operation ended")
+		logInfo("SETTINGS", "Saving operation ended with error")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-OPERATIONS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-OPERATIONS", "Saving operation ended")
+		logInfo("SETTINGS", "Saving operation ended with error")
 		return
 	}
 	var operation database.Operation
@@ -182,5 +181,5 @@ func saveOperation(writer http.ResponseWriter, request *http.Request, params htt
 	operation.Note = data.Note
 	db.Save(&operation)
 	cacheOperations(db)
-	logInfo("SETTINGS-OPERATIONS", "Operation saved in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Operation "+operation.Name+" saved in "+time.Since(timer).String())
 }

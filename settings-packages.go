@@ -76,128 +76,87 @@ type PackageTypeDetailsDataInput struct {
 	Note  string
 }
 
-func savePackageType(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadPackages(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-PACKAGES", "Saving package type started")
-	var data PackageTypeDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-PACKAGES", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGES", "Saving package type ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading packages")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-PACKAGES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGES", "Saving package type ended")
+		logInfo("SETTINGS", "Loading packages ended with error")
 		return
 	}
-	var packageType database.PackageType
-	db.Where("id=?", data.Id).Find(&packageType)
-	packageType.Name = data.Name
-	packageType.Count, _ = strconv.Atoi(data.Count)
-	packageType.Note = data.Note
-	db.Save(&packageType)
-	cachePackages(db)
-	logInfo("SETTINGS-PACKAGES", "Package type saved in "+time.Since(timer).String())
-}
-
-func savePackage(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	timer := time.Now()
-	logInfo("SETTINGS-PACKAGES", "Saving package started")
-	var data PackageDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-PACKAGES", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGES", "Saving package ended")
-		return
+	var data PackagesSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	var records []database.Package
+	db.Order("id desc").Find(&records)
+	addPackagesTableHeaders(email, &data)
+	for _, record := range records {
+		addPackagesTableRow(record, &data)
 	}
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-PACKAGES", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGES", "Saving package ended")
-		return
+	var typeRecords []database.PackageType
+	db.Order("id desc").Find(&typeRecords)
+	addPackageTypesTableHeaders(email, &data)
+	for _, record := range typeRecords {
+		addPackageTypesTableRow(record, &data)
 	}
-	var onePackage database.Package
-	db.Where("id=?", data.Id).Find(&onePackage)
-	onePackage.Name = data.Name
-	onePackage.PackageTypeID = int(cachedPackageTypesByName[data.Type].ID)
-	onePackage.OrderID = int(cachedOrdersByName[data.Order].ID)
-	onePackage.Barcode = data.Barcode
-	onePackage.Note = data.Note
-	db.Save(&onePackage)
-	cachePackages(db)
-	logInfo("SETTINGS-PACKAGES", "Package saved in "+time.Since(timer).String())
-}
-
-func loadPackageTypeDetails(id string, writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-PACKAGES", "Loading package type details")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-PACKAGES", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGES", "Loading package type details ended")
-		return
-	}
-	var packageType database.PackageType
-	db.Where("id = ?", id).Find(&packageType)
-
-	data := PackageTypeDetailsDataOutput{
-		PackageTypeName:        packageType.Name,
-		PackageTypeNamePrepend: getLocale(email, "type-name"),
-		Count:                  strconv.Itoa(packageType.Count),
-		CountPrepend:           getLocale(email, "count-requested"),
-		Note:                   packageType.Note,
-		NotePrepend:            getLocale(email, "note-name"),
-		CreatedAt:              packageType.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:       getLocale(email, "created-at"),
-		UpdatedAt:              packageType.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:       getLocale(email, "updated-at"),
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-package-type.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-PACKAGES", "Package type details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Packages loaded in "+time.Since(timer).String())
 }
 
-func loadPackageDetails(id string, writer http.ResponseWriter, email string) {
+func addPackageTypesTableRow(record database.PackageType, data *PackagesSettingsDataOutput) {
+	var tableRow TableRowType
+	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
+	tableRow.TableCellType = append(tableRow.TableCellType, id)
+	name := TableCellType{CellNameType: record.Name}
+	tableRow.TableCellType = append(tableRow.TableCellType, name)
+	data.TableRowsType = append(data.TableRowsType, tableRow)
+}
+
+func addPackageTypesTableHeaders(email string, data *PackagesSettingsDataOutput) {
+	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
+	data.TableHeaderType = append(data.TableHeaderType, id)
+	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
+	data.TableHeaderType = append(data.TableHeaderType, name)
+}
+
+func addPackagesTableRow(record database.Package, data *PackagesSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.Name}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addPackagesTableHeaders(email string, data *PackagesSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "package-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func loadPackage(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-PACKAGES", "Loading package details")
+	logInfo("SETTINGS", "Loading package")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-PACKAGES", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGES", "Loading package details ended")
+		logInfo("SETTINGS", "Loading package ended with error")
 		return
 	}
 	var onePackage database.Package
@@ -245,76 +204,113 @@ func loadPackageDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-package.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-PACKAGES", "Package details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Package "+onePackage.Name+" loaded in "+time.Since(timer).String())
 }
 
-func loadPackagesSettings(writer http.ResponseWriter, email string) {
+func loadPackageType(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-PACKAGE", "Loading packages settings")
+	logInfo("SETTINGS", "Loading package type")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-PACKAGE", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-PACKAGE", "Loading packages settings ended")
+		logInfo("SETTINGS", "Loading package type ended with error")
 		return
 	}
-
-	var data PackagesSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-
-	var records []database.Package
-	db.Order("id desc").Find(&records)
-	addPackageSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addPackageSettingsTableRow(record, &data)
+	var packageType database.PackageType
+	db.Where("id = ?", id).Find(&packageType)
+	data := PackageTypeDetailsDataOutput{
+		PackageTypeName:        packageType.Name,
+		PackageTypeNamePrepend: getLocale(email, "type-name"),
+		Count:                  strconv.Itoa(packageType.Count),
+		CountPrepend:           getLocale(email, "count-requested"),
+		Note:                   packageType.Note,
+		NotePrepend:            getLocale(email, "note-name"),
+		CreatedAt:              packageType.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:       getLocale(email, "created-at"),
+		UpdatedAt:              packageType.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:       getLocale(email, "updated-at"),
 	}
-
-	var typeRecords []database.PackageType
-	db.Order("id desc").Find(&typeRecords)
-	addPackageSettingsTypeTableHeaders(email, &data)
-	for _, record := range typeRecords {
-		addPackageSettingsTypeTableRow(record, &data)
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-package-type.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-PACKAGE", "Packages settings loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Package type "+packageType.Name+" loaded in "+time.Since(timer).String())
 }
 
-func addPackageSettingsTypeTableRow(record database.PackageType, data *PackagesSettingsDataOutput) {
-	var tableRow TableRowType
-	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
-	tableRow.TableCellType = append(tableRow.TableCellType, id)
-	name := TableCellType{CellNameType: record.Name}
-	tableRow.TableCellType = append(tableRow.TableCellType, name)
-	data.TableRowsType = append(data.TableRowsType, tableRow)
+func savePackage(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving package")
+	var data PackageDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving package ended with error")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving package ended with error")
+		return
+	}
+	var onePackage database.Package
+	db.Where("id=?", data.Id).Find(&onePackage)
+	onePackage.Name = data.Name
+	onePackage.PackageTypeID = int(cachedPackageTypesByName[data.Type].ID)
+	onePackage.OrderID = int(cachedOrdersByName[data.Order].ID)
+	onePackage.Barcode = data.Barcode
+	onePackage.Note = data.Note
+	db.Save(&onePackage)
+	cachePackages(db)
+	logInfo("SETTINGS", "Package "+onePackage.Name+" saved in "+time.Since(timer).String())
 }
 
-func addPackageSettingsTypeTableHeaders(email string, data *PackagesSettingsDataOutput) {
-	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
-	data.TableHeaderType = append(data.TableHeaderType, id)
-	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
-	data.TableHeaderType = append(data.TableHeaderType, name)
-}
-
-func addPackageSettingsTableRow(record database.Package, data *PackagesSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.Name}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addPackageSettingsTableHeaders(email string, data *PackagesSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "package-name")}
-	data.TableHeader = append(data.TableHeader, name)
+func savePackageType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving package type")
+	var data PackageTypeDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving package type ended with error")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving package type ended with error")
+		return
+	}
+	var packageType database.PackageType
+	db.Where("id=?", data.Id).Find(&packageType)
+	packageType.Name = data.Name
+	packageType.Count, _ = strconv.Atoi(data.Count)
+	packageType.Note = data.Note
+	db.Save(&packageType)
+	cachePackages(db)
+	logInfo("SETTINGS", "Package type "+packageType.Name+" saved in "+time.Since(timer).String())
 }

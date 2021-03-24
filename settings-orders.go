@@ -65,19 +65,19 @@ type OrderDetailsDataInput struct {
 	Note            string
 }
 
-func loadOrdersSettings(writer http.ResponseWriter, email string) {
+func loadOrders(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-ORDERS", "Loading orders settings")
+	logInfo("SETTINGS", "Loading orders")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-ORDERS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-ORDERS", "Loading orders settings ended")
+		logInfo("SETTINGS", "Loading orders ended with error")
 		return
 	}
 	var records []database.Order
@@ -86,16 +86,16 @@ func loadOrdersSettings(writer http.ResponseWriter, email string) {
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	addOrderSettingsTableHeaders(email, &data)
+	addOrdersTableHeaders(email, &data)
 	for _, record := range records {
-		addOrderSettingsTableRow(record, &data)
+		addOrdersTableRow(record, &data)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-ORDERS", "Orders settings loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Orders loaded in "+time.Since(timer).String())
 }
 
-func addOrderSettingsTableRow(record database.Order, data *OrdersSettingsDataOutput) {
+func addOrdersTableRow(record database.Order, data *OrdersSettingsDataOutput) {
 	var tableRow TableRow
 	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
 	tableRow.TableCell = append(tableRow.TableCell, id)
@@ -104,31 +104,30 @@ func addOrderSettingsTableRow(record database.Order, data *OrdersSettingsDataOut
 	data.TableRows = append(data.TableRows, tableRow)
 }
 
-func addOrderSettingsTableHeaders(email string, data *OrdersSettingsDataOutput) {
+func addOrdersTableHeaders(email string, data *OrdersSettingsDataOutput) {
 	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
 	data.TableHeader = append(data.TableHeader, id)
 	name := HeaderCell{HeaderName: getLocale(email, "order-name")}
 	data.TableHeader = append(data.TableHeader, name)
 }
 
-func loadOrderDetails(id string, writer http.ResponseWriter, email string) {
+func loadOrder(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-ORDERS", "Loading order details")
+	logInfo("SETTINGS", "Loading order")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-ORDERS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-ORDERS", "Loading order details ended")
+		logInfo("SETTINGS", "Loading order ended with error")
 		return
 	}
 	var order database.Order
 	db.Where("id = ?", id).Find(&order)
-
 	var workplaces []WorkplaceSelection
 	for _, workplace := range cachedWorkplacesById {
 		if workplace.Name == cachedWorkplacesById[uint(order.WorkplaceID.Int32)].Name {
@@ -140,7 +139,6 @@ func loadOrderDetails(id string, writer http.ResponseWriter, email string) {
 	sort.Slice(workplaces, func(i, j int) bool {
 		return workplaces[i].WorkplaceName < workplaces[j].WorkplaceName
 	})
-
 	var products []ProductSelection
 	for _, product := range cachedProductsById {
 		if product.Name == cachedProductsById[uint(order.ProductID.Int32)].Name {
@@ -152,12 +150,10 @@ func loadOrderDetails(id string, writer http.ResponseWriter, email string) {
 	sort.Slice(products, func(i, j int) bool {
 		return products[i].ProductName < products[j].ProductName
 	})
-
 	requiredDate := order.CreatedAt.Format("2006-01-02T15:04:05")
 	if !order.DateTimeRequest.Time.IsZero() {
 		requiredDate = order.DateTimeRequest.Time.Format("2006-01-02T15:04:05")
 	}
-
 	data := OrderDetailsDataOutput{
 		OrderName:              order.Name,
 		OrderNamePrepend:       getLocale(email, "order-name"),
@@ -184,40 +180,38 @@ func loadOrderDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-order.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-ORDERS", "Order details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Order "+order.Name+" loaded in "+time.Since(timer).String())
 }
 
-func saveOrder(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func saveOrder(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
-	logInfo("SETTINGS-ORDERS", "Saving order started")
+	logInfo("SETTINGS", "Saving order")
 	var data OrderDetailsDataInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
-		logError("SETTINGS-ORDERS", "Error parsing data: "+err.Error())
+		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-ORDERS", "Saving order ended")
+		logInfo("SETTINGS", "Saving order ended with error")
 		return
 	}
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-ORDERS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-ORDERS", "Saving order ended")
+		logInfo("SETTINGS", "Saving order ended with error")
 		return
 	}
-
 	var order database.Order
 	db.Where("id=?", data.Id).Find(&order)
 	order.Name = data.Name
-
 	if len(data.Product) > 0 {
 		order.ProductID = sql.NullInt32{Int32: int32(cachedProductsByName[data.Product].ID), Valid: true}
 	}
@@ -234,5 +228,5 @@ func saveOrder(writer http.ResponseWriter, request *http.Request, params httprou
 	order.Note = data.Note
 	db.Save(&order)
 	cacheOrders(db)
-	logInfo("SETTINGS-ORDERS", "Order saved in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Order "+order.Name+" saved in "+time.Since(timer).String())
 }

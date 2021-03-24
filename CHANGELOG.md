@@ -20,6 +20,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Changed
 - javascript settings code reformat
 - go caching code reformat
+- go settings (all files) code reformat
 
 ## [2021.1.3.23] - 2021-03-23
 

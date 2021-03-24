@@ -113,139 +113,91 @@ type UserTypeDetailsDataInput struct {
 	Note string
 }
 
-func saveUserType(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadUsers(writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-USERS", "Saving user type started")
-	var data UserTypeDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-USERS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Saving user type ended")
-		return
-	}
+	logInfo("SETTINGS", "Loading users")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Saving user type ended")
+		logInfo("SETTINGS", "Loading users ended with error")
 		return
 	}
-	var userType database.UserType
-	db.Where("id=?", data.Id).Find(&userType)
-	userType.Name = data.Name
-	userType.Note = data.Note
-	db.Save(&userType)
-	cacheUsers(db)
-	logInfo("SETTINGS-USERS", "User type saved in "+time.Since(timer).String())
-}
-
-func saveUser(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	timer := time.Now()
-	logInfo("SETTINGS-USERS", "Saving user started")
-	var data UserDetailsDataInput
-	err := json.NewDecoder(request.Body).Decode(&data)
-	if err != nil {
-		logError("SETTINGS-USERS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Saving user ended")
-		return
+	var data UsersSettingsDataOutput
+	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
+	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
+	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	var records []database.User
+	db.Order("id desc").Find(&records)
+	addUsersTableHeaders(email, &data)
+	for _, record := range records {
+		addUsersTableRow(record, &data)
 	}
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Saving user ended")
-		return
+	var typeRecords []database.UserType
+	db.Order("id desc").Find(&typeRecords)
+	addUserTypesTableHeaders(email, &data)
+	for _, record := range typeRecords {
+		addUserTypesTableRow(record, &data)
 	}
-	var user database.User
-	db.Where("id=?", data.Id).Find(&user)
-	user.FirstName = data.FirstName
-	user.SecondName = data.SecondName
-	user.UserTypeID = int(cachedUserTypesByName[data.Type].ID)
-	user.UserRoleID = int(cachedUserRolesByName[data.Role].ID)
-	user.Barcode = data.Barcode
-	user.Email = data.Email
-	user.Phone = data.Phone
-	user.Pin = data.Pin
-	user.Rfid = data.Rfid
-	user.Note = data.Note
-	user.Locale = data.Locale
-	if len(data.Password) > 0 {
-		user.Password = hashPasswordFromString([]byte(data.Password))
-	}
-	db.Save(&user)
-	cacheUsers(db)
-	logInfo("SETTINGS-USERS", "User saved in "+time.Since(timer).String())
-}
-
-func loadUserTypeDetails(id string, writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-USERS", "Loading user type details")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Loading user type details ended")
-		return
-	}
-	var userType database.UserType
-	db.Where("id = ?", id).Find(&userType)
-
-	data := UserTypeDetailsDataOutput{
-		UserTypeName:        userType.Name,
-		UserTypeNamePrepend: getLocale(email, "type-name"),
-		Note:                userType.Note,
-		NotePrepend:         getLocale(email, "note-name"),
-		CreatedAt:           userType.CreatedAt.Format("2006-01-02T15:04:05"),
-		CreatedAtPrepend:    getLocale(email, "created-at"),
-		UpdatedAt:           userType.UpdatedAt.Format("2006-01-02T15:04:05"),
-		UpdatedAtPrepend:    getLocale(email, "updated-at"),
-	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user-type.html"))
+	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-USERS", "User type details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "Users loaded in "+time.Since(timer).String())
 }
 
-func loadUserDetails(id string, writer http.ResponseWriter, email string) {
+func addUsersTableRow(record database.User, data *UsersSettingsDataOutput) {
+	var tableRow TableRow
+	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
+	tableRow.TableCell = append(tableRow.TableCell, id)
+	name := TableCell{CellName: record.FirstName + " " + record.SecondName}
+	tableRow.TableCell = append(tableRow.TableCell, name)
+	data.TableRows = append(data.TableRows, tableRow)
+}
+
+func addUsersTableHeaders(email string, data *UsersSettingsDataOutput) {
+	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
+	data.TableHeader = append(data.TableHeader, id)
+	name := HeaderCell{HeaderName: getLocale(email, "user-name")}
+	data.TableHeader = append(data.TableHeader, name)
+}
+
+func addUserTypesTableRow(record database.UserType, data *UsersSettingsDataOutput) {
+	var tableRow TableRowType
+	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
+	tableRow.TableCellType = append(tableRow.TableCellType, id)
+	name := TableCellType{CellNameType: record.Name}
+	tableRow.TableCellType = append(tableRow.TableCellType, name)
+	data.TableRowsType = append(data.TableRowsType, tableRow)
+}
+
+func addUserTypesTableHeaders(email string, data *UsersSettingsDataOutput) {
+	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
+	data.TableHeaderType = append(data.TableHeaderType, id)
+	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
+	data.TableHeaderType = append(data.TableHeaderType, name)
+}
+
+func loadUser(id string, writer http.ResponseWriter, email string) {
 	timer := time.Now()
-	logInfo("SETTINGS-USERS", "Loading user details")
+	logInfo("SETTINGS", "Loading user")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
+		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Loading user details ended")
+		logInfo("SETTINGS", "Loading user ended with error")
 		return
 	}
 	var user database.User
 	db.Where("id = ?", id).Find(&user)
-
 	var userTypes []UserTypeSelection
 	for _, userType := range cachedUserTypesById {
 		if userType.Name == cachedUserTypesById[uint(user.UserTypeID)].Name {
@@ -257,7 +209,6 @@ func loadUserDetails(id string, writer http.ResponseWriter, email string) {
 	sort.Slice(userTypes, func(i, j int) bool {
 		return userTypes[i].UserTypeName < userTypes[j].UserTypeName
 	})
-
 	var userRoles []UserRoleSelection
 	for _, userRole := range cachedUserRolesById {
 		if userRole.Name == cachedUserRolesById[uint(user.UserRoleID)].Name {
@@ -269,7 +220,6 @@ func loadUserDetails(id string, writer http.ResponseWriter, email string) {
 	sort.Slice(userTypes, func(i, j int) bool {
 		return userTypes[i].UserTypeName < userTypes[j].UserTypeName
 	})
-
 	var locales []LocaleSelection
 	locales = append(locales, LocaleSelection{LocaleName: "CsCZ", LocaleSelected: testLocaleForUser(user.Locale, "CsCZ")})
 	locales = append(locales, LocaleSelection{LocaleName: "DeDE", LocaleSelected: testLocaleForUser(user.Locale, "DeDE")})
@@ -281,7 +231,6 @@ func loadUserDetails(id string, writer http.ResponseWriter, email string) {
 	locales = append(locales, LocaleSelection{LocaleName: "PtPT", LocaleSelected: testLocaleForUser(user.Locale, "PtPT")})
 	locales = append(locales, LocaleSelection{LocaleName: "SkSK", LocaleSelected: testLocaleForUser(user.Locale, "SkSK")})
 	locales = append(locales, LocaleSelection{LocaleName: "RuRU", LocaleSelected: testLocaleForUser(user.Locale, "RuRU")})
-
 	data := UserDetailsDataOutput{
 		FirstName:           user.FirstName,
 		FirstNamePrepend:    getLocale(email, "first-name"),
@@ -318,7 +267,121 @@ func loadUserDetails(id string, writer http.ResponseWriter, email string) {
 	}
 	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-USERS", "User details loaded in "+time.Since(timer).String())
+	logInfo("SETTINGS", "User "+user.FirstName+" "+user.SecondName+" loaded in "+time.Since(timer).String())
+}
+
+func loadUserType(id string, writer http.ResponseWriter, email string) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Loading user type")
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Loading user type ended with error")
+		return
+	}
+	var userType database.UserType
+	db.Where("id = ?", id).Find(&userType)
+	data := UserTypeDetailsDataOutput{
+		UserTypeName:        userType.Name,
+		UserTypeNamePrepend: getLocale(email, "type-name"),
+		Note:                userType.Note,
+		NotePrepend:         getLocale(email, "note-name"),
+		CreatedAt:           userType.CreatedAt.Format("2006-01-02T15:04:05"),
+		CreatedAtPrepend:    getLocale(email, "created-at"),
+		UpdatedAt:           userType.UpdatedAt.Format("2006-01-02T15:04:05"),
+		UpdatedAtPrepend:    getLocale(email, "updated-at"),
+	}
+	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user-type.html"))
+	_ = tmpl.Execute(writer, data)
+	logInfo("SETTINGS", "User type "+userType.Name+" loaded in "+time.Since(timer).String())
+}
+
+func saveUser(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving user")
+	var data UserDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving user ended with error")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving user ended with error")
+		return
+	}
+	var user database.User
+	db.Where("id=?", data.Id).Find(&user)
+	user.FirstName = data.FirstName
+	user.SecondName = data.SecondName
+	user.UserTypeID = int(cachedUserTypesByName[data.Type].ID)
+	user.UserRoleID = int(cachedUserRolesByName[data.Role].ID)
+	user.Barcode = data.Barcode
+	user.Email = data.Email
+	user.Phone = data.Phone
+	user.Pin = data.Pin
+	user.Rfid = data.Rfid
+	user.Note = data.Note
+	user.Locale = data.Locale
+	if len(data.Password) > 0 {
+		user.Password = hashPasswordFromString([]byte(data.Password))
+	}
+	db.Save(&user)
+	cacheUsers(db)
+	logInfo("SETTINGS", "User "+user.FirstName+" "+user.SecondName+" saved in "+time.Since(timer).String())
+}
+
+func saveUserType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	logInfo("SETTINGS", "Saving user type")
+	var data UserTypeDetailsDataInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("SETTINGS", "Error parsing data: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving user type ended with error")
+		return
+	}
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("SETTINGS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Saving user type ended with error")
+		return
+	}
+	var userType database.UserType
+	db.Where("id=?", data.Id).Find(&userType)
+	userType.Name = data.Name
+	userType.Note = data.Note
+	db.Save(&userType)
+	cacheUsers(db)
+	logInfo("SETTINGS", "User type "+userType.Name+" saved in "+time.Since(timer).String())
 }
 
 func testLocaleForUser(userLocale string, locale string) string {
@@ -328,86 +391,14 @@ func testLocaleForUser(userLocale string, locale string) string {
 	return ""
 }
 
-func loadUsersSettings(writer http.ResponseWriter, email string) {
-	timer := time.Now()
-	logInfo("SETTINGS-USERS", "Loading users settings")
-	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
-	sqlDB, _ := db.DB()
-	defer sqlDB.Close()
-	if err != nil {
-		logError("SETTINGS-USERS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
-		writer.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS-USERS", "Loading users settings ended")
-		return
-	}
-
-	var data UsersSettingsDataOutput
-	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
-	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
-	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-
-	var records []database.User
-	db.Order("id desc").Find(&records)
-	addUserSettingsTableHeaders(email, &data)
-	for _, record := range records {
-		addUserSettingsTableRow(record, &data)
-	}
-
-	var typeRecords []database.UserType
-	db.Order("id desc").Find(&typeRecords)
-	addUserSettingsTypeTableHeaders(email, &data)
-	for _, record := range typeRecords {
-		addUserSettingsTypeTableRow(record, &data)
-	}
-
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS-USERS", "Users settings loaded in "+time.Since(timer).String())
-}
-
-func addUserSettingsTableRow(record database.User, data *UsersSettingsDataOutput) {
-	var tableRow TableRow
-	id := TableCell{CellName: strconv.Itoa(int(record.ID))}
-	tableRow.TableCell = append(tableRow.TableCell, id)
-	name := TableCell{CellName: record.FirstName + " " + record.SecondName}
-	tableRow.TableCell = append(tableRow.TableCell, name)
-	data.TableRows = append(data.TableRows, tableRow)
-}
-
-func addUserSettingsTableHeaders(email string, data *UsersSettingsDataOutput) {
-	id := HeaderCell{HeaderName: "#", HeaderWidth: "30"}
-	data.TableHeader = append(data.TableHeader, id)
-	name := HeaderCell{HeaderName: getLocale(email, "user-name")}
-	data.TableHeader = append(data.TableHeader, name)
-}
-
-func addUserSettingsTypeTableRow(record database.UserType, data *UsersSettingsDataOutput) {
-	var tableRow TableRowType
-	id := TableCellType{CellNameType: strconv.Itoa(int(record.ID))}
-	tableRow.TableCellType = append(tableRow.TableCellType, id)
-	name := TableCellType{CellNameType: record.Name}
-	tableRow.TableCellType = append(tableRow.TableCellType, name)
-	data.TableRowsType = append(data.TableRowsType, tableRow)
-}
-
-func addUserSettingsTypeTableHeaders(email string, data *UsersSettingsDataOutput) {
-	id := HeaderCellType{HeaderNameType: "#", HeaderWidthType: "30"}
-	data.TableHeaderType = append(data.TableHeaderType, id)
-	name := HeaderCellType{HeaderNameType: getLocale(email, "type-name")}
-	data.TableHeaderType = append(data.TableHeaderType, name)
-}
-
 func hashPasswordFromString(pwd []byte) string {
-	logInfo("MAIN", "Hashing password")
+	logInfo("SETTINGS", "Hashing password")
 	timer := time.Now()
 	hash, err := bcrypt.GenerateFromPassword(pwd, bcrypt.MinCost)
 	if err != nil {
-		logError("MAIN", "Cannot hash password: "+err.Error())
+		logError("SETTINGS", "Cannot hash password: "+err.Error())
 		return ""
 	}
-	logInfo("MAIN", "Password hashed in  "+time.Since(timer).String())
+	logInfo("SETTINGS", "Password hashed in  "+time.Since(timer).String())
 	return string(hash)
 }

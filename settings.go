@@ -141,7 +141,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	logInfo("SETTINGS", "Page sent in "+time.Since(timer).String())
 }
 
-func loadSettingsData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadSettingsData(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
 	logInfo("SETTINGS", "Loading settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
@@ -153,40 +153,40 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, params 
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS", "Loading settings ended")
+		logInfo("SETTINGS", "Loading settings ended with error")
 		return
 	}
 	logInfo("SETTINGS", "Loading settings for "+data.Data)
 	updateUserDataSettings(email, "", data.Data, nil)
 	switch data.Data {
 	case "alarms":
-		loadAlarmsSettings(writer, email)
+		loadAlarms(writer, email)
 	case "breakdowns":
-		loadBreakdownsSettings(writer, email)
+		loadBreakdowns(writer, email)
 	case "downtimes":
-		loadDowntimesSettings(writer, email)
+		loadDowntimes(writer, email)
 	case "faults":
-		loadFaultsSettings(writer, email)
+		loadFaults(writer, email)
 	case "operations":
-		loadOperationsSettings(writer, email)
+		loadOperations(writer, email)
 	case "orders":
-		loadOrdersSettings(writer, email)
+		loadOrders(writer, email)
 	case "packages":
-		loadPackagesSettings(writer, email)
+		loadPackages(writer, email)
 	case "parts":
-		loadPartsSettings(writer, email)
+		loadParts(writer, email)
 	case "products":
-		loadProductsSettings(writer, email)
+		loadProducts(writer, email)
 	case "states":
-		loadStatesSettings(writer, email)
+		loadStates(writer, email)
 	case "devices":
-		loadDevicesSettings(writer, email)
+		loadDevices(writer, email)
 	case "users":
-		loadUsersSettings(writer, email)
+		loadUsers(writer, email)
 	case "workplaces":
-		loadWorkplacesSettings(writer, email)
+		loadWorkplaces(writer, email)
 	case "workshifts":
-		loadWorkshiftsSettings(writer, email)
+		loadWorkShifts(writer, email)
 	case "system-settings":
 		loadSystemSettings(writer, email)
 	case "user":
@@ -196,7 +196,7 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, params 
 	return
 }
 
-func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
 	logInfo("SETTINGS", "Loading settings detail for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
@@ -208,7 +208,7 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("SETTINGS", "Loading settings detail ended")
+		logInfo("SETTINGS", "Loading settings detail ended with error")
 		return
 	}
 
@@ -218,52 +218,52 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		{
 			switch data.Data {
 			case "alarms":
-				loadAlarmDetails(data.Id, writer, email)
+				loadAlarm(data.Id, writer, email)
 			case "breakdowns":
-				loadBreakdownDetails(data.Id, writer, email)
+				loadBreakdown(data.Id, writer, email)
 			case "downtimes":
-				loadDowntimeDetails(data.Id, writer, email)
+				loadDowntime(data.Id, writer, email)
 			case "faults":
-				loadFaultDetails(data.Id, writer, email)
+				loadFault(data.Id, writer, email)
 			case "operations":
-				loadOperationDetails(data.Id, writer, email)
+				loadOperation(data.Id, writer, email)
 			case "orders":
-				loadOrderDetails(data.Id, writer, email)
+				loadOrder(data.Id, writer, email)
 			case "packages":
-				loadPackageDetails(data.Id, writer, email)
+				loadPackage(data.Id, writer, email)
 			case "parts":
-				loadPartDetails(data.Id, writer, email)
+				loadPart(data.Id, writer, email)
 			case "products":
-				loadProductDetails(data.Id, writer, email)
+				loadProduct(data.Id, writer, email)
 			case "states":
-				loadStateDetails(data.Id, writer, email)
+				loadState(data.Id, writer, email)
 			case "devices":
-				loadDeviceDetails(data.Id, writer, email)
+				loadDevice(data.Id, writer, email)
 			case "system-settings":
 				loadSystemSettingsDetails(data.Id, writer, email)
 			case "users":
-				loadUserDetails(data.Id, writer, email)
+				loadUser(data.Id, writer, email)
 			case "workplaces":
-				loadWorkplaceDetails(data.Id, writer, email)
+				loadWorkplace(data.Id, writer, email)
 			case "workshifts":
-				loadWorkshiftDetails(data.Id, writer, email)
+				loadWorkshift(data.Id, writer, email)
 			}
 		}
 	case "second":
 		{
 			switch data.Data {
 			case "breakdowns":
-				loadBreakdownTypeDetails(data.Id, writer, email)
+				loadBreakdownTypes(data.Id, writer, email)
 			case "downtimes":
-				loadDowntimeTypeDetails(data.Id, writer, email)
+				loadDowntimeType(data.Id, writer, email)
 			case "faults":
-				loadFaultTypeDetails(data.Id, writer, email)
+				loadFaultType(data.Id, writer, email)
 			case "packages":
-				loadPackageTypeDetails(data.Id, writer, email)
+				loadPackageType(data.Id, writer, email)
 			case "users":
-				loadUserTypeDetails(data.Id, writer, email)
+				loadUserType(data.Id, writer, email)
 			case "workplaces":
-				loadWorkplaceSectionDetails(data.Id, writer, email)
+				loadWorkplaceSection(data.Id, writer, email)
 			}
 
 		}
@@ -271,12 +271,11 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, param
 		{
 			switch data.Data {
 			case "workplaces":
-				loadWorkplaceModeDetails(data.Id, writer, email)
+				loadWorkplaceMode(data.Id, writer, email)
 			}
 		}
 
 	}
-
 	logInfo("SETTINGS", "Detail settings loaded in "+time.Since(timer).String())
 	return
 }
