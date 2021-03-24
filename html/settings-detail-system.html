@@ -3,29 +3,29 @@
            value="{{.SystemSettingsName}}">
 </div>
 
-<div class="important" style="margin-top: 6px;">
+<div class="important" style="margin-top: 7px;">
     <input id="system-settings-value" type="text" data-role="input" data-prepend="{{.SystemSettingsValuePrepend}}: "
            value="{{.SystemSettingsValue}}">
 </div>
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <input id="system-settings-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <select id="system-settings-selection" data-filter="false" data-role="select" data-prepend="{{.EnabledPrepend}}: ">
         {{range .SystemSettingsSelection}}
         <option value="{{.SystemSettingsValue}}" {{.SystemSettingsSelected}}>{{.SystemSettingsValue}}</option>
         {{end}}
     </select>
 </div>
-<div style="margin-top: 6px;" disabled>
+<div style="margin-top: 7px;" disabled>
     <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
 </div>
-<div style="margin-top: 6px;" disabled>
+<div style="margin-top: 7px;" disabled>
     <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
 </div>
 
-<div style="margin-top: 6px;text-align: right">
+<div style="margin-top: 7px;text-align: right">
     <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px;margin-right: 0">
         <span class="mif-floppy-disk" id="data-save-button-mif"></span>
     </button>

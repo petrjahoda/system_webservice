@@ -2,11 +2,11 @@
     <input id="first-name" type="text" data-role="input" data-prepend="{{.FirstNamePrepend}}: "
            value="{{.FirstName}}">
 </div>
-<div class="important" style="margin-top: 6px;">
+<div class="important" style="margin-top: 7px;">
     <input id="second-name" type="text" data-role="input" data-prepend="{{.SecondNamePrepend}}: "
            value="{{.SecondName}}">
 </div>
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <select id="user-locale-selection" data-filter="false" data-role="select"
             data-prepend="{{.LocalePrepend}}: ">
         {{range .Locales}}
@@ -15,31 +15,34 @@
     </select>
 </div>
 
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <input id="password" type="text" data-role="input" data-prepend="{{.PasswordPrepend}}: "
            value="{{.Password}}">
 </div>
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <input id="email" type="text" data-role="input" data-prepend="{{.EmailPrepend}}: "
            value="{{.Email}}">
 </div>
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <input id="phone" type="text" data-role="input" data-prepend="{{.PhonePrepend}}: "
            value="{{.Phone}}">
 </div>
-<div style="margin-top: 6px;">
+<div style="margin-top: 7px;">
     <input id="user-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
-<div style="margin-top: 6px;" disabled>
+<div style="margin-top: 7px;" disabled>
     <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
 </div>
-<div style="margin-top: 6px;" disabled>
+<div style="margin-top: 7px;" disabled>
     <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
 </div>
 
-<div style="margin-top: 6px;text-align: right">
+<div style="margin-top: 7px;text-align: right">
     <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px;margin-right: 0">
         <span class="mif-floppy-disk" id="data-save-button-mif"></span>
     </button>
+</div>
+<div style="text-align: center;mix-blend-mode: multiply;">
+    <img data-role="gravatar" data-email="{{.Email}}" data-default="identicon" alt="gravatar">
 </div>
