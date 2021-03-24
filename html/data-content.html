@@ -1,6 +1,15 @@
+<div class="row mb-2" style="margin-top: -6px">
+    <div class="cell-7 my-search-wrapper"></div>
+    <div class="cell-5 my-rows-wrapper"></div>
+</div>
+<div style="margin-top: -10px">
 <table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="data-table"
        data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
        data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
+       data-pagination-wrapper=".my-pagination-wrapper"
+       data-search-wrapper=".my-search-wrapper"
+       data-rows-wrapper=".my-rows-wrapper"
+       data-info-wrapper =".my-info-wrapper"
        data-rows-steps="5, 10, 15, 20, 25"
        data-rows="10"
        data-pagination-next-title="⇨">
@@ -21,3 +30,9 @@
     {{end}}
     </tbody>
 </table>
+</div>
+<div class="row mb-2" style="margin-top: -14px;text-align: right">
+    <div class="cell-7 my-pagination-wrapper" ></div>
+    <div class="cell-5 my-info-wrapper" style="text-align: right;padding-right: 10px">
+    </div>
+</div>

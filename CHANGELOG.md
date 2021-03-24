@@ -21,6 +21,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - javascript settings code reformat
 - go caching code reformat
 - go settings (all files) code reformat
+- better css formatting for all the tables
 
 ### Fixed
 - proper saving new workplace ports (when deleted old are found, they are updated)

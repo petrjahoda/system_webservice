@@ -2,7 +2,7 @@
     <input id="package-name" type="text" data-role="input" data-prepend="{{.PackageNamePrepend}}: "
            value="{{.PackageName}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <select id="package-type-selection" data-filter="false" data-role="select"
             data-prepend="{{.PackageTypeNamePrepend}}: ">
         {{range .PackageTypes}}
@@ -10,30 +10,30 @@
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <select id="order-selection" data-filter="false" data-role="select" data-prepend="{{.OrderNamePrepend}}: ">
         {{range .Orders}}
         <option value="{{.OrderName}}" {{.OrderSelected}}>{{.OrderName}}</option>
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="barcode" type="text" data-role="input" data-prepend="{{.BarcodePrepend}}: "
            value="{{.Barcode}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="package-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
-<div style="margin-top: 14px;" disabled>
+<div style="margin-top: 6px;" disabled>
     <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
 </div>
-<div style="margin-top: 14px;" disabled>
+<div style="margin-top: 6px;" disabled>
     <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
 </div>
 
-<div style="margin-top: 14px;text-align: right">
-    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+<div style="margin-top: 6px;text-align: right">
+    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px;margin-right: 0">
         <span class="mif-floppy-disk" id="data-save-button-mif"></span>
     </button>
 </div>

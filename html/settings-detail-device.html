@@ -2,7 +2,7 @@
     <input id="device-name" type="text" data-role="input" data-prepend="{{.DeviceNamePrepend}}: "
            value="{{.DeviceName}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <select id="device-type-selection" data-filter="false" data-role="select"
             data-prepend="{{.DeviceTypeNamePrepend}}: ">
         {{range .DeviceTypes}}
@@ -10,45 +10,45 @@
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="ip-address" type="text" data-role="input" data-prepend="{{.IpAddressPrepend}}: "
            value="{{.IpAddress}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="mac-address" type="text" data-role="input" data-prepend="{{.MacAddressPrepend}}: "
            value="{{.MacAddress}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="device-version-name" type="text" data-role="input" data-prepend="{{.DeviceVersionPrepend}}: "
            value="{{.DeviceVersion}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="device-settings" type="text" data-role="input" data-prepend="{{.DeviceSettingsPrepend}}: "
            value="{{.DeviceSettings}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <input id="device-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <select id="device-enabled-selection" data-filter="false" data-role="select" data-prepend="{{.EnabledPrepend}}: ">
         {{range .DeviceEnabledSelection}}
         <option value="{{.DeviceEnabled}}" {{.DeviceEnabledSelected}}>{{.DeviceEnabled}}</option>
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;" disabled>
+<div style="margin-top: 6px;" disabled>
     <input id="created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: " value="{{.CreatedAt}}">
 </div>
-<div style="margin-top: 14px;" disabled>
+<div style="margin-top: 6px;" disabled>
     <input id="updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: " value="{{.UpdatedAt}}">
 </div>
-<div style="margin-top: 14px;text-align: right">
-    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+<div style="margin-top: 6px;text-align: right">
+    <button id="data-save-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px;margin-right: 0">
         <span class="mif-floppy-disk" id="data-save-button-mif"></span>
     </button>
 </div>
-<div id="ports" style="margin-top: 14px;" {{.PortsHidden}}>
+<div id="ports" style="margin-top: 50px;" {{.PortsHidden}}>
     <table class="table striped row-hover" data-role="table" id="data-port-table" data-check="true" data-check-type="radio"
            data-show-search="false" data-show-table-info="false" data-show-pagination="false" data-show-activity="false"
            data-show-rows-steps="false" >
@@ -69,8 +69,8 @@
         {{end}}
         </tbody>
     </table>
-    <div style="margin-top: 14px;text-align: right">
-        <button id="data-new-port-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+    <div style="margin-top: 6px;text-align: right">
+        <button id="data-new-port-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px;margin-top: -4px;margin-right: 0">
             <span class="mif-plus" id="data-new-port-button-mif"></span>
         </button>
     </div>

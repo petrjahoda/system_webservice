@@ -1,8 +1,8 @@
-<div class="important" style="margin-top: 14px;">
+<div class="important" style="margin-top: 50px;">
     <input id="workplace-port-name" type="text" data-role="input" data-prepend="{{.WorkplacePortNamePrepend}}: "
            value="{{.WorkplacePortName}}">
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <select id="workplace-port-device-port-selection" data-filter="false" data-role="select"
             data-prepend="{{.WorkplacePortDevicePortPrepend}}: ">
         {{range .WorkplacePortDevicePorts}}
@@ -12,7 +12,7 @@
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;">
+<div style="margin-top: 6px;">
     <select id="workplace-port-state-selection" data-filter="false" data-role="select" data-add-empty-value="true"
             data-prepend="{{.WorkplacePortStatePrepend}}: ">
         {{range .WorkplacePortStates}}
@@ -20,27 +20,27 @@
         {{end}}
     </select>
 </div>
-<div style="margin-top: 14px;margin-right: 0;margin-left: 0;" class="row">
+<div style="margin-top: 6px;margin-right: 0;margin-left: 0;" class="row">
     <input id="workplace-port-note" type="text" data-role="input" data-prepend="{{.NotePrepend}}: "
            value="{{.Note}}" class="cell-10">
     <div class="cell-1"></div>
     <input id="port-color" type="color" class="cell-1" style="height: 36px;border:none" value="{{.Color}}">
 </div>
-<div style="margin-top: 14px;" disabled>
+<div style="margin-top: 6px;" disabled>
     <input id="workplace-port-created-at" type="text" data-role="input" data-prepend="{{.CreatedAtPrepend}}: "
            value="{{.CreatedAt}}">
 </div>
-<div style="margin-top: 14px;" disabled>
+<div style="margin-top: 6px;" disabled>
     <input id="workplace-port-updated-at" type="text" data-role="input" data-prepend="{{.UpdatedAtPrepend}}: "
            value="{{.UpdatedAt}}">
 </div>
 
-<div style="margin-top: 14px;text-align: right">
-    <button id="workplace-port-delete-button" class="button alert" style="min-width: 100px;max-width: 100px;height: 35px">
+<div style="margin-top: 6px;text-align: right">
+    <button id="workplace-port-delete-button" class="button alert" style="min-width: 100px;max-width: 100px;height: 35px;margin-right: 0">
         <span class="mif-minus" id="workplace-port-delete-button-mif"></span>
     </button>
     <button id="workplace-port-save-button" class="button primary"
-            style="min-width: 100px;max-width: 100px;height: 35px">
+            style="min-width: 100px;max-width: 100px;height: 35px;margin-right: 0">
         <span class="mif-floppy-disk" id="workplace-port-save-button-mif"></span>
     </button>
 </div>

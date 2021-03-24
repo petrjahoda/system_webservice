@@ -1,99 +1,130 @@
-<table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="data-table"
-       data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
-       data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
-       data-pagination-next-title="⇨" data-check="true" data-pagination-wrapper=".my-pagination-wrapper"
-       data-rows-steps="5, 10, 15"
-       data-rows="5"
-       data-check-type="radio">
-    <thead data-sortable="true">
-    <tr>
-        {{range .TableHeader}}
-        <th class="sortable-column asc" data-size="{{.HeaderWidth}}">{{.HeaderName}}</th>
+<div class="row mb-2" style="margin-top: -6px">
+    <div class="cell-7 my-search-wrapper"></div>
+    <div class="cell-5 my-rows-wrapper"></div>
+</div>
+<div style="margin-top: -10px">
+    <table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="data-table"
+           data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
+           data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
+           data-pagination-next-title="⇨" data-check="true"
+           data-show-table-info="false"
+           data-pagination-wrapper=".my-pagination-wrapper"
+           data-search-wrapper=".my-search-wrapper"
+           data-rows-wrapper=".my-rows-wrapper"
+           data-rows-steps="5, 10, 15"
+           data-rows="5"
+           data-check-type="radio">
+        <thead data-sortable="true">
+        <tr>
+            {{range .TableHeader}}
+            <th class="sortable-column asc" data-size="{{.HeaderWidth}}">{{.HeaderName}}</th>
+            {{end}}
+        </tr>
+        </thead>
+        <tbody>
+        {{range .TableRows}}
+        <tr>
+            {{range .TableCell}}
+            <td>{{.CellName}}</td>
+            {{end}}
+        </tr>
         {{end}}
-    </tr>
-    </thead>
-    <tbody>
-    {{range .TableRows}}
-    <tr>
-        {{range .TableCell}}
-        <td>{{.CellName}}</td>
-        {{end}}
-    </tr>
-    {{end}}
-    </tbody>
-</table>
-<div class="row mb-2">
-    <div class="cell-6 my-pagination-wrapper" ></div>
-    <div class="cell-6" style="text-align: right">
-        <button id="data-new-button" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        </tbody>
+    </table>
+</div>
+<div class="row mb-2" style="margin-top: -14px">
+    <div class="cell-7 my-pagination-wrapper"></div>
+    <div class="cell-5" style="text-align: right">
+        <button id="data-new-button" class="button primary"
+                style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 4px;margin-right: 0">
             <span class="mif-plus" id="data-new-button-mif"></span>
         </button>
     </div>
 </div>
-<br>
-<table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="type-table"
-       data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
-       data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
-       data-pagination-next-title="⇨" data-check="true"  data-pagination-wrapper=".my-pagination-wrapper-type"
-       data-rows-steps="5, 10, 15"
-       data-rows="5"
-       data-check-type="radio" >
-    <thead data-sortable="true" >
-    <tr>
-        {{range .TableHeaderType}}
-        <th class="sortable-column asc" data-size="{{.HeaderWidthType}}">{{.HeaderNameType}}</th>
+<div class="row mb-2" style="margin-top: 50px">
+    <div class="cell-7 my-search-wrapper-type"></div>
+    <div class="cell-5 my-rows-wrapper-type"></div>
+</div>
+<div style="margin-top: -10px">
+    <table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="type-table"
+           data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
+           data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
+           data-pagination-next-title="⇨" data-check="true"
+           data-show-table-info="false"
+           data-pagination-wrapper=".my-pagination-wrapper-type"
+           data-search-wrapper=".my-search-wrapper-type"
+           data-rows-wrapper=".my-rows-wrapper-type"
+           data-rows-steps="5, 10, 15"
+           data-rows="5"
+           data-check-type="radio">
+        <thead data-sortable="true">
+        <tr>
+            {{range .TableHeaderType}}
+            <th class="sortable-column asc" data-size="{{.HeaderWidthType}}">{{.HeaderNameType}}</th>
+            {{end}}
+        </tr>
+        </thead>
+        <tbody>
+        {{range .TableRowsType}}
+        <tr>
+            {{range .TableCellType}}
+            <td>{{.CellNameType}}</td>
+            {{end}}
+        </tr>
         {{end}}
-    </tr>
-    </thead>
-    <tbody>
-    {{range .TableRowsType}}
-    <tr>
-        {{range .TableCellType}}
-        <td>{{.CellNameType}}</td>
-        {{end}}
-    </tr>
-    {{end}}
-    </tbody>
-</table>
-<div class="row mb-2">
-    <div class="cell-6 my-pagination-wrapper-type" ></div>
-    <div class="cell-6" style="text-align: right">
-        <button id="data-new-button-type" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
-            <span class="mif-plus" id="data-new-button-mif-type"></span>
+        </tbody>
+    </table>
+</div>
+<div class="row mb-2" style="margin-top: -14px">
+    <div class="cell-7 my-pagination-wrapper-type"></div>
+    <div class="cell-5" style="text-align: right">
+        <button id="data-new-button-type" class="button primary"
+                style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 4px;margin-right: 0">
+            <span class="mif-plus" id="data-new-button-type-mif"></span>
         </button>
     </div>
 </div>
-<table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="type-table-extended"
-       data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
-       data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
-       data-pagination-next-title="⇨" data-check="true"  data-pagination-wrapper=".my-pagination-wrapper-type"
-       data-rows-steps="5, 10, 15"
-       data-rows="5"
-       data-check-type="radio" >
-    <thead data-sortable="true" >
-    <tr>
-        {{range .TableHeaderTypeExtended}}
-        <th class="sortable-column asc" data-size="{{.HeaderWidthTypeExtended}}">{{.HeaderNameTypeExtended}}</th>
+
+<div class="row mb-2" style="margin-top: 50px">
+    <div class="cell-7 my-search-wrapper-type-extended"></div>
+    <div class="cell-5 my-rows-wrapper-type-extended"></div>
+</div>
+<div style="margin-top: -10px">
+    <table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="type-table-extended"
+           data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
+           data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
+           data-pagination-next-title="⇨" data-check="true"
+           data-show-table-info="false"
+           data-pagination-wrapper=".my-pagination-wrapper-type-extended"
+           data-search-wrapper=".my-search-wrapper-type-extended"
+           data-rows-wrapper=".my-rows-wrapper-type-extended"
+           data-rows-steps="5, 10, 15"
+           data-rows="5"
+           data-check-type="radio">
+        <thead data-sortable="true">
+        <tr>
+            {{range .TableHeaderTypeExtended}}
+            <th class="sortable-column asc" data-size="{{.HeaderWidthTypeExtended}}">{{.HeaderNameTypeExtended}}</th>
+            {{end}}
+        </tr>
+        </thead>
+        <tbody>
+        {{range .TableRowsTypeExtended}}
+        <tr>
+            {{range .TableCellTypeExtended}}
+            <td>{{.CellNameTypeExtended}}</td>
+            {{end}}
+        </tr>
         {{end}}
-    </tr>
-    </thead>
-    <tbody>
-    {{range .TableRowsTypeExtended}}
-    <tr>
-        {{range .TableCellTypeExtended}}
-        <td>{{.CellNameTypeExtended}}</td>
-        {{end}}
-    </tr>
-    {{end}}
-    </tbody>
-</table>
-<div class="row mb-2">
-    <div class="cell-6 my-pagination-wrapper-type" ></div>
-    <div class="cell-6" style="text-align: right">
-        <button id="data-new-button-type-extended" class="button primary" style="min-width: 100px;max-width: 100px;height: 35px">
+        </tbody>
+    </table>
+</div>
+<div class="row mb-2" style="margin-top: -14px">
+    <div class="cell-7 my-pagination-wrapper-type-extended"></div>
+    <div class="cell-5" style="text-align: right">
+        <button id="data-new-button-type-extended" class="button primary"
+                style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 4px;margin-right: 0">
             <span class="mif-plus" id="data-new-button-mif-type-extended"></span>
         </button>
     </div>
 </div>
-
-
