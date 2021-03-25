@@ -1,3 +1,13 @@
+var timeleft = 60;
+var downloadTimer = setInterval(function(){
+    if(timeleft <= 0){
+        clearInterval(downloadTimer);
+    }
+    document.getElementById("progress-bar").value = 60 - timeleft;
+    timeleft -= 1;
+}, 1000);
+
+
 function dataCollapse(element) {
     console.log(element.dataset.titleCaption + " collapsed")
     let data = {
