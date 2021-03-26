@@ -18,6 +18,8 @@ type IndexPageData struct {
 	MenuData       string
 	MenuSettings   string
 	Compacted      string
+	UserEmail      string
+	UserName       string
 }
 
 func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -34,6 +36,8 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.Compacted = cachedUserSettings[email].menuState
+	data.UserEmail = email
+	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("MAIN", "Home page sent in "+time.Since(timer).String())

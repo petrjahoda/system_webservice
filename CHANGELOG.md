@@ -20,6 +20,9 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 - workplaces port handling
 
+### Changed
+- rendering html data the same for all pages
+
 ## [2021.1.3.25] - 2021-03-25
 
 ### Changed

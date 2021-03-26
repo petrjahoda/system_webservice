@@ -31,6 +31,8 @@ type ChartsPageData struct {
 	Compacted             string
 	DataFilterPlaceholder string
 	DateLocale            string
+	UserEmail             string
+	UserName              string
 }
 
 type ChartWorkplaceSelection struct {
@@ -83,6 +85,8 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	var data ChartsPageData
 	data.Version = version
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
+	data.UserEmail = email
+	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.Company = cachedCompanyName
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
