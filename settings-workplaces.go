@@ -670,53 +670,133 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		productionDowntimeId := strings.TrimRight(strings.Split(data.ProductionDowntimeSelection, "[")[1], "]")
 		var devicePort database.DevicePort
 		db.Where("id = ?", productionDowntimeId).Find(&devicePort)
-		var port database.WorkplacePort
-		db.Where("device_port_id = ?", productionDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&port)
-		port.StateID = sql.NullInt32{Int32: 1, Valid: true}
-		port.DevicePortID, _ = strconv.Atoi(productionDowntimeId)
-		port.Name = devicePort.Name
-		port.WorkplaceID = int(workplace.ID)
-		port.Color = data.ProductionDowntimeColor
-		db.Save(&port)
+		var workplacePort database.WorkplacePort
+		db.Where("device_port_id = ?", productionDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+		if workplacePort.ID > 0 {
+			workplacePort.StateID = sql.NullInt32{Int32: 1, Valid: true}
+			workplacePort.DevicePortID, _ = strconv.Atoi(productionDowntimeId)
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.ProductionDowntimeColor
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		} else {
+			productionDowntimeIdAsInt, _ := strconv.Atoi(productionDowntimeId)
+			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), productionDowntimeIdAsInt).Find(&workplacePort)
+			workplacePort.StateID = sql.NullInt32{Int32: 1, Valid: true}
+			workplacePort.DevicePortID = productionDowntimeIdAsInt
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.ProductionDowntimeColor
+			workplacePort.DeletedAt = gorm.DeletedAt{
+				Time:  time.Time{},
+				Valid: false,
+			}
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		}
 	}
 	if len(data.PowerOnPowerOffSelection) > 1 {
 		poweroffDowntimeId := strings.TrimRight(strings.Split(data.PowerOnPowerOffSelection, "[")[1], "]")
 		var devicePort database.DevicePort
 		db.Where("id = ?", poweroffDowntimeId).Find(&devicePort)
-		var port database.WorkplacePort
-		db.Where("device_port_id = ?", poweroffDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&port)
-		port.StateID = sql.NullInt32{Int32: 3, Valid: true}
-		port.DevicePortID, _ = strconv.Atoi(poweroffDowntimeId)
-		port.Name = devicePort.Name
-		port.WorkplaceID = int(workplace.ID)
-		port.Color = data.PowerOnPowerOffColor
-		db.Save(&port)
+		var workplacePort database.WorkplacePort
+		db.Where("device_port_id = ?", poweroffDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+		if workplacePort.ID > 0 {
+			workplacePort.StateID = sql.NullInt32{Int32: 3, Valid: true}
+			workplacePort.DevicePortID, _ = strconv.Atoi(poweroffDowntimeId)
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.PowerOnPowerOffColor
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		} else {
+			poweroffDowntimeIdAsInt, _ := strconv.Atoi(poweroffDowntimeId)
+			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), poweroffDowntimeIdAsInt).Find(&workplacePort)
+			workplacePort.StateID = sql.NullInt32{Int32: 3, Valid: true}
+			workplacePort.DevicePortID = poweroffDowntimeIdAsInt
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.PowerOnPowerOffColor
+			workplacePort.DeletedAt = gorm.DeletedAt{
+				Time:  time.Time{},
+				Valid: false,
+			}
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		}
 	}
 	if len(data.CountOkSelection) > 1 {
 		countOkId := strings.TrimRight(strings.Split(data.CountOkSelection, "[")[1], "]")
 		var devicePort database.DevicePort
 		db.Where("id = ?", countOkId).Find(&devicePort)
-		var port database.WorkplacePort
-		db.Where("device_port_id = ?", countOkId).Where("workplace_id = ?", workplace.ID).Find(&port)
-		port.DevicePortID, _ = strconv.Atoi(countOkId)
-		port.Name = devicePort.Name
-		port.WorkplaceID = int(workplace.ID)
-		port.Color = data.CountOkColor
-		port.CounterOK = true
-		db.Save(&port)
+		var workplacePort database.WorkplacePort
+		db.Where("device_port_id = ?", countOkId).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+		if workplacePort.ID > 0 {
+			fmt.Println("naslo")
+			workplacePort.DevicePortID, _ = strconv.Atoi(countOkId)
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.CountOkColor
+			workplacePort.CounterOK = true
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		} else {
+			fmt.Println("nenaslo")
+			countOkIdAsInt, _ := strconv.Atoi(countOkId)
+			db.Debug().Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), countOkIdAsInt).Find(&workplacePort)
+			workplacePort.DevicePortID = countOkIdAsInt
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.CountOkColor
+			workplacePort.CounterOK = true
+			workplacePort.DeletedAt = gorm.DeletedAt{
+				Time:  time.Time{},
+				Valid: false,
+			}
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		}
+
 	}
 	if len(data.CountNokSelection) > 1 {
 		countNokId := strings.TrimRight(strings.Split(data.CountNokSelection, "[")[1], "]")
 		var devicePort database.DevicePort
 		db.Where("id = ?", countNokId).Find(&devicePort)
-		var port database.WorkplacePort
-		db.Where("device_port_id = ?", countNokId).Where("workplace_id = ?", workplace.ID).Find(&port)
-		port.DevicePortID, _ = strconv.Atoi(countNokId)
-		port.Name = devicePort.Name
-		port.WorkplaceID = int(workplace.ID)
-		port.Color = data.CountNokColor
-		port.CounterNOK = true
-		db.Save(&port)
+		var workplacePort database.WorkplacePort
+		db.Where("device_port_id = ?", countNokId).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
+		if workplacePort.ID > 0 {
+			workplacePort.DevicePortID, _ = strconv.Atoi(countNokId)
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.CountNokColor
+			workplacePort.CounterNOK = true
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		} else {
+			countNokIdAsInt, _ := strconv.Atoi(countNokId)
+			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), countNokIdAsInt).Find(&workplacePort)
+			workplacePort.DevicePortID = countNokIdAsInt
+			workplacePort.Name = devicePort.Name
+			workplacePort.WorkplaceID = int(workplace.ID)
+			workplacePort.Color = data.CountNokColor
+			workplacePort.CounterNOK = true
+			workplacePort.DeletedAt = gorm.DeletedAt{
+				Time:  time.Time{},
+				Valid: false,
+			}
+			db.Save(&workplacePort)
+			cacheWorkplaces(db)
+			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
+		}
+
 	}
 	cacheWorkplaces(db)
 
@@ -860,7 +940,6 @@ func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 	var workplacePort database.WorkplacePort
 	db.Where("id=?", data.Id).Find(&workplacePort)
 	devicePortId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
-	fmt.Println(workplacePort.ID)
 	if workplacePort.ID > 0 {
 		workplacePort.Name = data.Name
 		workplacePort.DevicePortID = devicePortId
@@ -893,7 +972,6 @@ func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 		cacheWorkplaces(db)
 		logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 	}
-
 }
 
 func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
