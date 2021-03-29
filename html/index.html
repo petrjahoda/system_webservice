@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon"  href="../icon/favicon.ico">
+    <link rel="icon" href="../icon/favicon.ico">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="120x120">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="152x152">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="180x180">
@@ -14,11 +14,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="../js/metro.min.js" defer></script>
     <script src="../js/menu.js" defer></script>
+    <script src="../js/echarts.min.js" defer></script>
+    <script src="../js/index.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
 <body class="m4-cloak h-vh-100" style="min-width: 1000px;">
-<div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm" class="{{.Compacted}}">
+<div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm"
+     class="{{.Compacted}}">
     <div class="navview-pane" style="z-index: 999">
         <div class="d-flex flex-align-center">
             <button class="pull-button m-0" style="height: 52px" id="menu">
@@ -96,18 +99,15 @@
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div id="calendar-heatmap"></div>
-            <p>CALENDAR HEATMAP</p>
-            <p>30 day back by days</p>
-            <p>4 weeks back by weeks</p>
-            <p>1 month back by months</p>
-            <p>in production</p>
-            <p>in downtime</p>
-            <p>in poweroff</p>
-            <p>30 days consumption</p>
-
+            <div class="row" id="content">
+                <div id="productivity-overview" class="cell-2" >PRODUCTIVITY</div>
+                <div class="cell-8" >
+                    <div id="calendar-heatmap" class="row"><p>CALENDAR HEATMAP</p></div>
+<!--                    <div id="power-consumption" class="row" ><p>POWER CONSUMPTION</p></div>-->
+                </div>
+                <div id="terminal-data-overview" class="cell-2">TERMINAL</div>
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>

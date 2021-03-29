@@ -10,6 +10,10 @@ menu.addEventListener("click", (event) => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
+        setTimeout(function () {
+            resizeCharts()
+        }, 100);
+
     }).catch((error) => {
         console.log(error)
     });
