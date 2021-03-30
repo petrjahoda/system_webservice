@@ -54,10 +54,10 @@ type WorkplacesData struct {
 }
 
 func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
 	ipAddress := strings.Split(request.RemoteAddr, ":")
 	logInfo("MAIN", "Sending home page to "+ipAddress[0])
 	email, _, _ := request.BasicAuth()
-
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
@@ -65,12 +65,46 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		logError("MAIN", "Problem opening database: "+err.Error())
 		return
 	}
+	var downtimeRecords []database.DowntimeRecord
+	db.Where("date_time_end is null").Find(&downtimeRecords)
+	cachedDowntimeRecords := make(map[int]database.DowntimeRecord)
+	for _, downtimeRecord := range downtimeRecords {
+		cachedDowntimeRecords[downtimeRecord.WorkplaceID] = downtimeRecord
+	}
+	var orderRecords []database.OrderRecord
+	db.Where("date_time_end is null").Find(&orderRecords)
+	cachedOrderRecords := make(map[int]database.OrderRecord)
+	for _, orderRecord := range orderRecords {
+		cachedOrderRecords[orderRecord.WorkplaceID] = orderRecord
+	}
+	var userRecords []database.UserRecord
+	db.Where("date_time_end is null").Find(&userRecords)
+	cachedUserRecords := make(map[int]database.UserRecord)
+	for _, userRecord := range userRecords {
+		cachedUserRecords[userRecord.WorkplaceID] = userRecord
+	}
+	var breakdownRecords []database.BreakdownRecord
+	db.Where("date_time_end is null").Find(&breakdownRecords)
+	cachedBreakdownRecords := make(map[int]database.BreakdownRecord)
+	for _, breakdownRecord := range breakdownRecords {
+		cachedBreakdownRecords[breakdownRecord.WorkplaceID] = breakdownRecord
+	}
+	var alarmRecords []database.AlarmRecord
+	db.Where("date_time_end is null").Find(&alarmRecords)
+	cachedAlarmRecords := make(map[int]database.AlarmRecord)
+	for _, alarmRecord := range alarmRecords {
+		cachedAlarmRecords[alarmRecord.WorkplaceID] = alarmRecord
+	}
+	var stateRecords []database.StateRecord
+	db.Raw("select * from state_records where id in (select distinct max(id) as id from state_records group by workplace_id)").Find(&stateRecords)
+	cachedStateRecords := make(map[int]database.StateRecord)
+	for _, stateRecord := range stateRecords {
+		cachedStateRecords[stateRecord.WorkplaceID] = stateRecord
+	}
 	var workplaceSections []database.WorkplaceSection
 	db.Find(&workplaceSections)
-
 	var sections []WorkplaceSection
 	for _, workplaceSection := range workplaceSections {
-
 		var section WorkplaceSection
 		section.SectionName = workplaceSection.Name
 		section.PanelCompacted = "display:block"
@@ -82,132 +116,111 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 				}
 			}
 		}
-
 		var pageWorkplaces []Workplace
-		var workplaces []database.Workplace
-		db.Where("workplace_section_id = ?", workplaceSection.ID).Find(&workplaces)
-		for _, workplace := range workplaces {
-			var pageWorkplace Workplace
-			pageWorkplace.WorkplaceName = workplace.Name
-			var stateRecord database.StateRecord
-			db.Where("workplace_id = ?", workplace.ID).Last(&stateRecord)
-			var state database.State
-			db.Where("id = ?", stateRecord.StateID).Find(&state)
-
-			var downtimeRecord database.DowntimeRecord
-			db.Where("workplace_id = ?", workplace.ID).Where("date_time_end is null").Last(&downtimeRecord)
-			var downtime database.Downtime
-			db.Where("id = ?", downtimeRecord.DowntimeID).Find(&downtime)
-
-			var orderRecord database.OrderRecord
-			db.Where("workplace_id = ?", workplace.ID).Where("date_time_end is null").Last(&orderRecord)
-			var order database.Order
-			db.Where("id = ?", orderRecord.OrderID).Find(&order)
-
-			var userRecord database.UserRecord
-			db.Where("workplace_id = ?", workplace.ID).Where("date_time_end is null").Last(&userRecord)
-			var user database.User
-			db.Where("id = ?", userRecord.UserID).Find(&user)
-
-			var breakdownRecord database.BreakdownRecord
-			db.Where("workplace_id = ?", workplace.ID).Where("date_time_end is null").Last(&breakdownRecord)
-			var breakdown database.Breakdown
-			db.Where("id = ?", breakdownRecord.BreakdownID).Find(&breakdown)
-
-			var alarmRecord database.AlarmRecord
-			db.Where("workplace_id = ?", workplace.ID).Where("date_time_end is null").Last(&alarmRecord)
-			var alarm database.Alarm
-			db.Where("id = ?", alarmRecord.AlarmID).Find(&alarm)
-
-			productivity := calculateProductivity(db, workplace)
-
-			switch stateRecord.StateID {
-			case 1:
-				pageWorkplace.WorkplaceColor = "background-color: " + state.Color
-				pageWorkplace.WorkplaceProductivityColor = "bg-darkGreen"
-				pageWorkplace.WorkplaceState = "mif-play"
-				pageWorkplace.WorkplaceStateName = getLocale(email, "production")
-				pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
-				pageWorkplace.WorkplaceProductivityToday = productivity
-				if len(order.Name) > 0 {
-					pageWorkplace.Information = getLocale(email, "order-name") + ": " + order.Name
-					pageWorkplace.OrderDuration = "[" + time.Now().Sub(orderRecord.DateTimeStart).Round(time.Minute).String() + "]"
-					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
-				} else if len(user.FirstName) > 0 {
-					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
-					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
-				} else {
+		for _, workplace := range cachedWorkplacesById {
+			if uint(workplace.WorkplaceSectionID) == workplaceSection.ID {
+				var pageWorkplace Workplace
+				pageWorkplace.WorkplaceName = workplace.Name
+				productivity := calculateProductivity(db, workplace)
+				stateRecord := cachedStateRecords[int(workplace.ID)]
+				state := cachedStatesById[uint(stateRecord.StateID)]
+				switch stateRecord.StateID {
+				case 1:
+					pageWorkplace.WorkplaceColor = "background-color: " + state.Color
+					pageWorkplace.WorkplaceProductivityColor = "bg-darkGreen"
+					pageWorkplace.WorkplaceState = "mif-play"
+					pageWorkplace.WorkplaceStateName = getLocale(email, "production")
+					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
+					pageWorkplace.WorkplaceProductivityToday = productivity
+					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
+					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
+					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
+					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
+					if orderRecordId > 0 {
+						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
+						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Minute).String() + "]"
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+					} else if userRecordId > 0 {
+						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+					} else {
+						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
+					}
+					if alarmRecordId > 0 {
+						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
+					} else {
+						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
+					}
+					if breakdownRecordId > 0 {
+						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
+					} else {
+						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
+					}
+					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
+				case 2:
+					pageWorkplace.WorkplaceColor = "background-color: " + state.Color
+					pageWorkplace.WorkplaceProductivityColor = "bg-darkOrange"
+					pageWorkplace.WorkplaceState = "mif-pause"
+					downtimeRecordId := cachedDowntimeRecords[int(workplace.ID)].DowntimeID
+					pageWorkplace.WorkplaceStateName = cachedDowntimesById[uint(downtimeRecordId)].Name
+					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
+					pageWorkplace.WorkplaceProductivityToday = productivity
+					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
+					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
+					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
+					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
+					if orderRecordId > 0 {
+						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
+						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Minute).String() + "]"
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+					} else if userRecordId > 0 {
+						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+					} else {
+						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
+					}
+					if alarmRecordId > 0 {
+						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
+					} else {
+						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
+					}
+					if breakdownRecordId > 0 {
+						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
+					} else {
+						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
+					}
+					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
+				default:
+					pageWorkplace.WorkplaceColor = "background-color: " + state.Color
+					pageWorkplace.WorkplaceState = "mif-stop"
+					pageWorkplace.WorkplaceStateName = getLocale(email, "poweroff")
+					pageWorkplace.WorkplaceProductivityColor = "bg-darkRed"
+					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
+					pageWorkplace.WorkplaceProductivityToday = productivity
 					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
 					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
+					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
+					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
+					if alarmRecordId > 0 {
+						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
+					} else {
+						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
+					}
+					if breakdownRecordId > 0 {
+						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
+					} else {
+						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
+					}
+					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
 				}
-				if len(alarm.Name) > 0 {
-					pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + alarm.Name
-				} else {
-					pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
-				}
-				if len(breakdown.Name) > 0 {
-					pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + breakdown.Name
-				} else {
-					pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
-				}
-				pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
-			case 2:
-				pageWorkplace.WorkplaceColor = "background-color: " + state.Color
-				pageWorkplace.WorkplaceProductivityColor = "bg-darkOrange"
-				pageWorkplace.WorkplaceState = "mif-pause"
-				pageWorkplace.WorkplaceStateName = downtime.Name
-				pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
-				pageWorkplace.WorkplaceProductivityToday = productivity
-				if len(order.Name) > 0 {
-					pageWorkplace.Information = getLocale(email, "order-name") + ": " + order.Name
-					pageWorkplace.OrderDuration = "[" + time.Now().Sub(orderRecord.DateTimeStart).Round(time.Minute).String() + "]"
-					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
-				} else if len(user.FirstName) > 0 {
-					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
-					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
-				} else {
-					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
-					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
-				}
-				if len(alarm.Name) > 0 {
-					pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + alarm.Name
-				} else {
-					pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
-				}
-				if len(breakdown.Name) > 0 {
-					pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + breakdown.Name
-				} else {
-					pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
-				}
-				pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
-			default:
-				pageWorkplace.WorkplaceColor = "background-color: " + state.Color
-				pageWorkplace.WorkplaceState = "mif-stop"
-				pageWorkplace.WorkplaceStateName = getLocale(email, "poweroff")
-				pageWorkplace.WorkplaceProductivityColor = "bg-darkRed"
-				pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
-				pageWorkplace.WorkplaceProductivityToday = productivity
-				pageWorkplace.Information = getLocale(email, "order-name") + ": -"
-				pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
-				if len(alarm.Name) > 0 {
-					pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + alarm.Name
-				} else {
-					pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
-				}
-				if len(breakdown.Name) > 0 {
-					pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + breakdown.Name
-				} else {
-					pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
-				}
-				pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
+				pageWorkplaces = append(pageWorkplaces, pageWorkplace)
 			}
-
-			pageWorkplaces = append(pageWorkplaces, pageWorkplace)
 		}
 		section.Workplaces = pageWorkplaces
 		sections = append(sections, section)
 	}
-
 	var data WorkplacesData
 	data.Version = version
 	data.Company = cachedCompanyName
@@ -223,7 +236,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	tmpl := template.Must(template.ParseFiles("./html/workplaces.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("MAIN", "Home page sent")
+	logInfo("MAIN", "Workplace page sent in "+time.Since(timer).String())
 }
 
 func calculateProductivity(db *gorm.DB, workplace database.Workplace) string {

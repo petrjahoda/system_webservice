@@ -14,6 +14,18 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.1.3.30] - 2021-03-30
+
+### Changed
+- speed-up: workplaces page load in under 100ms
+
+### Added
+- main page fully working production overview
+- main page fully working terminal data overview
+- main page partially working calendar overview
+
+## [2021.1.3.26] - 2021-03-26
+
 ## [2021.1.3.29] - 2021-03-29
 
 ### Added

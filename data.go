@@ -133,7 +133,7 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
-	tmpl := template.Must(template.ParseFiles("./html/Data.html"))
+	tmpl := template.Must(template.ParseFiles("./html/data.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA", "Page sent in "+time.Since(timer).String())
 }
@@ -170,6 +170,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 		return
 	}
 	logInfo("DATA", "Loading data for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
+	logInfo("DATA", location)
 	loc, err := time.LoadLocation(location)
 	if err != nil {
 		logError("DATA", "Problem loading timezone, setting Europe/Prague")

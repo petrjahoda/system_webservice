@@ -50,6 +50,8 @@ func addStateTableRow(record database.StateRecord, data *TableOutput) {
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	stateStartDate := TableCell{CellName: record.DateTimeStart.Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, stateStartDate)
+	stateEndDate := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
+	tableRow.TableCell = append(tableRow.TableCell, stateEndDate)
 	stateName := TableCell{CellName: cachedStatesById[uint(record.StateID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, stateName)
 	note := TableCell{CellName: record.Note}
@@ -62,6 +64,8 @@ func addStateTableHeaders(email string, data *TableOutput) {
 	data.TableHeader = append(data.TableHeader, workplaceName)
 	stateStart := HeaderCell{HeaderName: getLocale(email, "state-start")}
 	data.TableHeader = append(data.TableHeader, stateStart)
+	stateEnd := HeaderCell{HeaderName: getLocale(email, "state-end")}
+	data.TableHeader = append(data.TableHeader, stateEnd)
 	stateName := HeaderCell{HeaderName: getLocale(email, "state-name")}
 	data.TableHeader = append(data.TableHeader, stateName)
 	noteName := HeaderCell{HeaderName: getLocale(email, "note-name")}

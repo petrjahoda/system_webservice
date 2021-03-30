@@ -8,10 +8,10 @@ import (
 	"os"
 )
 
-const version = "2021.1.3.24"
+const version = "2021.1.3.30"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
-const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable"
+const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable"
 
 type program struct{}
 
@@ -61,6 +61,7 @@ func (p *program) run() {
 	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
+	router.POST("/load_index_data", loadIndexData)
 	router.POST("/load_table_data", loadTableData)
 	router.POST("/load_chart_data", loadChartData)
 	router.POST("/load_settings_data", loadSettingsData)
@@ -94,7 +95,7 @@ func (p *program) run() {
 	router.POST("/delete_workplace_port", deleteWorkplacePort)
 	router.POST("/save_workplace_port_details", saveWorkplacePort)
 	go cacheData()
-	err := http.ListenAndServe(":82", router)
+	err := http.ListenAndServe(":80", router)
 	if err != nil {
 		logError("SYSTEM", "Problem starting service: "+err.Error())
 		os.Exit(-1)

@@ -1,169 +1,80 @@
 let productivityChartDom = document.getElementById('productivity-overview');
-let terminalChartDom = document.getElementById('terminal-data-overview');
 let calendarChartDom = document.getElementById('calendar-heatmap');
-productivityChartDom.style.height = '500px'
-terminalChartDom.style.height = '500px'
-calendarChartDom.style.height = '250px'
+let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
+let terminalBreakdownChartDom = document.getElementById('terminal-breakdowns');
+let terminalAlarmChartDom = document.getElementById('terminal-alarms');
+productivityChartDom.hidden = true
+calendarChartDom.hidden = true
+terminalDowntimeChartDom.hidden = true
+terminalBreakdownChartDom.hidden = true
+terminalAlarmChartDom.hidden = true
 let productivityChart = echarts.init(productivityChartDom);
 let calendarChart = echarts.init(calendarChartDom);
-let terminalChart = echarts.init(terminalChartDom);
-drawProductivityChart();
-drawTerminalChart();
-drawCalendar();
+let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom);
+let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom);
+let terminalAlarmChart = echarts.init(terminalAlarmChartDom);
 
-function drawTerminalChart() {
-    let option;
-
-    let labelLeft = {
-        position: 'left'
-    };
-    option = {
-        grid: {
-            top: 10,
-            bottom: 10,
-            left: 50,
-            right: 20,
-        },
-        xAxis: {
-            scale: true,
-            responsive: true,
-            type: 'value',
-            position: 'top',
-            splitLine: {
-                lineStyle: {
-                    type: 'dashed'
-                }
-            }
-        },
-        yAxis: {
-            scale: true,
-            responsive: true,
-            type: 'category',
-            axisLine: {show: false},
-            axisLabel: {show: false},
-            axisTick: {show: false},
-            splitLine: {show: false},
-            data: ['ten', 'nine', 'eight', 'seven', 'six', 'five', 'four', 'three', 'two', 'one']
-        },
-        series: [
-            {
-                type: 'bar',
-                label: {
-                    show: true,
-                    formatter: '{b}'
-                },
-                data: [
-                    {value: 0.01, label: labelLeft},
-                    {value: 0.09, label: labelLeft},
-                    {value: 0.2, label: labelLeft},
-                    {value: 0.44, label: labelLeft},
-                    {value: 0.23, label: labelLeft},
-                    {value: 0.08, label: labelLeft},
-                    {value: 0.17, label: labelLeft},
-                    {value: 0.47, label: labelLeft},
-                    {value: 1.17, label: labelLeft},
-                    {value: 1.36, label: labelLeft},
-                ]
-            }
-        ]
-    };
-
-    option && terminalChart.setOption(option);
-}
-
-function drawCalendar() {
-    let option;
-    function getVirtualData(year) {
-        year = year || '2021';
-        let date = +echarts.number.parseDate(year + '-01-01');
-        let end = +echarts.number.parseDate((+year + 1) + '-01-01');
-        let dayTime = 3600 * 24 * 1000;
-        let data = [];
-        for (let time = date; time < end; time += dayTime) {
-            data.push([
-                echarts.format.formatTime('yyyy-MM-dd', time),
-                Math.floor(Math.random() * 100)
-            ]);
+fetch("/load_index_data", {
+    method: "POST",
+}).then((response) => {
+    response.text().then(function (data) {
+        let result = JSON.parse(data);
+        drawProductivityChart(result);
+        drawCalendar(result);
+        if (result["TerminalDowntimeNames"] !== null) {
+            drawTerminalDowntimeChart(result);
         }
-        return data;
-    }
-    option = {
-        scale: true,
-        responsive: true,
-        title: {
-            top: 30,
-            left: 'center',
-            text: '2021'
-        },
-        tooltip: {},
-        visualMap: {
-            color: 'green',
-            min: 0,
-            max: 100,
-            type: 'piecewise',
-            orient: 'horizontal',
-            left: 'center',
-            top: 65,
-            inRange: {
-                color: ['#fefefd', '#e8eed0', '#d0dda0', '#b9cc70', '#a1bb40', '#89aa10']
-            }
-        },
-        calendar: {
-            top: 120,
-            left: 100,
-            right: 100,
-            cellSize: ['auto', 15],
-            range: '2021',
-            itemStyle: {
-                borderWidth: 0.5
-            },
-            yearLabel: {show: false},
-            dayLabel: {
-                firstDay: 0,
-                nameMap: ['Po','Ut','St','Ct','Pa','So','Ne']
-            },
-            monthLabel: {
-                nameMap: ['Led','Uno','Bre','Dub','Kve','Cer','Cvc', 'Srp', 'Zar', 'Rij', 'Lis', 'Pro']
-            }
-        },
-        series: {
-            type: 'heatmap',
-            coordinateSystem: 'calendar',
-            data: getVirtualData(2021)
+        if (result["TerminalBreakdownNames"] !== null) {
+            drawTerminalBreakdownChart(result);
         }
-    };
+        if (result["TerminalAlarmNames"] !== null) {
+            drawTerminalAlarmChart(result);
+        }
+        resizeCharts()
+        productivityChartDom.hidden = false
+        terminalDowntimeChartDom.hidden = false
+        terminalBreakdownChartDom.hidden = false
+        terminalAlarmChartDom.hidden = false
+        calendarChartDom.hidden = false
+        window.addEventListener('resize', resizeCharts)
+    });
+}).catch((error) => {
+    console.log(error)
+});
 
-    option && calendarChart.setOption(option);
-}
-
-
-
-function drawProductivityChart() {
+function drawProductivityChart(data) {
+    productivityChartDom.style.height = (data["WorkplaceNames"].length) * 30 + 30 + "px"
+    console.log("PRODUCTIVITY: " + data["WorkplaceNames"].length + ":" + productivityChartDom.style.height)
     productivityChart.scale = true
     let option;
-
-    let labelLeft = {
-        position: 'insideLeft'
-    };
     option = {
+        title: {
+            text: data["ProductivityTodayTitle"]
+        },
         scale: true,
         responsive: true,
         grid: {
-            top: 10,
-            bottom: 10,
-            left: 20,
+            top: 30,
+            bottom: 0,
+            left: 5,
             right: 20,
         },
         xAxis: {
             scale: true,
+            min: 0,
+            max: 100,
             responsive: true,
             type: 'value',
             position: 'top',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
             splitLine: {
                 lineStyle: {
-                    type: 'dashed'
+                    type: 'dashed',
+                    color: "#e5e5e5"
                 }
-            }
+            },
         },
         yAxis: {
             scale: true,
@@ -173,39 +84,295 @@ function drawProductivityChart() {
             axisLabel: {show: false},
             axisTick: {show: false},
             splitLine: {show: false},
-            data: ['CNC-12', 'CNC-3', 'eight', 'seven', 'six', 'five', 'four', 'three', 'two', 'one']
+
+            data: data["WorkplaceNames"]
         },
         series: [
             {
-                color: '#89aa10',
+                color: data["TerminalProductionColor"],
                 type: 'bar',
+                silent: true,
                 label: {
                     show: true,
-                    formatter: '{b}'
+                    // var res = str.split(" ");
+                    formatter: '{b}',
+                    position: 'insideLeft',
+                    fontSize: '16',
                 },
-                barWidth: 40,
-                data: [
-                    {value: 0.01, label: labelLeft, itemStyle: {color: '#fefefd', borderColor: '#e8eed0'}},
-                    {value: 0.09, label: labelLeft, itemStyle: {color: '#fefefd', borderColor: '#e8eed0'}},
-                    {value: 0.20, label: labelLeft, itemStyle: {color: '#e8eed0', borderColor: '#d0dda0'}},
-                    {value: 0.34, label: labelLeft, itemStyle: {color: '#e8eed0', borderColor: '#d0dda0'}},
-                    {value: 0.43, label: labelLeft, itemStyle: {color: '#d0dda0', borderColor: '#a1bb40'}},
-                    {value: 0.48, label: labelLeft, itemStyle: {color: '#d0dda0', borderColor: '#a1bb40'}},
-                    {value: 0.52, label: labelLeft, itemStyle: {color: '#d0dda0', borderColor: '#a1bb40'}},
-                    {value: 0.67, label: labelLeft, itemStyle: {color: '#a1bb40', borderColor: '#89aa10'}},
-                    {value: 0.87, label: labelLeft, itemStyle: {color: '#89aa10', borderColor: '#89aa10'}},
-                    {value: 0.97, label: labelLeft, itemStyle: {color: '#89aa10', borderColor: '#89aa10'}},
-                ]
+                barWidth: 25,
+                data: data["WorkplacePercents"],
+
             }
         ]
     };
     option && productivityChart.setOption(option);
 }
 
-function resizeCharts() {
-    productivityChart.resize()
-    calendarChart.resize();
-    terminalChart.resize();
+function drawTerminalDowntimeChart(data) {
+    terminalDowntimeChartDom.style.height = (data["TerminalDowntimeNames"].length) * 30 + 30 + "px"
+    console.log("DOWNTIMES: " + data["TerminalDowntimeNames"].length + ":" + terminalDowntimeChartDom.style.height)
+    console.log("DOWNTIMES: " + data["TerminalDowntimeDurations"])
+    let option;
+    option = {
+        title: {
+            text: data["DowntimesTitle"]
+        },
+        grid: {
+            top: 30,
+            bottom: 0,
+            left: 5,
+            right: 20,
+        },
+        xAxis: {
+            min: 0,
+            scale: true,
+            responsive: true,
+            type: 'value',
+            position: 'bottom',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
+            splitLine: {
+                lineStyle: {
+                    type: 'dashed',
+                    color: "#e5e5e5"
+                }
+            }
+        },
+        yAxis: {
+            scale: true,
+            responsive: true,
+            type: 'category',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
+            splitLine: {show: false},
+            data: data["TerminalDowntimeNames"]
+        },
+        series: [
+            {
+                color: data["TerminalDowntimeColor"],
+                barWidth: 25,
+                type: 'bar',
+                silent: true,
+                label: {
+                    show: true,
+                    formatter: '{b}',
+                    position: 'insideLeft',
+                    fontSize: '16',
+                },
+                data: data["TerminalDowntimeDurations"]
+            }
+        ]
+    };
+    option && terminalDowntimeChart.setOption(option);
 }
 
-window.addEventListener('resize', resizeCharts)
+function drawTerminalBreakdownChart(data) {
+    terminalBreakdownChartDom.style.height = data["TerminalBreakdownNames"].length * 30 + 30 + "px"
+    console.log("BREAKDOWNS: " + data["TerminalBreakdownNames"].length + ":" + terminalBreakdownChartDom.style.height)
+    let option;
+    option = {
+        title: {
+            text: data["BreakdownsTitle"]
+        },
+        grid: {
+            top: 30,
+            bottom: 0,
+            left: 5,
+            right: 20,
+        },
+        xAxis: {
+            min: 0,
+            scale: true,
+            responsive: true,
+            type: 'value',
+            position: 'top',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
+            splitLine: {
+                lineStyle: {
+                    type: 'dashed',
+                    color: "#e5e5e5"
+                }
+            }
+        },
+        yAxis: {
+            scale: true,
+            responsive: true,
+            type: 'category',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
+            splitLine: {show: false},
+            data: data["TerminalBreakdownNames"]
+        },
+        series: [
+            {
+                color: data["TerminalBreakdownColor"],
+                barWidth: 25,
+                type: 'bar',
+                silent: true,
+                label: {
+                    show: true,
+                    formatter: '{b}',
+                    position: 'insideLeft',
+                    fontSize: '16',
+                },
+                data: data["TerminalBreakdownDurations"]
+            }
+        ]
+    };
+    option && terminalBreakdownChart.setOption(option);
+}
+
+function drawTerminalAlarmChart(data) {
+    terminalAlarmChartDom.style.height = data["TerminalAlarmNames"].length * 30 + 30 + "px"
+    console.log("ALARMS: " + data["TerminalAlarmNames"].length + ":" + terminalAlarmChartDom.style.height)
+    let option;
+    option = {
+        title: {
+            text: data["AlarmTitle"]
+        },
+        grid: {
+            top: 30,
+            bottom: 0,
+            left: 5,
+            right: 20,
+        },
+        xAxis: {
+            min: 0,
+            scale: true,
+            responsive: true,
+            type: 'value',
+            position: 'top',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
+            splitLine: {
+                lineStyle: {
+                    type: 'dashed',
+                    color: "#e5e5e5"
+                }
+            }
+        },
+        yAxis: {
+            scale: true,
+            responsive: true,
+            type: 'category',
+            axisLine: {show: false},
+            axisLabel: {show: false},
+            axisTick: {show: false},
+            splitLine: {show: false},
+            data: data["TerminalAlarmNames"]
+        },
+        series: [
+            {
+                color: data["TerminalAlarmColor"],
+                barWidth: 25,
+                type: 'bar',
+                silent: true,
+                label: {
+                    show: true,
+                    formatter: '{b}',
+                    position: 'insideLeft',
+                    fontSize: '16',
+                },
+                data: data["TerminalAlarmDurations"]
+            }
+        ]
+    };
+    option && terminalAlarmChart.setOption(option);
+}
+
+function drawCalendar(data) {
+    calendarChartDom.style.height = '250px'
+    let option;
+
+    // function getVirtualData(year) {
+    //     year = year || '2021';
+    //     let date = +echarts.number.parseDate(year + '-01-01');
+    //     let end = +echarts.number.parseDate((+year + 1) + '-01-01');
+    //     let dayTime = 3600 * 24 * 1000;
+    //     let data = [];
+    //     for (let time = date; time < end; time += dayTime) {
+    //         data.push([
+    //             echarts.format.formatTime('yyyy-MM-dd', time),
+    //             Math.floor(Math.random() * 100)
+    //         ]);
+    //     }
+    //     console.log(data)
+    //     return data;
+    // }
+console.log(data["CalendarData"])
+    option = {
+        scale: true,
+        responsive: true,
+        tooltip: {
+            formatter: function (p) {
+                let format = echarts.format.formatTime('dd.MM.yyyy', p.data[0]);
+                return format + ': ' + "<b>" + p.data[1] + "%</b>";
+            }
+        },
+        visualMap: {
+            min: 0,
+            max: 100,
+            calculable: true,
+            orient: 'horizontal',
+            left: 'center',
+            top: '150',
+            inRange: {
+                color: ['#f3f6e7', '#89aa10']
+            },
+            formatter: function (value) {
+                return +value.toFixed(1) + '%';
+            }
+        },
+        calendar: {
+            top: 24,
+            left: 30,
+            right: 30,
+            cellSize: ['auto', 18],
+            range: ['2020-04-01', '2021-03-31'],
+            itemStyle: {
+                borderWidth: 0.5
+            },
+            yearLabel: {show: false},
+            dayLabel: {
+                firstDay: 0,
+                nameMap: data["CalendarDayLabel"]
+            },
+            monthLabel: {
+                nameMap: data["CalendarMonthLabel"]
+            }
+        },
+        series: {
+            type: 'heatmap',
+            coordinateSystem: 'calendar',
+            data: data["CalendarData"],
+            emphasis: {
+                itemStyle: {
+                    borderWidth: 1,
+                    borderColor: '#EE6666',
+                }
+            }
+        }
+    };
+    option && calendarChart.setOption(option);
+}
+
+function resizeCharts() {
+    setTimeout(function () {
+        productivityChart.resize()
+        calendarChart.resize();
+        terminalDowntimeChart.resize()
+        terminalBreakdownChart.resize()
+        terminalAlarmChart.resize()
+        terminalDowntimeChartDom.hidden = false
+        terminalBreakdownChartDom.hidden = false
+        terminalAlarmChartDom.hidden = false
+        calendarChartDom.hidden = false
+        productivityChartDom.hidden = false
+    }, 250);
+}

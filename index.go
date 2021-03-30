@@ -1,9 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
+	"github.com/petrjahoda/database"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"html/template"
 	"net/http"
+	"sort"
+	"strconv"
 	"time"
 )
 
@@ -22,10 +29,185 @@ type IndexPageData struct {
 	UserName       string
 }
 
+type IndexData struct {
+	WorkplaceNames             []string
+	WorkplacePercents          []float64
+	TerminalProductionColor    string
+	TerminalDowntimeNames      []string
+	TerminalDowntimeDurations  []float64
+	TerminalDowntimeColor      string
+	TerminalBreakdownNames     []string
+	TerminalBreakdownDurations []float64
+	TerminalBreakdownColor     string
+	TerminalAlarmNames         []string
+	TerminalAlarmDurations     []float64
+	TerminalAlarmColor         string
+	ProductivityTodayTitle     string
+	DowntimesTitle             string
+	BreakdownsTitle            string
+	AlarmsTitle                string
+	CalendarDayLabel           []string
+	CalendarMonthLabel         []string
+	CalendarData               [][]string
+}
+
+type IndexDataWorkplace struct {
+	Name  string
+	Value float64
+}
+
+func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	timer := time.Now()
+	email, _, _ := request.BasicAuth()
+	logInfo("INDEX", "Loading index data for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("DATA-ALARMS", "Problem opening database: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("DATA-ALARMS", "Loading alarms table ended")
+		return
+	}
+	data := IndexData{}
+	workplaceNames, workplacePercents := downloadProductionData(db)
+	terminalDowntimeNames, terminalDowntimeValues := downloadTerminalDowntimeData(db)
+	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db)
+	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db)
+
+	var calendarData [][]string
+	var stateRecords []database.StateRecord
+	db.Where("date_time_start >= ?", time.Now().AddDate(-1, 0, 0)).Order("date_time_start asc").Find(&stateRecords)
+	//for _, record := range stateRecords {
+	//
+	//}
+	calendarData = append(calendarData, []string{"2021-01-03", "92"})
+
+	data.WorkplaceNames = workplaceNames
+	data.WorkplacePercents = workplacePercents
+	data.TerminalDowntimeNames = terminalDowntimeNames
+	data.TerminalDowntimeDurations = terminalDowntimeValues
+	data.TerminalBreakdownNames = terminalBreakdownNames
+	data.TerminalBreakdownDurations = terminalBreakdownValues
+	data.TerminalAlarmNames = terminalAlarmNames
+	data.TerminalAlarmDurations = terminalAlarmValues
+	data.TerminalDowntimeColor = cachedStatesById[2].Color
+	data.TerminalProductionColor = cachedStatesById[1].Color
+	data.TerminalBreakdownColor = cachedStatesById[3].Color
+	data.TerminalAlarmColor = "grey"
+	data.ProductivityTodayTitle = "Productivity Today"
+	data.DowntimesTitle = "Downtimes"
+	data.BreakdownsTitle = "Breakdowns"
+	data.AlarmsTitle = "Alarms"
+	data.CalendarDayLabel = []string{"Po", "Út", "St", "Čt", "Pá", "So", "Ne"}
+	data.CalendarMonthLabel = []string{"Led", "Úno", "Bře", "Dub", "Kvě", "Čer", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"}
+	data.CalendarData = calendarData
+	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(data)
+	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
+}
+
+func downloadTerminalAlarmData(db *gorm.DB) ([]string, []float64) {
+	var alarmRecords []database.AlarmRecord
+	db.Where("date_time_end is null").Limit(10).Find(&alarmRecords)
+
+	var indexDataWorkplaces []IndexDataWorkplace
+	for _, alarmRecord := range alarmRecords {
+		var indexDataWorkplace IndexDataWorkplace
+		indexDataWorkplace.Name = cachedWorkplacesById[uint(alarmRecord.WorkplaceID)].Name + ": " + cachedAlarmsById[uint(alarmRecord.AlarmID)].Name
+		indexDataWorkplace.Value = time.Since(alarmRecord.DateTimeStart).Seconds()
+		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
+	}
+	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
+		return indexDataWorkplaces[i].Value < indexDataWorkplaces[j].Value
+	})
+	var terminalAlarmNames []string
+	var terminalAlarmValues []float64
+	for _, workplace := range indexDataWorkplaces {
+		percentage := time.Duration(workplace.Value) * time.Second
+		terminalAlarmNames = append(terminalAlarmNames, workplace.Name+": "+percentage.String())
+		terminalAlarmValues = append(terminalAlarmValues, workplace.Value)
+	}
+	return terminalAlarmNames, terminalAlarmValues
+}
+
+func downloadTerminalBreakdownData(db *gorm.DB) ([]string, []float64) {
+	var breakdownRecords []database.BreakdownRecord
+	db.Where("date_time_end is null").Limit(10).Find(&breakdownRecords)
+
+	var indexDataWorkplaces []IndexDataWorkplace
+	for _, breakdownRecord := range breakdownRecords {
+		var indexDataWorkplace IndexDataWorkplace
+		indexDataWorkplace.Name = cachedWorkplacesById[uint(breakdownRecord.WorkplaceID)].Name + ": " + cachedBreakdownsById[uint(breakdownRecord.BreakdownID)].Name
+		indexDataWorkplace.Value = time.Since(breakdownRecord.DateTimeStart).Seconds()
+		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
+	}
+	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
+		return indexDataWorkplaces[i].Value < indexDataWorkplaces[j].Value
+	})
+	var terminalBreakdownNames []string
+	var terminalBreakdownValues []float64
+	for _, workplace := range indexDataWorkplaces {
+		percentage := time.Duration(workplace.Value) * time.Second
+		terminalBreakdownNames = append(terminalBreakdownNames, workplace.Name+": "+percentage.String())
+		terminalBreakdownValues = append(terminalBreakdownValues, workplace.Value)
+	}
+	return terminalBreakdownNames, terminalBreakdownValues
+}
+
+func downloadTerminalDowntimeData(db *gorm.DB) ([]string, []float64) {
+	var downtimeRecords []database.DowntimeRecord
+	db.Where("date_time_end is null").Limit(10).Find(&downtimeRecords)
+
+	var indexDataWorkplaces []IndexDataWorkplace
+	for _, downtimeRecord := range downtimeRecords {
+		var indexDataWorkplace IndexDataWorkplace
+		indexDataWorkplace.Name = cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name + ": " + cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name
+		indexDataWorkplace.Value = time.Since(downtimeRecord.DateTimeStart).Seconds()
+		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
+	}
+	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
+		return indexDataWorkplaces[i].Value < indexDataWorkplaces[j].Value
+	})
+	var terminalDowntimeNames []string
+	var terminalDowntimeValues []float64
+	for _, workplace := range indexDataWorkplaces {
+		percentage := time.Duration(workplace.Value) * time.Second
+		terminalDowntimeNames = append(terminalDowntimeNames, workplace.Name+": "+percentage.String())
+		terminalDowntimeValues = append(terminalDowntimeValues, workplace.Value)
+	}
+	return terminalDowntimeNames, terminalDowntimeValues
+}
+
+func downloadProductionData(db *gorm.DB) ([]string, []float64) {
+	var workplaceNames []string
+	var workplacePercents []float64
+	var indexDataWorkplaces []IndexDataWorkplace
+	for _, workplace := range cachedWorkplacesByName {
+		productivity := calculateProductivity(db, workplace)
+		var indexDataWorkplace IndexDataWorkplace
+		indexDataWorkplace.Name = workplace.Name
+		indexDataWorkplace.Value, _ = strconv.ParseFloat(productivity, 32)
+		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
+	}
+	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
+		return indexDataWorkplaces[i].Value < indexDataWorkplaces[j].Value
+	})
+	for _, workplace := range indexDataWorkplaces {
+		percentage := fmt.Sprintf("%.1f", workplace.Value)
+		workplaceNames = append(workplaceNames, workplace.Name+": "+percentage+"%")
+		workplacePercents = append(workplacePercents, workplace.Value)
+	}
+	return workplaceNames, workplacePercents
+}
+
 func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("MAIN", "Sending home page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("INDEX", "Sending home page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data IndexPageData
 	data.Version = version
 	data.Company = cachedCompanyName
@@ -40,7 +222,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("MAIN", "Home page sent in "+time.Since(timer).String())
+	logInfo("INDEX", "Index page sent in "+time.Since(timer).String())
 }
 
 func getLocale(email string, locale string) string {
