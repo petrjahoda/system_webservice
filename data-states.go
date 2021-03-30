@@ -36,22 +36,28 @@ func loadStatesTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
 	addStateTableHeaders(email, &data)
+	loc, err := time.LoadLocation(location)
 	for _, record := range orderRecords {
-		addStateTableRow(record, &data)
+		addStateTableRow(record, loc, &data)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-STATES", "States table loaded in "+time.Since(timer).String())
 }
 
-func addStateTableRow(record database.StateRecord, data *TableOutput) {
+func addStateTableRow(record database.StateRecord, loc *time.Location, data *TableOutput) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	stateStartDate := TableCell{CellName: record.DateTimeStart.Format("2006-01-02 15:04:05")}
+	stateStartDate := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, stateStartDate)
-	stateEndDate := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
-	tableRow.TableCell = append(tableRow.TableCell, stateEndDate)
+	if record.DateTimeEnd.Time.IsZero() {
+		stateEndDate := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}
+		tableRow.TableCell = append(tableRow.TableCell, stateEndDate)
+	} else {
+		stateEndDate := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
+		tableRow.TableCell = append(tableRow.TableCell, stateEndDate)
+	}
 	stateName := TableCell{CellName: cachedStatesById[uint(record.StateID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, stateName)
 	note := TableCell{CellName: record.Note}
