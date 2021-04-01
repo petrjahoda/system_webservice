@@ -80,8 +80,8 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	terminalDowntimeNames, terminalDowntimeValues := downloadTerminalDowntimeData(db)
 	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db)
 	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db)
-	calendarData := downloadCalendarData(db)
 	loc, err := time.LoadLocation(location)
+	calendarData := downloadCalendarData(db, loc)
 	data.WorkplaceNames = workplaceNames
 	data.WorkplacePercents = workplacePercents
 	data.TerminalDowntimeNames = terminalDowntimeNames
@@ -108,33 +108,33 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
 }
 
-func downloadCalendarData(db *gorm.DB) [][]string {
+func downloadCalendarData(db *gorm.DB, loc *time.Location) [][]string {
 	var stateRecords []database.StateRecord
-	db.Where("date_time_start >= ?", time.Now().AddDate(-1, 0, 0)).Where("state_id = 1").Order("date_time_start asc").Find(&stateRecords)
-	stateRecordsAsMap := make(map[string]float64)
+	db.Debug().Where("date_time_start >= ?", time.Now().AddDate(-1, 0, 0)).Where("state_id = 1").Order("date_time_start asc").Find(&stateRecords)
+	stateRecordsAsMap := make(map[string]time.Duration)
 	for _, record := range stateRecords {
-		if record.DateTimeStart.Day() == record.DateTimeEnd.Time.Day() {
+		if record.DateTimeStart.In(loc).Day() == record.DateTimeEnd.Time.In(loc).Day() {
 			if record.DateTimeEnd.Time.IsZero() {
-				record.DateTimeEnd.Time = time.Now().UTC()
+				record.DateTimeEnd.Time = time.Now()
 			}
-			stateRecordsAsMap[record.DateTimeStart.Format("2006-01-02")] += record.DateTimeEnd.Time.Sub(record.DateTimeStart).Seconds()
+			stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(record.DateTimeStart.In(loc))
 		} else {
 			if record.DateTimeEnd.Time.IsZero() {
-				record.DateTimeEnd.Time = time.Now().UTC()
+				record.DateTimeEnd.Time = time.Now()
 			}
-			actualDay := record.DateTimeStart
-			endOfActualDay := time.Date(record.DateTimeStart.Year(), record.DateTimeStart.Month(), record.DateTimeStart.Day()+1, 0, 0, 0, 0, time.UTC)
-			for actualDay.Day() < record.DateTimeEnd.Time.Day() {
-				stateRecordsAsMap[record.DateTimeStart.Format("2006-01-02")] += endOfActualDay.Sub(actualDay).Seconds()
-				actualDay = endOfActualDay
-				endOfActualDay = endOfActualDay.Add(24 * time.Hour)
+			endOfRecordDay := time.Date(record.DateTimeStart.Year(), record.DateTimeStart.Month(), record.DateTimeStart.Day()+1, 0, 0, 0, 0, loc)
+			for endOfRecordDay.Before(record.DateTimeEnd.Time) {
+				stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.Sub(record.DateTimeStart.In(loc))
+				endOfRecordDay = endOfRecordDay.Add(24 * time.Hour)
 			}
-			stateRecordsAsMap[record.DateTimeStart.Format("2006-01-02")] += record.DateTimeEnd.Time.Sub(endOfActualDay).Seconds()
+			endOfRecordDay = endOfRecordDay.Add(-24 * time.Hour)
+			stateRecordsAsMap[endOfRecordDay.Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(endOfRecordDay)
 		}
 	}
 	var calendarData [][]string
 	for key, value := range stateRecordsAsMap {
-		percentage := strconv.FormatFloat(value/86400, 'f', 1, 64)
+		total := time.Duration(len(cachedWorkplacesById)*24) * time.Hour
+		percentage := strconv.FormatFloat(100*value.Seconds()/total.Seconds(), 'f', 1, 32)
 		calendarData = append(calendarData, []string{key, percentage})
 	}
 	return calendarData
