@@ -77,15 +77,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	terminalDowntimeNames, terminalDowntimeValues := downloadTerminalDowntimeData(db)
 	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db)
 	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db)
-
-	var calendarData [][]string
-	var stateRecords []database.StateRecord
-	db.Where("date_time_start >= ?", time.Now().AddDate(-1, 0, 0)).Order("date_time_start asc").Find(&stateRecords)
-	//for _, record := range stateRecords {
-	//
-	//}
-	calendarData = append(calendarData, []string{"2021-01-03", "92"})
-
+	calendarData := downloadCalendarData(db)
 	data.WorkplaceNames = workplaceNames
 	data.WorkplacePercents = workplacePercents
 	data.TerminalDowntimeNames = terminalDowntimeNames
@@ -108,6 +100,38 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(data)
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
+}
+
+func downloadCalendarData(db *gorm.DB) [][]string {
+	var stateRecords []database.StateRecord
+	db.Where("date_time_start >= ?", time.Now().AddDate(-1, 0, 0)).Where("state_id = 1").Order("date_time_start asc").Find(&stateRecords)
+	stateRecordsAsMap := make(map[string]float64)
+	for _, record := range stateRecords {
+		if record.DateTimeStart.Day() == record.DateTimeEnd.Time.Day() {
+			if record.DateTimeEnd.Time.IsZero() {
+				record.DateTimeEnd.Time = time.Now().UTC()
+			}
+			stateRecordsAsMap[record.DateTimeStart.Format("2006-01-02")] += record.DateTimeEnd.Time.Sub(record.DateTimeStart).Seconds()
+		} else {
+			if record.DateTimeEnd.Time.IsZero() {
+				record.DateTimeEnd.Time = time.Now().UTC()
+			}
+			actualDay := record.DateTimeStart
+			endOfActualDay := time.Date(record.DateTimeStart.Year(), record.DateTimeStart.Month(), record.DateTimeStart.Day()+1, 0, 0, 0, 0, time.UTC)
+			for actualDay.Day() < record.DateTimeEnd.Time.Day() {
+				stateRecordsAsMap[record.DateTimeStart.Format("2006-01-02")] += endOfActualDay.Sub(actualDay).Seconds()
+				actualDay = endOfActualDay
+				endOfActualDay = endOfActualDay.Add(24 * time.Hour)
+			}
+			stateRecordsAsMap[record.DateTimeStart.Format("2006-01-02")] += record.DateTimeEnd.Time.Sub(endOfActualDay).Seconds()
+		}
+	}
+	var calendarData [][]string
+	for key, value := range stateRecordsAsMap {
+		percentage := strconv.FormatFloat(value/86400, 'f', 1, 64)
+		calendarData = append(calendarData, []string{key, percentage})
+	}
+	return calendarData
 }
 
 func downloadTerminalAlarmData(db *gorm.DB) ([]string, []float64) {
