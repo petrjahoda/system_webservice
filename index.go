@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/jinzhu/now"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -49,6 +50,8 @@ type IndexData struct {
 	CalendarDayLabel           []string
 	CalendarMonthLabel         []string
 	CalendarData               [][]string
+	CalendarStart              string
+	CalendarEnd                string
 }
 
 type IndexDataWorkplace struct {
@@ -78,6 +81,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db)
 	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db)
 	calendarData := downloadCalendarData(db)
+	loc, err := time.LoadLocation(location)
 	data.WorkplaceNames = workplaceNames
 	data.WorkplacePercents = workplacePercents
 	data.TerminalDowntimeNames = terminalDowntimeNames
@@ -97,6 +101,8 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.CalendarDayLabel = []string{"Po", "Út", "St", "Čt", "Pá", "So", "Ne"}
 	data.CalendarMonthLabel = []string{"Led", "Úno", "Bře", "Dub", "Kvě", "Čer", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"}
 	data.CalendarData = calendarData
+	data.CalendarStart = time.Now().In(loc).AddDate(0, -11, 0).Format("2006-01-02")
+	data.CalendarEnd = now.EndOfMonth().In(loc).Format("2006-01-02")
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(data)
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())

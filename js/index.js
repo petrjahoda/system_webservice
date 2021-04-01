@@ -289,23 +289,6 @@ function drawTerminalAlarmChart(data) {
 function drawCalendar(data) {
     calendarChartDom.style.height = '250px'
     let option;
-
-    // function getVirtualData(year) {
-    //     year = year || '2021';
-    //     let date = +echarts.number.parseDate(year + '-01-01');
-    //     let end = +echarts.number.parseDate((+year + 1) + '-01-01');
-    //     let dayTime = 3600 * 24 * 1000;
-    //     let data = [];
-    //     for (let time = date; time < end; time += dayTime) {
-    //         data.push([
-    //             echarts.format.formatTime('yyyy-MM-dd', time),
-    //             Math.floor(Math.random() * 100)
-    //         ]);
-    //     }
-    //     console.log(data)
-    //     return data;
-    // }
-console.log(data["CalendarData"])
     option = {
         scale: true,
         responsive: true,
@@ -334,7 +317,7 @@ console.log(data["CalendarData"])
             left: 30,
             right: 30,
             cellSize: ['auto', 18],
-            range: ['2020-04-01', '2021-03-31'],
+            range: [data["CalendarStart"], data["CalendarEnd"]],
             itemStyle: {
                 borderWidth: 0.5
             },
