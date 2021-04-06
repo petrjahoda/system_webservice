@@ -35,26 +35,27 @@ func loadBreakdownTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addBreakdownTableHeaders(email, &data)
 	for _, record := range breakdownRecords {
-		addBreakdownTableRow(record, &data)
+		addBreakdownTableRow(record, &data, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-BREAKDOWNS", "Breakdowns table loaded in "+time.Since(timer).String())
 }
 
-func addBreakdownTableRow(record database.BreakdownRecord, data *TableOutput) {
+func addBreakdownTableRow(record database.BreakdownRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	breakdownStart := TableCell{CellName: record.DateTimeStart.Format("2006-01-02 15:04:05")}
+	breakdownStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, breakdownStart)
 	if record.DateTimeEnd.Time.IsZero() {
-		breakdownEnd := TableCell{CellName: time.Now().Format("2006-01-02 15:04:05") + " +"}
+		breakdownEnd := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}
 		tableRow.TableCell = append(tableRow.TableCell, breakdownEnd)
 	} else {
-		breakdownEnd := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
+		breakdownEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, breakdownEnd)
 	}
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}

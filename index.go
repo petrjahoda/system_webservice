@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/jinzhu/now"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
@@ -52,6 +51,7 @@ type IndexData struct {
 	CalendarData               [][]string
 	CalendarStart              string
 	CalendarEnd                string
+	Locale                     string
 }
 
 type IndexDataWorkplace struct {
@@ -76,11 +76,11 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 		return
 	}
 	data := IndexData{}
-	workplaceNames, workplacePercents := downloadProductionData(db)
+	loc, err := time.LoadLocation(location)
+	workplaceNames, workplacePercents := downloadProductionData(db, loc)
 	terminalDowntimeNames, terminalDowntimeValues := downloadTerminalDowntimeData(db)
 	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db)
 	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db)
-	loc, err := time.LoadLocation(location)
 	calendarData := downloadCalendarData(db, loc)
 	data.WorkplaceNames = workplaceNames
 	data.WorkplacePercents = workplacePercents
@@ -94,56 +94,70 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.TerminalProductionColor = cachedStatesById[1].Color
 	data.TerminalBreakdownColor = cachedStatesById[3].Color
 	data.TerminalAlarmColor = "grey"
-	data.ProductivityTodayTitle = "Productivity Today"
-	data.DowntimesTitle = "Downtimes"
-	data.BreakdownsTitle = "Breakdowns"
-	data.AlarmsTitle = "Alarms"
-	data.CalendarDayLabel = []string{"Po", "Út", "St", "Čt", "Pá", "So", "Ne"}
-	data.CalendarMonthLabel = []string{"Led", "Úno", "Bře", "Dub", "Kvě", "Čer", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"}
+	data.ProductivityTodayTitle = "Productivity Today" // getlocale
+	data.DowntimesTitle = getLocale(email, "downtimes")
+	data.BreakdownsTitle = getLocale(email, "breakdowns")
+	data.AlarmsTitle = getLocale(email, "alarms")
+	data.CalendarDayLabel = []string{"Po", "Út", "St", "Čt", "Pá", "So", "Ne"}                                             //get locale
+	data.CalendarMonthLabel = []string{"Led", "Úno", "Bře", "Dub", "Kvě", "Čer", "Čvc", "Srp", "Zář", "Říj", "Lis", "Pro"} // get locale
 	data.CalendarData = calendarData
 	data.CalendarStart = time.Now().In(loc).AddDate(0, -11, 0).Format("2006-01-02")
 	data.CalendarEnd = now.EndOfMonth().In(loc).Format("2006-01-02")
+	data.Locale = cachedUsersByEmail[email].Locale
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(data)
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
 }
 
 func downloadCalendarData(db *gorm.DB, loc *time.Location) [][]string {
-	var stateRecords []database.StateRecord
-	db.Debug().Where("date_time_start >= ?", time.Now().AddDate(-1, 0, 0)).Where("state_id = 1").Order("date_time_start asc").Find(&stateRecords)
-	stateRecordsAsMap := make(map[string]time.Duration)
-	for _, record := range stateRecords {
-		if record.DateTimeStart.In(loc).Day() == record.DateTimeEnd.Time.In(loc).Day() {
-			if record.DateTimeEnd.Time.IsZero() {
-				record.DateTimeEnd.Time = time.Now()
-			}
-			stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(record.DateTimeStart.In(loc))
-		} else {
-			if record.DateTimeEnd.Time.IsZero() {
-				record.DateTimeEnd.Time = time.Now()
-			}
-			endOfRecordDay := time.Date(record.DateTimeStart.Year(), record.DateTimeStart.Month(), record.DateTimeStart.Day()+1, 0, 0, 0, 0, loc)
-			for endOfRecordDay.Before(record.DateTimeEnd.Time) {
-				stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.Sub(record.DateTimeStart.In(loc))
-				endOfRecordDay = endOfRecordDay.Add(24 * time.Hour)
-			}
-			endOfRecordDay = endOfRecordDay.Add(-24 * time.Hour)
-			stateRecordsAsMap[endOfRecordDay.Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(endOfRecordDay)
-		}
-	}
+	stateRecordsAsMap := downloadData(db, time.Now().In(loc).AddDate(-1, 0, 0), time.Now().In(loc), 0, loc)
 	var calendarData [][]string
 	for key, value := range stateRecordsAsMap {
-		total := time.Duration(len(cachedWorkplacesById)*24) * time.Hour
-		percentage := strconv.FormatFloat(100*value.Seconds()/total.Seconds(), 'f', 1, 32)
-		calendarData = append(calendarData, []string{key, percentage})
+		if key != time.Now().In(loc).Format("2006-01-02") {
+			totalDayDuration := 24 * time.Hour
+			percentage := strconv.FormatFloat(value.Seconds()/(totalDayDuration.Seconds()*float64(len(cachedWorkplacesById)))*100, 'f', 1, 64)
+			calendarData = append(calendarData, []string{key, percentage})
+		} else {
+			startOfToday := time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc)
+			totalTodayDuration := time.Now().In(loc).Sub(startOfToday)
+			percentage := strconv.FormatFloat(value.Seconds()/(totalTodayDuration.Seconds()*float64(len(cachedWorkplacesById)))*100, 'f', 1, 64)
+			calendarData = append(calendarData, []string{key, percentage})
+		}
 	}
 	return calendarData
 }
 
+func downloadData(db *gorm.DB, fromDate time.Time, toDate time.Time, workplaceId uint, loc *time.Location) map[string]time.Duration {
+	stateRecordsAsMap := make(map[string]time.Duration)
+	var stateRecords []database.StateRecord
+	if workplaceId == 0 {
+		db.Where("date_time_start >= ?", fromDate).Where("date_time_end <= ? or date_time_end is null", toDate).Where("state_id = 1").Order("date_time_start asc").Find(&stateRecords)
+	} else {
+		db.Where("date_time_start >= ?", fromDate).Where("date_time_end <= ? or date_time_end is null", toDate).Where("state_id = 1").Where("workplace_id = ?", workplaceId).Order("date_time_start asc").Find(&stateRecords)
+	}
+	for _, record := range stateRecords {
+		if record.DateTimeStart.In(loc).Day() == record.DateTimeEnd.Time.In(loc).Day() {
+			stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(record.DateTimeStart.In(loc))
+		} else {
+			if record.DateTimeEnd.Time.IsZero() {
+				record.DateTimeEnd.Time = time.Now().In(loc)
+			}
+			endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+			for record.DateTimeStart.In(loc).Before(record.DateTimeEnd.Time.In(loc)) {
+				stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
+				record.DateTimeStart = endOfRecordDay.In(loc)
+				endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+			}
+			endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
+			stateRecordsAsMap[record.DateTimeEnd.Time.In(loc).Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(endOfRecordDay.In(loc))
+		}
+	}
+	return stateRecordsAsMap
+}
+
 func downloadTerminalAlarmData(db *gorm.DB) ([]string, []float64) {
 	var alarmRecords []database.AlarmRecord
-	db.Where("date_time_end is null").Limit(10).Find(&alarmRecords)
-
+	db.Where("date_time_end is null").Find(&alarmRecords)
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, alarmRecord := range alarmRecords {
 		var indexDataWorkplace IndexDataWorkplace
@@ -157,8 +171,7 @@ func downloadTerminalAlarmData(db *gorm.DB) ([]string, []float64) {
 	var terminalAlarmNames []string
 	var terminalAlarmValues []float64
 	for _, workplace := range indexDataWorkplaces {
-		percentage := time.Duration(workplace.Value) * time.Second
-		terminalAlarmNames = append(terminalAlarmNames, workplace.Name+": "+percentage.String())
+		terminalAlarmNames = append(terminalAlarmNames, workplace.Name)
 		terminalAlarmValues = append(terminalAlarmValues, workplace.Value)
 	}
 	return terminalAlarmNames, terminalAlarmValues
@@ -166,7 +179,7 @@ func downloadTerminalAlarmData(db *gorm.DB) ([]string, []float64) {
 
 func downloadTerminalBreakdownData(db *gorm.DB) ([]string, []float64) {
 	var breakdownRecords []database.BreakdownRecord
-	db.Where("date_time_end is null").Limit(10).Find(&breakdownRecords)
+	db.Where("date_time_end is null").Find(&breakdownRecords)
 
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, breakdownRecord := range breakdownRecords {
@@ -181,8 +194,7 @@ func downloadTerminalBreakdownData(db *gorm.DB) ([]string, []float64) {
 	var terminalBreakdownNames []string
 	var terminalBreakdownValues []float64
 	for _, workplace := range indexDataWorkplaces {
-		percentage := time.Duration(workplace.Value) * time.Second
-		terminalBreakdownNames = append(terminalBreakdownNames, workplace.Name+": "+percentage.String())
+		terminalBreakdownNames = append(terminalBreakdownNames, workplace.Name)
 		terminalBreakdownValues = append(terminalBreakdownValues, workplace.Value)
 	}
 	return terminalBreakdownNames, terminalBreakdownValues
@@ -190,7 +202,7 @@ func downloadTerminalBreakdownData(db *gorm.DB) ([]string, []float64) {
 
 func downloadTerminalDowntimeData(db *gorm.DB) ([]string, []float64) {
 	var downtimeRecords []database.DowntimeRecord
-	db.Where("date_time_end is null").Limit(10).Find(&downtimeRecords)
+	db.Where("date_time_end is null").Find(&downtimeRecords)
 
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, downtimeRecord := range downtimeRecords {
@@ -205,30 +217,34 @@ func downloadTerminalDowntimeData(db *gorm.DB) ([]string, []float64) {
 	var terminalDowntimeNames []string
 	var terminalDowntimeValues []float64
 	for _, workplace := range indexDataWorkplaces {
-		percentage := time.Duration(workplace.Value) * time.Second
-		terminalDowntimeNames = append(terminalDowntimeNames, workplace.Name+": "+percentage.String())
+		terminalDowntimeNames = append(terminalDowntimeNames, workplace.Name)
 		terminalDowntimeValues = append(terminalDowntimeValues, workplace.Value)
 	}
 	return terminalDowntimeNames, terminalDowntimeValues
 }
 
-func downloadProductionData(db *gorm.DB) ([]string, []float64) {
+func downloadProductionData(db *gorm.DB, loc *time.Location) ([]string, []float64) {
 	var workplaceNames []string
 	var workplacePercents []float64
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, workplace := range cachedWorkplacesByName {
-		productivity := calculateProductivity(db, workplace)
+		data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc)
+		var totalDuration time.Duration
+		for _, duration := range data {
+			totalDuration = duration
+		}
+		startOfToday := time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc)
+		totalTodayDuration := time.Now().In(loc).Sub(startOfToday)
 		var indexDataWorkplace IndexDataWorkplace
 		indexDataWorkplace.Name = workplace.Name
-		indexDataWorkplace.Value, _ = strconv.ParseFloat(productivity, 32)
+		indexDataWorkplace.Value = (totalDuration.Seconds() / totalTodayDuration.Seconds()) * 100
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
 	}
 	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
 		return indexDataWorkplaces[i].Value < indexDataWorkplaces[j].Value
 	})
 	for _, workplace := range indexDataWorkplaces {
-		percentage := fmt.Sprintf("%.1f", workplace.Value)
-		workplaceNames = append(workplaceNames, workplace.Name+": "+percentage+"%")
+		workplaceNames = append(workplaceNames, workplace.Name)
 		workplacePercents = append(workplacePercents, workplace.Value)
 	}
 	return workplaceNames, workplacePercents

@@ -32,18 +32,19 @@ func loadSystemStatsTable(writer http.ResponseWriter, dateFrom time.Time, dateTo
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addSystemTableHeaders(email, &data)
 	for _, record := range systemRecords {
-		addSystemTableRow(record, &data)
+		addSystemTableRow(record, &data, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-SYSTEM-STATS", "System stats table loaded in "+time.Since(timer).String())
 }
 
-func addSystemTableRow(record database.SystemRecord, data *TableOutput) {
+func addSystemTableRow(record database.SystemRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
-	systemDate := TableCell{CellName: record.CreatedAt.Format("2006-01-02 15:04:05")}
+	systemDate := TableCell{CellName: record.CreatedAt.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, systemDate)
 
 	databaseSizeAsString := strconv.FormatFloat(float64(record.DatabaseSizeInMegaBytes), 'f', 0, 64)

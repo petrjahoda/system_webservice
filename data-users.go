@@ -35,26 +35,27 @@ func loadUsersTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addUserTableHeaders(email, &data)
 	for _, record := range userRecords {
-		addUserTableRow(record, &data, db)
+		addUserTableRow(record, &data, db, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-USERS", "Users table loaded in "+time.Since(timer).String())
 }
 
-func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB) {
+func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	userStart := TableCell{CellName: record.DateTimeStart.Format("2006-01-02 15:04:05")}
+	userStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, userStart)
 	if record.DateTimeEnd.Time.IsZero() {
-		userEnd := TableCell{CellName: time.Now().Format("2006-01-02 15:04:05") + " +"}
+		userEnd := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}
 		tableRow.TableCell = append(tableRow.TableCell, userEnd)
 	} else {
-		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
+		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	}
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}

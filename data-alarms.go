@@ -35,35 +35,36 @@ func loadAlarmsTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addAlarmTableHeaders(email, &data)
 	for _, record := range alarmRecords {
-		addAlarmTableRow(record, &data)
+		addAlarmTableRow(record, &data, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-ALARMS", "Alarms table loaded in "+time.Since(timer).String())
 }
 
-func addAlarmTableRow(record database.AlarmRecord, data *TableOutput) {
+func addAlarmTableRow(record database.AlarmRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	alarmStart := TableCell{CellName: record.DateTimeStart.Format("2006-01-02 15:04:05")}
+	alarmStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, alarmStart)
 	if record.DateTimeEnd.Time.IsZero() {
-		alarmEnd := TableCell{CellName: time.Now().Format("2006-01-02 15:04:05") + " +"}
+		alarmEnd := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}
 		tableRow.TableCell = append(tableRow.TableCell, alarmEnd)
 	} else {
-		alarmEnd := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
+		alarmEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, alarmEnd)
 	}
 	alarmName := TableCell{CellName: cachedAlarmsById[uint(record.AlarmID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, alarmName)
 	if record.DateTimeProcessed.Time.IsZero() {
-		alarmProcessed := TableCell{CellName: time.Now().Format("2006-01-02 15:04:05") + " +"}
+		alarmProcessed := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}
 		tableRow.TableCell = append(tableRow.TableCell, alarmProcessed)
 	} else {
-		alarmProcessed := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
+		alarmProcessed := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, alarmProcessed)
 	}
 	data.TableRows = append(data.TableRows, tableRow)

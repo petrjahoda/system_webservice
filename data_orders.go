@@ -43,9 +43,10 @@ func loadOrdersTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addOrderTableHeaders(email, &data)
 	for _, record := range orderRecords {
-		addOrderTableRow(record, userRecordsByRecordId, &data)
+		addOrderTableRow(record, userRecordsByRecordId, &data, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
@@ -81,17 +82,17 @@ func addOrderTableHeaders(email string, data *TableOutput) {
 	data.TableHeader = append(data.TableHeader, noteName)
 }
 
-func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableOutput) {
+func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	orderStart := TableCell{CellName: record.DateTimeStart.Format("2006-01-02 15:04:05")}
+	orderStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, orderStart)
 	if record.DateTimeEnd.Time.IsZero() {
-		orderEnd := TableCell{CellName: time.Now().Format("2006-01-02 15:04:05") + " +"}
+		orderEnd := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	} else {
-		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.Format("2006-01-02 15:04:05")}
+		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	}
 	workplaceModeNameCell := TableCell{CellName: cachedWorkplaceModesById[uint(record.WorkplaceModeID)].Name}

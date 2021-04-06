@@ -44,10 +44,22 @@ fetch("/load_index_data", {
 
 function drawProductivityChart(data) {
     productivityChartDom.style.height = (data["WorkplaceNames"].length) * 30 + 30 + "px"
-    console.log("PRODUCTIVITY: " + data["WorkplaceNames"].length + ":" + productivityChartDom.style.height)
     productivityChart.scale = true
     let option;
     option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                return params[0]["name"] +": <b>"+ params[0]["data"].toFixed(1) + "%</b>"
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0]-size["contentSize"][0]/2, point[1]];
+            }
+
+        },
         title: {
             text: data["ProductivityTodayTitle"]
         },
@@ -57,7 +69,7 @@ function drawProductivityChart(data) {
             top: 30,
             bottom: 0,
             left: 5,
-            right: 20,
+            right: 1,
         },
         xAxis: {
             scale: true,
@@ -110,17 +122,29 @@ function drawProductivityChart(data) {
 
 function drawTerminalDowntimeChart(data) {
     terminalDowntimeChartDom.style.height = (data["TerminalDowntimeNames"].length) * 30 + 30 + "px"
-    console.log("DOWNTIMES: " + data["TerminalDowntimeNames"].length + ":" + terminalDowntimeChartDom.style.height)
-    console.log("DOWNTIMES: " + data["TerminalDowntimeDurations"])
+    console.log(data["Locale"]) //change locale
     let option;
     option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                return params[0]["name"] +": <b>"+ moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0]-size["contentSize"][0]/2, point[1]];
+            }
+
+        },
         title: {
             text: data["DowntimesTitle"]
         },
         grid: {
             top: 30,
             bottom: 0,
-            left: 5,
+            left: 1,
             right: 20,
         },
         xAxis: {
@@ -170,16 +194,28 @@ function drawTerminalDowntimeChart(data) {
 
 function drawTerminalBreakdownChart(data) {
     terminalBreakdownChartDom.style.height = data["TerminalBreakdownNames"].length * 30 + 30 + "px"
-    console.log("BREAKDOWNS: " + data["TerminalBreakdownNames"].length + ":" + terminalBreakdownChartDom.style.height)
     let option;
     option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                return params[0]["name"] +": <b>"+ moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0]-size["contentSize"][0]/2, point[1]];
+            }
+
+        },
         title: {
             text: data["BreakdownsTitle"]
         },
         grid: {
             top: 30,
             bottom: 0,
-            left: 5,
+            left: 1,
             right: 20,
         },
         xAxis: {
@@ -229,16 +265,28 @@ function drawTerminalBreakdownChart(data) {
 
 function drawTerminalAlarmChart(data) {
     terminalAlarmChartDom.style.height = data["TerminalAlarmNames"].length * 30 + 30 + "px"
-    console.log("ALARMS: " + data["TerminalAlarmNames"].length + ":" + terminalAlarmChartDom.style.height)
     let option;
     option = {
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                return params[0]["name"] +": <b>"+ moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0]-size["contentSize"][0]/2, point[1]];
+            }
+
+        },
         title: {
-            text: data["AlarmTitle"]
+            text: data["AlarmsTitle"]
         },
         grid: {
             top: 30,
             bottom: 0,
-            left: 5,
+            left: 1,
             right: 20,
         },
         xAxis: {
@@ -296,6 +344,9 @@ function drawCalendar(data) {
             formatter: function (p) {
                 let format = echarts.format.formatTime('dd.MM.yyyy', p.data[0]);
                 return format + ': ' + "<b>" + p.data[1] + "%</b>";
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0]-size["contentSize"][0]/2, point[1]];
             }
         },
         visualMap: {

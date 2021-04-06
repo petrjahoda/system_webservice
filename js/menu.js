@@ -16,4 +16,3 @@ menu.addEventListener("click", (event) => {
         console.log(error)
     });
 })
-

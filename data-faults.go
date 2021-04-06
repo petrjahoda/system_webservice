@@ -36,20 +36,21 @@ func loadFaultsTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addFaultTableHeaders(email, &data)
 	for _, record := range orderRecords {
-		addFaultTableRow(record, &data, db)
+		addFaultTableRow(record, &data, db, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-FAULTS", "Faults table loaded in "+time.Since(timer).String())
 }
 
-func addFaultTableRow(record database.FaultRecord, data *TableOutput, db *gorm.DB) {
+func addFaultTableRow(record database.FaultRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	faultDate := TableCell{CellName: record.DateTime.Format("2006-01-02 15:04:05")}
+	faultDate := TableCell{CellName: record.DateTime.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, faultDate)
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}
 	tableRow.TableCell = append(tableRow.TableCell, userName)

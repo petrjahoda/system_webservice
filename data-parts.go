@@ -36,20 +36,21 @@ func loadPartsTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	loc, err := time.LoadLocation(location)
 	addPartTableHeaders(email, &data)
 	for _, record := range packageRecords {
-		addPartTableRow(record, &data, db)
+		addPartTableRow(record, &data, db, loc)
 	}
 	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA-PARTS", "Parts table loaded in "+time.Since(timer).String())
 }
 
-func addPartTableRow(record database.PartRecord, data *TableOutput, db *gorm.DB) {
+func addPartTableRow(record database.PartRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
-	partdate := TableCell{CellName: record.DateTime.Format("2006-01-02 15:04:05")}
+	partdate := TableCell{CellName: record.DateTime.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, partdate)
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}
 	tableRow.TableCell = append(tableRow.TableCell, userName)

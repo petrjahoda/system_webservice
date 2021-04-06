@@ -14,6 +14,11 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.1.6] - 2021-01-06
+
+### Added
+- calendar data calculation make fastest possible
+
 ## [2021.2.1.1] - 2021-01-04
 
 ### Added
