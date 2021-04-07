@@ -131,25 +131,53 @@ func downloadData(db *gorm.DB, fromDate time.Time, toDate time.Time, workplaceId
 	stateRecordsAsMap := make(map[string]time.Duration)
 	var stateRecords []database.StateRecord
 	if workplaceId == 0 {
-		db.Where("date_time_start >= ?", fromDate).Where("date_time_end <= ? or date_time_end is null", toDate).Where("state_id = 1").Order("date_time_start asc").Find(&stateRecords)
+		for _, workplace := range cachedWorkplacesById {
+			db.Select("state_id, date_time_start").Where("date_time_start >= ?", fromDate).Where("date_time_start <= ?", toDate).Where("workplace_id = ?", workplace.ID).Order("date_time_start asc").Find(&stateRecords)
+			for index, record := range stateRecords {
+				nextDate := time.Now().In(loc)
+				if index < len(stateRecords)-1 {
+					nextDate = stateRecords[index+1].DateTimeStart
+				}
+				if record.StateID == 1 {
+					if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
+						stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
+					} else {
+
+						endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+						for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
+							stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
+							record.DateTimeStart = endOfRecordDay.In(loc)
+							endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+						}
+						endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
+						stateRecordsAsMap[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
+					}
+				}
+			}
+		}
+
 	} else {
-		db.Where("date_time_start >= ?", fromDate).Where("date_time_end <= ? or date_time_end is null", toDate).Where("state_id = 1").Where("workplace_id = ?", workplaceId).Order("date_time_start asc").Find(&stateRecords)
-	}
-	for _, record := range stateRecords {
-		if record.DateTimeStart.In(loc).Day() == record.DateTimeEnd.Time.In(loc).Day() {
-			stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(record.DateTimeStart.In(loc))
-		} else {
-			if record.DateTimeEnd.Time.IsZero() {
-				record.DateTimeEnd.Time = time.Now().In(loc)
+		db.Select("state_id, date_time_start").Where("date_time_start >= ?", fromDate).Where("date_time_start <= ?", toDate).Where("workplace_id = ?", workplaceId).Order("date_time_start asc").Find(&stateRecords)
+		for index, record := range stateRecords {
+			nextDate := time.Now().In(loc)
+			if index < len(stateRecords)-1 {
+				nextDate = stateRecords[index+1].DateTimeStart
 			}
-			endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-			for record.DateTimeStart.In(loc).Before(record.DateTimeEnd.Time.In(loc)) {
-				stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
-				record.DateTimeStart = endOfRecordDay.In(loc)
-				endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+			if record.StateID == 1 {
+				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
+					stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
+				} else {
+
+					endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+					for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
+						stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
+						record.DateTimeStart = endOfRecordDay.In(loc)
+						endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+					}
+					endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
+					stateRecordsAsMap[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
+				}
 			}
-			endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
-			stateRecordsAsMap[record.DateTimeEnd.Time.In(loc).Format("2006-01-02")] += record.DateTimeEnd.Time.In(loc).Sub(endOfRecordDay.In(loc))
 		}
 	}
 	return stateRecordsAsMap
