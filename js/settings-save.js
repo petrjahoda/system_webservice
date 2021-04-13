@@ -261,7 +261,7 @@ function saveUserSettings() {
                     }).then((response) => {
                         response.text().then(function () {
                             document.getElementById("settings-container-detail").innerHTML = ""
-                            loadSettings();
+                            location.reload()
                         });
                     }).catch((error) => {
                         console.log(error)
