@@ -296,7 +296,6 @@ func cacheUsers(db *gorm.DB) {
 	usersSync.Lock()
 	userSettingsSync.Lock()
 	cachedUsersByEmail = map[string]database.User{}
-	cachedUserSettings = map[string]userSettings{}
 	cachedUsersById = map[uint]database.User{}
 	for _, user := range users {
 		if len(user.Email) > 0 {

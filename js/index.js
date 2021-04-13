@@ -13,6 +13,10 @@ let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom);
 let terminalAlarmChart = echarts.init(terminalAlarmChartDom);
 let daysChart = echarts.init(daysDom)
 
+loadIndexData();
+
+window.addEventListener('resize', () => location.reload())
+
 refreshButton.addEventListener('click', () => {
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
@@ -39,22 +43,22 @@ function loadIndexData() {
         response.text().then(function (data) {
             let result = JSON.parse(data);
             drawProductivityChart(result);
+            productivityChart.resize()
             drawCalendar(result);
+            calendarChart.resize();
             drawDaysChart();
+            daysChart.resize()
             drawTerminalDowntimeChart(result);
+            terminalDowntimeChart.resize()
             drawTerminalBreakdownChart(result);
+            terminalBreakdownChart.resize()
             drawTerminalAlarmChart(result);
-            resizeCharts()
-            window.addEventListener('resize', () => location.reload())
+            terminalAlarmChart.resize()
         });
     }).catch((error) => {
         console.log(error)
     });
 }
-
-loadIndexData();
-
-
 
 function drawProductivityChart(data) {
     productivityChartDom.style.height = (data["WorkplaceNames"].length) * 30 + 30 + "px"
@@ -67,12 +71,11 @@ function drawProductivityChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] +": <b>"+ params[0]["data"].toFixed(1) + "%</b>"
+                return params[0]["name"] + ": <b>" + params[0]["data"].toFixed(1) + "%</b>"
             },
             position: function (point, params, dom, rect, size) {
-                return [point[0]-size["contentSize"][0]/2, point[1]];
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
             }
-
         },
         title: {
             text: data["ProductivityTodayTitle"]
@@ -120,7 +123,6 @@ function drawProductivityChart(data) {
                 silent: true,
                 label: {
                     show: true,
-                    // var res = str.split(" ");
                     formatter: '{b}',
                     position: 'insideLeft',
                     fontSize: '16',
@@ -148,10 +150,10 @@ function drawTerminalDowntimeChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] +": <b>"+ moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
             },
             position: function (point, params, dom, rect, size) {
-                return [point[0]-size["contentSize"][0]/2, point[1]];
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
             }
 
         },
@@ -210,6 +212,11 @@ function drawTerminalDowntimeChart(data) {
 }
 
 function drawTerminalBreakdownChart(data) {
+    if (data["TerminalDowntimeNames"] === null) {
+        document.getElementById("terminal-breakdowns").style.marginTop = "0px"
+    } else {
+        document.getElementById("terminal-breakdowns").style.marginTop = "30px"
+    }
     if (data["TerminalBreakdownNames"] === null) {
         terminalBreakdownChartDom.style.height = "0px"
     } else {
@@ -223,10 +230,10 @@ function drawTerminalBreakdownChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] +": <b>"+ moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
             },
             position: function (point, params, dom, rect, size) {
-                return [point[0]-size["contentSize"][0]/2, point[1]];
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
             }
 
         },
@@ -285,6 +292,11 @@ function drawTerminalBreakdownChart(data) {
 }
 
 function drawTerminalAlarmChart(data) {
+    if (data["TerminalDowntimeNames"] === null && data["TerminalBreakdownNames"] === null) {
+        document.getElementById("terminal-alarms").style.marginTop = "0px"
+    } else {
+        document.getElementById("terminal-alarms").style.marginTop = "30px"
+    }
     if (data["TerminalAlarmNames"] === null) {
         terminalAlarmChartDom.style.height = "0px"
     } else {
@@ -298,10 +310,10 @@ function drawTerminalAlarmChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] +": <b>"+ moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
             },
             position: function (point, params, dom, rect, size) {
-                return [point[0]-size["contentSize"][0]/2, point[1]];
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
             }
 
         },
@@ -372,7 +384,7 @@ function drawCalendar(data) {
                 return format + ': ' + "<b>" + p.data[1] + "%</b>";
             },
             position: function (point, params, dom, rect, size) {
-                return [point[0]-size["contentSize"][0]/2, point[1]];
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
             }
         },
         visualMap: {
@@ -381,7 +393,7 @@ function drawCalendar(data) {
             calculable: true,
             orient: 'horizontal',
             left: 'center',
-            top: 52+actualWidth/53*6,
+            top: 52 + actualWidth / 53 * 6,
             inRange: {
                 color: ['#f3f6e7', '#89aa10']
             },
@@ -393,7 +405,7 @@ function drawCalendar(data) {
             top: 24,
             left: 30,
             right: 30,
-            cellSize: ['auto', actualWidth/53],
+            cellSize: ['auto', actualWidth / 53],
             range: [data["CalendarStart"], data["CalendarEnd"]],
             itemStyle: {
                 borderWidth: 0.5
@@ -422,28 +434,14 @@ function drawCalendar(data) {
     option && calendarChart.setOption(option);
 }
 
-function resizeCharts() {
-    setTimeout(function () {
-        terminalDowntimeChart.resize()
-        terminalBreakdownChart.resize()
-        terminalAlarmChart.resize()
-        daysChart.resize()
-        productivityChart.resize()
-        calendarChart.resize();
-    }, 250);
-}
-
-
 function drawDaysChart() {
     daysDom.style.height = "300px"
-    var option;
-
-    var xAxisData = [];
-    var data1 = [];
-    var data2 = [];
-    var data3 = [];
-
-    for (var i = 0; i < 30; i++) {
+    let option;
+    let xAxisData = [];
+    let data1 = [];
+    let data2 = [];
+    let data3 = [];
+    for (let i = 0; i < 30; i++) {
         xAxisData.push('Day' + i);
         let number1 = (Math.random() * 50).toFixed(2)
         let number2 = (Math.random() * 50).toFixed(2)
@@ -451,14 +449,12 @@ function drawDaysChart() {
         data2.push(number2);
         data3.push(100 - number1 - number2);
     }
-
-    var emphasisStyle = {
+    let emphasisStyle = {
         itemStyle: {
             shadowBlur: 10,
             shadowColor: 'rgba(0,0,0,0.3)'
         }
     };
-
     option = {
         tooltip: {},
         xAxis: {

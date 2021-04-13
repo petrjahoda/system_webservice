@@ -10,7 +10,7 @@ menu.addEventListener("click", (event) => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-        resizeCharts()
+        location.reload()
     }).catch((error) => {
         console.log(error)
     });
