@@ -13,12 +13,52 @@ type UserSettingsInput struct {
 	State    string
 }
 
+type UserWorkplacesInput struct {
+	Workplaces []string
+}
+
+type UserOutput struct {
+	Result string
+}
+
+func updateUserWorkplaces(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	email, _, _ := request.BasicAuth()
+	logInfo("UPDATE", "Updating user workplaces for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	timer := time.Now()
+	var data UserWorkplacesInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("UPDATE", "Error parsing data: "+err.Error())
+		var responseData UserOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("UPDATE", "Loading settings ended with error")
+		return
+	}
+	updateUserDataSettings(email, "", "", data.Workplaces)
+	var responseData UserOutput
+	responseData.Result = "ok"
+	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(responseData)
+	logInfo("UPDATE", "User workplaces updated in "+time.Since(timer).String())
+}
+
 func updateUserSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	email, _, _ := request.BasicAuth()
 	logInfo("UPDATE", "Updating user settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	timer := time.Now()
 	var data UserSettingsInput
-	_ = json.NewDecoder(request.Body).Decode(&data)
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("UPDATE", "Error parsing data: "+err.Error())
+		var responseData UserOutput
+		responseData.Result = "nok: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("UPDATE", "Loading settings ended with error")
+		return
+	}
 	switch data.Settings {
 	case "menu":
 		{
@@ -66,6 +106,8 @@ func updateUserDataSettings(email string, dataSelection string, settingsSelectio
 	}
 	if len(workplaces) > 0 {
 		settings.selectedWorkplaces = workplaces
+	} else {
+		settings.selectedWorkplaces = nil
 	}
 	cachedUserSettings[email] = settings
 	userSettingsSync.Unlock()

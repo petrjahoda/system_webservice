@@ -20,6 +20,12 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - settings caching after save change
 - export data from data table
 
+### Changed
+- gui structure for data
+
+### Added
+- workplace selection for index page
+
 ## [2021.2.1.7] - 2021-04-07
 
 ### Changed

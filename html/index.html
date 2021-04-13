@@ -103,18 +103,33 @@
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+            <div class="row" style="margin-bottom: 7px;margin-left: 2px;margin-top:6px;display: flex">
+                <div style="display: inline-block;flex-grow: 1" id="workplaces-data">
+                    <select data-role="select" multiple data-clear-button="true"
+                            data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                        {{range .Workplaces}}
+                        <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <button id="data-refresh-button" class="button primary"
+                        style="min-width: 100px;max-width: 100px;height: 38px;margin-right: 7px;margin-left: 10px;">
+                    <span class="mif-checkmark"></span>
+                </button>
+
+            </div>
             <div class="row" id="content">
                 <div class="cell-2">
                     <div id="productivity-overview"></div>
                 </div>
-                <div class="cell-8">
+                <div class="cell-8" id="inside">
                     <div id="calendar-heatmap"></div>
                     <div id="days-chart"></div>
                 </div>
                 <div class="cell-2">
                     <div id="terminal-downtimes"></div>
-                    <div id="terminal-breakdowns" style="margin-top: 30px"></div>
-                    <div id="terminal-alarms" style="margin-top: 30px"></div>
+                    <div id="terminal-breakdowns"></div>
+                    <div id="terminal-alarms"></div>
                 </div>
             </div>
         </div>

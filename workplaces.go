@@ -132,7 +132,8 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 				var pageWorkplace Workplace
 				pageWorkplace.WorkplaceName = workplace.Name
 				loc, _ := time.LoadLocation(location)
-				data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc)
+				data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc, email)
+
 				var totalDuration time.Duration
 				for _, duration := range data {
 					totalDuration = duration

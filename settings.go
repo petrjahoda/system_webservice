@@ -159,7 +159,7 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, _ httpr
 		return
 	}
 	logInfo("SETTINGS", "Loading settings for "+data.Data)
-	updateUserDataSettings(email, "", data.Data, nil)
+	updateUserDataSettings(email, "", data.Data, cachedUserSettings[email].selectedWorkplaces)
 	switch data.Data {
 	case "alarms":
 		loadAlarms(writer, email)

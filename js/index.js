@@ -4,12 +4,8 @@ let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
 let terminalBreakdownChartDom = document.getElementById('terminal-breakdowns');
 let terminalAlarmChartDom = document.getElementById('terminal-alarms');
 let daysDom = document.getElementById('days-chart');
-daysDom.hidden = true
-productivityChartDom.hidden = true
-calendarChartDom.hidden = true
-terminalDowntimeChartDom.hidden = true
-terminalBreakdownChartDom.hidden = true
-terminalAlarmChartDom.hidden = true
+let refreshButton = document.getElementById("data-refresh-button");
+
 let productivityChart = echarts.init(productivityChartDom);
 let calendarChart = echarts.init(calendarChartDom);
 let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom);
@@ -17,36 +13,48 @@ let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom);
 let terminalAlarmChart = echarts.init(terminalAlarmChartDom);
 let daysChart = echarts.init(daysDom)
 
-fetch("/load_index_data", {
-    method: "POST",
-}).then((response) => {
-    response.text().then(function (data) {
-        let result = JSON.parse(data);
-        drawProductivityChart(result);
-        drawCalendar(result);
-        drawDaysChart();
-        if (result["TerminalDowntimeNames"] !== null) {
-            drawTerminalDowntimeChart(result);
-        }
-        if (result["TerminalBreakdownNames"] !== null) {
-            drawTerminalBreakdownChart(result);
-        }
-        if (result["TerminalAlarmNames"] !== null) {
-            drawTerminalAlarmChart(result);
-        }
-
-        resizeCharts()
-        productivityChartDom.hidden = false
-        terminalDowntimeChartDom.hidden = false
-        terminalBreakdownChartDom.hidden = false
-        terminalAlarmChartDom.hidden = false
-        calendarChartDom.hidden = false
-        daysDom.hidden = false
-        window.addEventListener('resize', resizeCharts)
+refreshButton.addEventListener('click', () => {
+    const workplacesElement = document.getElementsByClassName("tag short-tag");
+    let workplaces = []
+    for (let index = 0; index < workplacesElement.length; index++) {
+        workplaces.push(workplacesElement[index].children[0].innerHTML)
+    }
+    let data = {
+        workplaces: workplaces,
+    };
+    fetch("/update_user_workplaces", {
+        method: "POST",
+        body: JSON.stringify(data)
+    }).then(() => {
+        loadIndexData();
+    }).catch((error) => {
+        console.log(error)
     });
-}).catch((error) => {
-    console.log(error)
-});
+})
+
+function loadIndexData() {
+    fetch("/load_index_data", {
+        method: "POST",
+    }).then((response) => {
+        response.text().then(function (data) {
+            let result = JSON.parse(data);
+            drawProductivityChart(result);
+            drawCalendar(result);
+            drawDaysChart();
+            drawTerminalDowntimeChart(result);
+            drawTerminalBreakdownChart(result);
+            drawTerminalAlarmChart(result);
+            resizeCharts()
+            window.addEventListener('resize', () => location.reload())
+        });
+    }).catch((error) => {
+        console.log(error)
+    });
+}
+
+loadIndexData();
+
+
 
 function drawProductivityChart(data) {
     productivityChartDom.style.height = (data["WorkplaceNames"].length) * 30 + 30 + "px"
@@ -127,8 +135,11 @@ function drawProductivityChart(data) {
 }
 
 function drawTerminalDowntimeChart(data) {
-    terminalDowntimeChartDom.style.height = (data["TerminalDowntimeNames"].length) * 30 + 30 + "px"
-    console.log(data["Locale"]) //change locale
+    if (data["TerminalDowntimeNames"] === null) {
+        terminalDowntimeChartDom.style.height = "0px"
+    } else {
+        terminalDowntimeChartDom.style.height = (data["TerminalDowntimeNames"].length) * 30 + 30 + "px"
+    }
     let option;
     option = {
         tooltip: {
@@ -199,7 +210,11 @@ function drawTerminalDowntimeChart(data) {
 }
 
 function drawTerminalBreakdownChart(data) {
-    terminalBreakdownChartDom.style.height = data["TerminalBreakdownNames"].length * 30 + 30 + "px"
+    if (data["TerminalBreakdownNames"] === null) {
+        terminalBreakdownChartDom.style.height = "0px"
+    } else {
+        terminalBreakdownChartDom.style.height = data["TerminalBreakdownNames"].length * 30 + 30 + "px"
+    }
     let option;
     option = {
         tooltip: {
@@ -270,7 +285,11 @@ function drawTerminalBreakdownChart(data) {
 }
 
 function drawTerminalAlarmChart(data) {
-    terminalAlarmChartDom.style.height = data["TerminalAlarmNames"].length * 30 + 30 + "px"
+    if (data["TerminalAlarmNames"] === null) {
+        terminalAlarmChartDom.style.height = "0px"
+    } else {
+        terminalAlarmChartDom.style.height = data["TerminalAlarmNames"].length * 30 + 30 + "px"
+    }
     let option;
     option = {
         tooltip: {
@@ -342,6 +361,7 @@ function drawTerminalAlarmChart(data) {
 
 function drawCalendar(data) {
     calendarChartDom.style.height = '250px'
+    let actualWidth = parseInt(window.getComputedStyle(document.getElementById("inside")).width)
     let option;
     option = {
         scale: true,
@@ -361,7 +381,7 @@ function drawCalendar(data) {
             calculable: true,
             orient: 'horizontal',
             left: 'center',
-            top: '150',
+            top: 52+actualWidth/53*6,
             inRange: {
                 color: ['#f3f6e7', '#89aa10']
             },
@@ -373,7 +393,7 @@ function drawCalendar(data) {
             top: 24,
             left: 30,
             right: 30,
-            cellSize: ['auto', 18],
+            cellSize: ['auto', actualWidth/53],
             range: [data["CalendarStart"], data["CalendarEnd"]],
             itemStyle: {
                 borderWidth: 0.5
@@ -404,24 +424,17 @@ function drawCalendar(data) {
 
 function resizeCharts() {
     setTimeout(function () {
-        productivityChart.resize()
-        calendarChart.resize();
         terminalDowntimeChart.resize()
         terminalBreakdownChart.resize()
         terminalAlarmChart.resize()
         daysChart.resize()
-        terminalDowntimeChartDom.hidden = false
-        terminalBreakdownChartDom.hidden = false
-        terminalAlarmChartDom.hidden = false
-        calendarChartDom.hidden = false
-        productivityChartDom.hidden = false
-        daysDom.hidden = false
+        productivityChart.resize()
+        calendarChart.resize();
     }, 250);
 }
 
 
 function drawDaysChart() {
-
     daysDom.style.height = "300px"
     var option;
 
@@ -441,8 +454,8 @@ function drawDaysChart() {
 
     var emphasisStyle = {
         itemStyle: {
-            // shadowBlur: 10,
-            // shadowColor: 'rgba(0,0,0,0.3)'
+            shadowBlur: 10,
+            shadowColor: 'rgba(0,0,0,0.3)'
         }
     };
 

@@ -11,7 +11,6 @@ menu.addEventListener("click", (event) => {
         body: JSON.stringify(data)
     }).then(() => {
         resizeCharts()
-
     }).catch((error) => {
         console.log(error)
     });
