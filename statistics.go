@@ -23,6 +23,7 @@ type StatisticsPageData struct {
 }
 
 func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
+	go updatePageCount("statistics")
 	ipAddress := strings.Split(request.RemoteAddr, ":")
 	logInfo("MAIN", "Sending home page to "+ipAddress[0])
 	email, _, _ := request.BasicAuth()

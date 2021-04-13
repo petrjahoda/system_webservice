@@ -80,6 +80,7 @@ type Data struct {
 
 func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("charts")
 	email, _, _ := request.BasicAuth()
 	logInfo("CHARTS", "Sending data page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data ChartsPageData

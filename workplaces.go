@@ -56,6 +56,7 @@ type WorkplacesData struct {
 
 func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("workplaces")
 	ipAddress := strings.Split(request.RemoteAddr, ":")
 	logInfo("MAIN", "Sending home page to "+ipAddress[0])
 	email, _, _ := request.BasicAuth()

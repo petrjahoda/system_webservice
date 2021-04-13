@@ -280,6 +280,7 @@ func downloadProductionData(db *gorm.DB, loc *time.Location) ([]string, []float6
 
 func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("index")
 	email, _, _ := request.BasicAuth()
 	logInfo("INDEX", "Sending home page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data IndexPageData
@@ -294,6 +295,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	data.Compacted = cachedUserSettings[email].menuState
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("INDEX", "Index page sent in "+time.Since(timer).String())

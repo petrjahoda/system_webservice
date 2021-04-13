@@ -22,7 +22,7 @@ container.addEventListener("click", (event) => {
     } else if (event.target.id === "data-new-button" || event.target.id === "data-new-button-mif") {
         loadSettings();
         loadDetails(null, "first");
-    } else if (event.target.id === "data-new-button-type" || event.target.id === "data-new-button-mif-type") {
+    } else if (event.target.id === "data-new-button-type" || event.target.id === "data-new-button-type-mif") {
         loadSettings();
         loadDetails(null, "second");
     } else if (event.target.id === "data-new-button-type-extended" || event.target.id === "data-new-button-mif-type-extended") {

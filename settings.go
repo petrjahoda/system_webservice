@@ -33,6 +33,7 @@ type SettingsPageOutput struct {
 
 func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("settings")
 	email, _, _ := request.BasicAuth()
 	logInfo("SETTINGS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data SettingsPageOutput
@@ -143,6 +144,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 
 func loadSettingsData(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("settings")
 	email, _, _ := request.BasicAuth()
 	logInfo("SETTINGS", "Loading settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data SettingsPageInput

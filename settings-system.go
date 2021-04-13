@@ -175,5 +175,6 @@ func saveSystemSettingsDetails(writer http.ResponseWriter, request *http.Request
 	settings.Note = data.Note
 	db.Save(&settings)
 	cacheUsers(db)
+	cacheSystemSettings(db)
 	logInfo("SETTINGS", "System settings details for "+settings.Name+" saved in "+time.Since(timer).String())
 }

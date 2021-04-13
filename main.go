@@ -11,7 +11,7 @@ import (
 const version = "2021.2.1.1"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
-const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable"
+const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable application_name=system_webservice"
 
 type program struct{}
 
@@ -27,6 +27,7 @@ func main() {
 	if err != nil {
 		logError("SYSTEM", "Cannot start: "+err.Error())
 	}
+
 	err = s.Run()
 	if err != nil {
 		logError("SYSTEM", "Cannot start: "+err.Error())

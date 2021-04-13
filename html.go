@@ -112,3 +112,18 @@ func comparePasswords(hashedPwd string, plainPwd []byte) bool {
 	}
 	return true
 }
+
+func updatePageCount(pageName string) {
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("MAIN", "Problem opening database: "+err.Error())
+		return
+	}
+	var pageCount database.PageCount
+	db.Where("page_name = ?", pageName).Find(&pageCount)
+	pageCount.PageName = pageName
+	pageCount.Count = pageCount.Count + 1
+	db.Save(&pageCount)
+}

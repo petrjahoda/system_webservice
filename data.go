@@ -52,6 +52,7 @@ type TableWorkplaceSelection struct {
 
 func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("data")
 	email, _, _ := request.BasicAuth()
 	logInfo("DATA", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data DataPageOutput
@@ -156,6 +157,7 @@ func getSelected(selection string, menu string) string {
 
 func loadTableData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
+	go updatePageCount("data")
 	email, _, _ := request.BasicAuth()
 	logInfo("DATA", "Loading table for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data DataPageInput

@@ -14,17 +14,23 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
-## [2021.2.1.7] - 2021-01-07
+## [2021.2.1.13] - 2021-04-13
+
+### Fixed
+- settings caching after save change
+- export data from data table
+
+## [2021.2.1.7] - 2021-04-07
 
 ### Changed
 - calendar data calculation changed for actual state_record table
 
-## [2021.2.1.6] - 2021-01-06
+## [2021.2.1.6] - 2021-04-06
 
 ### Added
 - calendar data calculation make fastest possible
 
-## [2021.2.1.1] - 2021-01-04
+## [2021.2.1.1] - 2021-04-04
 
 ### Added
 - calculating productivity for calendar overview

@@ -1,38 +1,45 @@
 <div class="row mb-2" style="margin-top: -6px;margin-left: -5px;margin-right: -5px;">
     <div class="cell-7 my-search-wrapper"></div>
     <div class="cell-5 my-rows-wrapper"></div>
+
 </div>
 <div style="margin-top: -18px;border: 1px solid transparent">
-<table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="data-table"
-       data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
-       data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
-       data-pagination-wrapper=".my-pagination-wrapper"
-       data-search-wrapper=".my-search-wrapper"
-       data-rows-wrapper=".my-rows-wrapper"
-       data-info-wrapper =".my-info-wrapper"
-       data-rows-steps="5, 10, 15, 20, 25"
-       data-rows="15"
-       data-pagination-next-title="⇨">
-    <thead data-sortable="true">
-    <tr>
-        {{range .TableHeader}}
-        <th class="sortable-column asc">{{.HeaderName}}</th>
+    <table class="table striped row-hover" data-role="table" data-horizontal-scroll="true" id="data-table"
+           data-table-search-title="{{.DataTableSearchTitle}}" data-table-info-title="{{.DataTableInfoTitle}}"
+           data-table-rows-count-title="{{.DataTableRowsCountTitle}}" data-pagination-prev-title="⇦"
+           data-pagination-wrapper=".my-pagination-wrapper"
+           data-search-wrapper=".my-search-wrapper"
+           data-rows-wrapper=".my-rows-wrapper"
+           data-info-wrapper=".my-info-wrapper"
+           data-rows-steps="5, 10, 15, 20, 25"
+           data-rows="15"
+           data-pagination-next-title="⇨">
+        <thead data-sortable="true">
+        <tr>
+            {{range .TableHeader}}
+            <th class="sortable-column asc">{{.HeaderName}}</th>
+            {{end}}
+        </tr>
+        </thead>
+        <tbody>
+        {{range .TableRows}}
+        <tr>
+            {{range .TableCell}}
+            <td>{{.CellName}}</td>
+            {{end}}
+        </tr>
         {{end}}
-    </tr>
-    </thead>
-    <tbody>
-    {{range .TableRows}}
-    <tr>
-        {{range .TableCell}}
-        <td>{{.CellName}}</td>
-        {{end}}
-    </tr>
-    {{end}}
-    </tbody>
-</table>
+        </tbody>
+    </table>
 </div>
 <div class="row mb-2" style="margin-top: -14px;text-align: right;margin-left: -5px;margin-right: -5px;">
-    <div class="cell-7 my-pagination-wrapper" ></div>
-    <div class="cell-5 my-info-wrapper" style="text-align: right;padding-right: 10px">
+    <div class="cell-10 my-pagination-wrapper"></div>
+    <div class="cell-2" style="display: flex; justify-content: flex-end">
+        <button id="data-export-button" class="button primary"
+                style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 4px;margin-right: 0;" onclick="$('#data-table').data('table').export('CSV')"><span class="mif-floppy-disk"></span>
+        </button>
     </div>
+</div>
+<div class="row mb-2" style="margin-top: -34px;text-align: right;margin-left: -5px;margin-right: -5px;">
+<div class="cell-12 my-info-wrapper" style="text-align: left;padding-right: 10px"></div>
 </div>

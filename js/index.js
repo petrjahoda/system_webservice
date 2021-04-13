@@ -3,6 +3,8 @@ let calendarChartDom = document.getElementById('calendar-heatmap');
 let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
 let terminalBreakdownChartDom = document.getElementById('terminal-breakdowns');
 let terminalAlarmChartDom = document.getElementById('terminal-alarms');
+let daysDom = document.getElementById('days-chart');
+daysDom.hidden = true
 productivityChartDom.hidden = true
 calendarChartDom.hidden = true
 terminalDowntimeChartDom.hidden = true
@@ -13,6 +15,7 @@ let calendarChart = echarts.init(calendarChartDom);
 let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom);
 let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom);
 let terminalAlarmChart = echarts.init(terminalAlarmChartDom);
+let daysChart = echarts.init(daysDom)
 
 fetch("/load_index_data", {
     method: "POST",
@@ -21,6 +24,7 @@ fetch("/load_index_data", {
         let result = JSON.parse(data);
         drawProductivityChart(result);
         drawCalendar(result);
+        drawDaysChart();
         if (result["TerminalDowntimeNames"] !== null) {
             drawTerminalDowntimeChart(result);
         }
@@ -30,12 +34,14 @@ fetch("/load_index_data", {
         if (result["TerminalAlarmNames"] !== null) {
             drawTerminalAlarmChart(result);
         }
+
         resizeCharts()
         productivityChartDom.hidden = false
         terminalDowntimeChartDom.hidden = false
         terminalBreakdownChartDom.hidden = false
         terminalAlarmChartDom.hidden = false
         calendarChartDom.hidden = false
+        daysDom.hidden = false
         window.addEventListener('resize', resizeCharts)
     });
 }).catch((error) => {
@@ -403,10 +409,88 @@ function resizeCharts() {
         terminalDowntimeChart.resize()
         terminalBreakdownChart.resize()
         terminalAlarmChart.resize()
+        daysChart.resize()
         terminalDowntimeChartDom.hidden = false
         terminalBreakdownChartDom.hidden = false
         terminalAlarmChartDom.hidden = false
         calendarChartDom.hidden = false
         productivityChartDom.hidden = false
+        daysDom.hidden = false
     }, 250);
 }
+
+
+function drawDaysChart() {
+
+    daysDom.style.height = "300px"
+    var option;
+
+    var xAxisData = [];
+    var data1 = [];
+    var data2 = [];
+    var data3 = [];
+
+    for (var i = 0; i < 30; i++) {
+        xAxisData.push('Day' + i);
+        let number1 = (Math.random() * 50).toFixed(2)
+        let number2 = (Math.random() * 50).toFixed(2)
+        data1.push(number1);
+        data2.push(number2);
+        data3.push(100 - number1 - number2);
+    }
+
+    var emphasisStyle = {
+        itemStyle: {
+            // shadowBlur: 10,
+            // shadowColor: 'rgba(0,0,0,0.3)'
+        }
+    };
+
+    option = {
+        tooltip: {},
+        xAxis: {
+            data: xAxisData,
+            axisLine: {onZero: true},
+            splitLine: {show: false},
+            splitArea: {show: false}
+        },
+        yAxis: {
+            max: 100,
+        },
+        grid: {
+            top: 30,
+            bottom: 30,
+            left: 25,
+            right: 25,
+        },
+        series: [
+            {
+                name: 'Production',
+                type: 'bar',
+                stack: 'one',
+                emphasis: emphasisStyle,
+                data: data1,
+                color: "#a1c03e"
+            },
+            {
+                name: 'PowerOff',
+                type: 'bar',
+                stack: 'one',
+                emphasis: emphasisStyle,
+                data: data2,
+                color: "#e18378"
+            },
+            {
+                name: 'Downtime',
+                type: 'bar',
+                stack: 'one',
+                emphasis: emphasisStyle,
+                data: data3,
+                color: "#eebe63"
+            },
+
+        ]
+    };
+    option && daysChart.setOption(option);
+}
+
