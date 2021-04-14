@@ -80,9 +80,9 @@
                     <span class="mif-bell"></span>
                     <span class="badge bg-red fg-white">4</span>
                 </button>
-<!--                <button class="button square m-1" id="logout-button">-->
-<!--                    <span class="mif-user-minus"></span>-->
-<!--                </button>-->
+                <!--                <button class="button square m-1" id="logout-button">-->
+                <!--                    <span class="mif-user-minus"></span>-->
+                <!--                </button>-->
                 <h6 class="m-0">{{.UserName}} @ {{.Company}}</h6>
             </div>
             <br>
@@ -99,24 +99,25 @@
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto" style="margin: 0">
+                <div style="min-width:200px;margin-top: 3px;margin-left: 24px;">
+                    <progress value="0" max="60" id="progress-bar" style="margin-left: 24px;"></progress>
+                </div>
+                <div style="min-width:100px;margin-left: 3px">
+                    <button id="data-refresh-button" class="button primary"
+                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-loop2"></span>
+                    </button>
+                </div>
             </div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
-             style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div class="row" style="margin-bottom: 7px;margin-left: 2px;margin-top:6px;display: flex">
-                <div style="display: inline-block;flex-grow: 1" id="workplaces-data">
-                    <select data-role="select" multiple data-clear-button="true"
-                            data-filter-placeholder="{{.DataFilterPlaceholder}}">
-                        {{range .Workplaces}}
-                        <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
-                        {{end}}
-                    </select>
-                </div>
-                <button id="data-refresh-button" class="button primary"
-                        style="min-width: 100px;max-width: 100px;height: 38px;margin-right: 7px;margin-left: 10px;">
-                    <span class="mif-checkmark"></span>
-                </button>
-
+             style="padding-top: 61px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+            <div id="workplaces-data" class="row" style="margin: 6px 1px 7px 2px;">
+                <select data-role="select" multiple data-clear-button="true"
+                        data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                    {{range .Workplaces}}
+                    <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
+                    {{end}}
+                </select>
             </div>
             <div class="row" id="content">
                 <div class="cell-2">
@@ -125,6 +126,7 @@
                 <div class="cell-8" id="inside">
                     <div id="calendar-heatmap"></div>
                     <div id="days-chart"></div>
+                    <div id="consumption-chart"></div>
                 </div>
                 <div class="cell-2">
                     <div id="terminal-downtimes"></div>
@@ -134,5 +136,6 @@
             </div>
         </div>
     </div>
+</div>
 </body>
 </html>

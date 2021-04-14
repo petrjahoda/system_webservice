@@ -28,7 +28,9 @@ type Workplace struct {
 	OrderDuration              string
 	UserInformation            string
 	BreakdownInformation       string
+	BreakdownDuration          string
 	AlarmInformation           string
+	AlarmDuration              string
 	TodayDate                  string
 }
 
@@ -132,7 +134,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 				var pageWorkplace Workplace
 				pageWorkplace.WorkplaceName = workplace.Name
 				loc, _ := time.LoadLocation(location)
-				data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc, email)
+				data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc, email, 1)
 
 				var totalDuration time.Duration
 				for _, duration := range data {
@@ -148,7 +150,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					pageWorkplace.WorkplaceProductivityColor = "bg-darkGreen"
 					pageWorkplace.WorkplaceState = "mif-play"
 					pageWorkplace.WorkplaceStateName = getLocale(email, "production")
-					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
+					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
 					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
 					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
@@ -156,7 +158,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
-						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Minute).String() + "]"
+						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
@@ -167,13 +169,17 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					}
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
+						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
+						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
+						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
+						pageWorkplace.BreakdownDuration = ""
 					}
 					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
 				case 2:
@@ -182,7 +188,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					pageWorkplace.WorkplaceState = "mif-pause"
 					downtimeRecordId := cachedDowntimeRecords[int(workplace.ID)].DowntimeID
 					pageWorkplace.WorkplaceStateName = cachedDowntimesById[uint(downtimeRecordId)].Name
-					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
+					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
 					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
 					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
@@ -190,7 +196,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
-						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Minute).String() + "]"
+						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
@@ -201,13 +207,17 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					}
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
+						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
+						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
+						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
+						pageWorkplace.BreakdownDuration = ""
 					}
 					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
 				default:
@@ -215,7 +225,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					pageWorkplace.WorkplaceState = "mif-stop"
 					pageWorkplace.WorkplaceStateName = getLocale(email, "poweroff")
 					pageWorkplace.WorkplaceProductivityColor = "bg-darkRed"
-					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Minute).String()
+					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
 					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
 					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
@@ -223,13 +233,17 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
+						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
+						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
+						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
+						pageWorkplace.BreakdownDuration = ""
 					}
 					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
 				}

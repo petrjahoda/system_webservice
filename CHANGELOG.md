@@ -14,6 +14,16 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.1.14] - 2021-04-14
+
+### Added
+- proper locales for index page
+- 30 days overview table for index page
+- workplace selection for index page
+
+### Changed
+- control buttons reverted back to top
+
 ## [2021.2.1.13] - 2021-04-13
 
 ### Fixed

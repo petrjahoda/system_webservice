@@ -102,28 +102,30 @@
                         {{end}}
                     </select>
                 </div>
+                <div style="margin-top: 3px;margin-left: 3px">
+                    <input id="from-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px">
+                </div>
+                <div style="margin-top: 3px;margin-left: 3px">
+                    <input id="to-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px">
+                </div>
+                <div style="min-width:100px;margin-left: 3px">
+                    <button id="data-ok-button" class="button primary"
+                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-loop2"></span>
+                    </button>
+                </div>
             </div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 60px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div class="row" style="margin-bottom: 7px;margin-left: 2px;margin-top:6px;display: flex">
-                <div style="display: inline-block;flex-grow: 1">
+            <div class="row" style="margin: 6px 1px 7px 2px;">
                     <select data-role="select" multiple data-clear-button="true"
                             data-filter-placeholder="{{.DataFilterPlaceholder}}">
                         {{range .Workplaces}}
                         <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
                         {{end}}
                     </select>
-                </div>
-                <input id="from-date" type="datetime-local"
-                       style="text-align: center;border: 1px solid #d9d9d9;height: 38px;margin-left: 10px;">
-                <input id="to-date" type="datetime-local"
-                       style=";text-align: center;border: 1px solid #d9d9d9;height: 38px;margin-left: 10px;">
-                <button id="data-ok-button" class="button primary"
-                        style="min-width: 100px;max-width: 100px;height: 38px;margin-right: 7px;margin-left: 10px;">
-                    <span class="mif-checkmark"></span>
-                </button>
-
             </div>
             <div id="data-table-container" style="display: block">
             </div>

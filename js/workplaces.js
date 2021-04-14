@@ -1,7 +1,14 @@
-var timeleft = 60;
-var downloadTimer = setInterval(function(){
-    if(timeleft <= 0){
+const refreshButton = document.getElementById("data-refresh-button")
+
+refreshButton.addEventListener('click', () => {
+    location.reload()
+})
+
+let timeleft = 60;
+const downloadTimer = setInterval(function () {
+    if (timeleft <= 0) {
         clearInterval(downloadTimer);
+        location.reload()
     }
     document.getElementById("progress-bar").value = 60 - timeleft;
     timeleft -= 1;
