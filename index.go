@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jinzhu/now"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
@@ -53,12 +54,14 @@ type IndexData struct {
 	ProductivityTodayTitle     string
 	ProductivityYearTitle      string
 	OverviewMonthTitle         string
+	ConsumptionMonthTitle      string
 	DowntimesTitle             string
 	BreakdownsTitle            string
 	AlarmsTitle                string
 	CalendarDayLabel           []string
 	CalendarMonthLabel         []string
 	CalendarData               [][]string
+	ConsumptionData            []string
 	MonthDataDays              []string
 	MonthDataProduction        []string
 	MonthDataDowntime          []string
@@ -99,24 +102,9 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db, email)
 	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db, email)
 	productionData, downtimeData, poweroffData := downloadIndexData(db, loc, email)
-	monthDataDays := []string{}
-	monthDataProduction := []string{}
-	monthDataDowntime := []string{}
-	monthDataPoweroff := []string{}
-	for index, data := range productionData {
-		layout := "2006-01-02"
-		date, err := time.Parse(layout, data[0])
-		if err != nil {
-			logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
-		}
-		if time.Now().In(loc).Sub(date).Hours() < 720 {
-			monthDataDays = append(monthDataDays, data[0])
-			monthDataProduction = append(monthDataProduction, data[1])
-			monthDataDowntime = append(monthDataDowntime, downtimeData[index][1])
-			monthDataPoweroff = append(monthDataPoweroff, poweroffData[index][1])
-		}
-	}
-
+	monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff := processProductionData(productionData, loc, downtimeData, poweroffData)
+	consumptionData := downloadConsumptionData(db, loc, email)
+	timeBack := time.Now().In(loc).AddDate(0, -11, 0)
 	data.WorkplaceNames = workplaceNames
 	data.WorkplacePercents = workplacePercents
 	data.TerminalDowntimeNames = terminalDowntimeNames
@@ -138,20 +126,100 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.CalendarDayLabel = strings.Split(getLocale(email, "day-names"), ",")
 	data.CalendarMonthLabel = strings.Split(getLocale(email, "month-names"), ",")
 	data.CalendarData = productionData
+	data.ConsumptionData = consumptionData
 	data.MonthDataDays = monthDataDays
 	data.MonthDataProduction = monthDataProduction
 	data.MonthDataDowntime = monthDataDowntime
 	data.MonthDataPoweroff = monthDataPoweroff
-	data.CalendarStart = time.Now().In(loc).AddDate(0, -11, 0).Format("2006-01-02")
+	data.CalendarStart = time.Date(timeBack.Year(), timeBack.Month(), 1, 0, 0, 0, 0, loc).Format("2006-01-02")
 	data.CalendarEnd = now.EndOfMonth().In(loc).Format("2006-01-02")
 	data.Locale = cachedUsersByEmail[email].Locale
 	data.ProductionLocale = getLocale(email, "production")
 	data.DowntimeLocale = getLocale(email, "downtime")
 	data.PoweroffLocale = getLocale(email, "poweroff")
 	data.OverviewMonthTitle = getLocale(email, "month-overview")
+	data.ConsumptionMonthTitle = getLocale(email, "month-consumption-overview")
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(data)
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
+}
+
+func processProductionData(productionData [][]string, loc *time.Location, downtimeData [][]string, poweroffData [][]string) ([]string, []string, []string, []string) {
+	var monthDataDays []string
+	var monthDataProduction []string
+	var monthDataDowntime []string
+	var monthDataPoweroff []string
+	for index, data := range productionData {
+		layout := "2006-01-02"
+		date, err := time.Parse(layout, data[0])
+		if err != nil {
+			logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
+		}
+		if time.Now().In(loc).Sub(date).Hours() < 720 {
+			monthDataDays = append(monthDataDays, data[0])
+			monthDataProduction = append(monthDataProduction, data[1])
+			monthDataDowntime = append(monthDataDowntime, downtimeData[index][1])
+			monthDataPoweroff = append(monthDataPoweroff, poweroffData[index][1])
+		}
+	}
+	return monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff
+}
+
+func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []string {
+	consumptionDataSync.Lock()
+	todayNoon := time.Date(consumptionDataLastFullDateTime.Year(), consumptionDataLastFullDateTime.Month(), consumptionDataLastFullDateTime.Day(), 0, 0, 0, 0, loc).In(loc)
+	for _, workplace := range cachedWorkplacesById {
+		tempConsumptionData := cachedConsumptionDataByWorkplaceName[workplace.Name]
+		for _, port := range cachedWorkplacePorts[workplace.Name] {
+			if port.StateID.Int32 == 3 {
+				var devicePortAnalogRecords []database.DevicePortAnalogRecord
+				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", todayNoon).Find(&devicePortAnalogRecords)
+				tempConsumptionData[todayNoon.Format("2006-01-02")] = 0
+				for _, record := range devicePortAnalogRecords {
+					tempConsumptionData[record.DateTime.Format("2006-01-02")] += record.Data
+				}
+				cachedConsumptionDataByWorkplaceName[workplace.Name] = tempConsumptionData
+			}
+		}
+	}
+	consumptionDataLastFullDateTime = time.Now().In(loc)
+	consumptionDataSync.Unlock()
+	cachedConsumptionData := make(map[string]float32)
+	initialDate := time.Now().In(loc).AddDate(0, -1, 0)
+	for initialDate.Format("2006-01-02") != time.Now().In(loc).Format("2006-01-02") {
+		cachedConsumptionData[initialDate.Format("2006-01-02")] = 0.0
+		initialDate = initialDate.Add(24 * time.Hour)
+	}
+	if len(cachedUserSettings[email].selectedWorkplaces) > 0 {
+		for _, workplace := range cachedUserSettings[email].selectedWorkplaces {
+			fmt.Println(workplace)
+			for date, consumption := range cachedConsumptionDataByWorkplaceName[workplace] {
+				cachedConsumptionData[date] += consumption
+			}
+		}
+	} else {
+		for _, data := range cachedConsumptionDataByWorkplaceName {
+			for date, consumption := range data {
+				cachedConsumptionData[date] += consumption
+			}
+		}
+	}
+	var temporaryData [][]string
+	for key, value := range cachedConsumptionData {
+		dateTimeParsed, _ := time.Parse("2006-01-02", key)
+		if time.Now().In(loc).Sub(dateTimeParsed).Hours() <= 720 {
+			consumption := strconv.FormatFloat(float64(value*230/1000), 'f', 1, 64)
+			temporaryData = append(temporaryData, []string{key, consumption})
+		}
+	}
+	sort.Slice(temporaryData[:], func(i, j int) bool {
+		return temporaryData[i][0] < temporaryData[j][0]
+	})
+	var consumptionData []string
+	for _, consumption := range temporaryData {
+		consumptionData = append(consumptionData, consumption[1])
+	}
+	return consumptionData
 }
 
 func downloadIndexData(db *gorm.DB, loc *time.Location, email string) ([][]string, [][]string, [][]string) {
@@ -198,10 +266,9 @@ func downloadIndexData(db *gorm.DB, loc *time.Location, email string) ([][]strin
 		}
 	}
 	for _, dateToAdd := range datesToAdd {
-		productionData = append(productionData, []string{dateToAdd, "0"})
-		downtimeData = append(downtimeData, []string{dateToAdd, "0"})
-		poweroffData = append(poweroffData, []string{dateToAdd, "100"})
-
+		productionData = append(productionData, []string{dateToAdd, "0.0"})
+		downtimeData = append(downtimeData, []string{dateToAdd, "0.0"})
+		poweroffData = append(poweroffData, []string{dateToAdd, "100.0"})
 	}
 	sort.Slice(productionData[:], func(i, j int) bool {
 		return productionData[i][0] < productionData[j][0]

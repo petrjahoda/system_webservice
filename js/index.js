@@ -14,6 +14,7 @@ let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
 let terminalBreakdownChartDom = document.getElementById('terminal-breakdowns');
 let terminalAlarmChartDom = document.getElementById('terminal-alarms');
 let consumptionChartDom = document.getElementById('consumption-chart');
+consumptionChartDom.style.marginTop = "30px"
 let daysDom = document.getElementById('days-chart');
 let refreshButton = document.getElementById("data-refresh-button");
 
@@ -29,6 +30,8 @@ loadIndexData();
 
 window.addEventListener('resize', () => location.reload())
 
+
+
 refreshButton.addEventListener('click', () => {
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
@@ -42,6 +45,7 @@ refreshButton.addEventListener('click', () => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
+        updateCharm("updated")
         loadIndexData();
         timeleft=60
     }).catch((error) => {
@@ -80,6 +84,9 @@ function drawProductivityChart(data) {
     productivityChart.scale = true
     let option;
     option = {
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         tooltip: {
             trigger: 'axis',
             axisPointer: {
@@ -159,6 +166,9 @@ function drawTerminalDowntimeChart(data) {
     }
     let option;
     option = {
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         tooltip: {
             trigger: 'axis',
             axisPointer: {
@@ -239,6 +249,9 @@ function drawTerminalBreakdownChart(data) {
     }
     let option;
     option = {
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         tooltip: {
             trigger: 'axis',
             axisPointer: {
@@ -319,6 +332,9 @@ function drawTerminalAlarmChart(data) {
     }
     let option;
     option = {
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         tooltip: {
             trigger: 'axis',
             axisPointer: {
@@ -391,6 +407,9 @@ function drawCalendar(data) {
     let actualWidth = parseInt(window.getComputedStyle(document.getElementById("inside")).width)
     let option;
     option = {
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         title: {
             text: data["ProductivityYearTitle"],
             x: 'center'
@@ -458,6 +477,9 @@ function drawDaysChart(data) {
     let option;
 
     option = {
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         legend: {
             bottom: "0"
         },
@@ -526,7 +548,7 @@ function drawDaysChart(data) {
 }
 
 function drawConsumptionChart(data) {
-    consumptionChartDom.style.height = "300px"
+    consumptionChartDom.style.height = "250px"
     let emphasisStyle = {
         itemStyle: {
             borderWidth: 1,
@@ -534,9 +556,16 @@ function drawConsumptionChart(data) {
         }
     };
     option = {
+        title: {
+            text: data["ConsumptionMonthTitle"],
+            x: 'center'
+        },
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
         xAxis: {
             type: 'category',
-            data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun','Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun','Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun','Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Sat', 'Sun']
+            data: data["MonthDataDays"]
         },
         yAxis: {
             type: 'value',
@@ -547,14 +576,24 @@ function drawConsumptionChart(data) {
         },
         grid: {
             top: 30,
-            bottom: 30,
+            bottom: 50,
             left: 25,
             right: 25,
         },
         tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'shadow'
+            },
+            formatter: function (params) {
+                return "<b>" + echarts.format.formatTime('dd.MM.yyyy', params[0]["name"]) + "</b>: " + params[0]["value"].replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') + " kWh"
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
+            }
         },
         series: [{
-            data: [820, 932, 901, 934, 1290, 1330, 1320,820, 932, 901, 934, 1290, 1330, 1320,820, 932, 901, 934, 1290, 1330, 1320,820, 932, 901, 934, 1290, 1330, 1320, 123, 321],
+            data: data["ConsumptionData"],
             type: 'bar',
             symbol: 'none',
             emphasis: emphasisStyle,

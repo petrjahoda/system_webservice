@@ -8,7 +8,7 @@ import (
 	"os"
 )
 
-const version = "2021.2.1.13"
+const version = "2021.2.1.26"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable application_name=system_webservice"
@@ -53,6 +53,7 @@ func (p *program) run() {
 	router.ServeFiles("/js/*filepath", http.Dir("js"))
 	router.ServeFiles("/mif/*filepath", http.Dir("mif"))
 	router.ServeFiles("/icon/*filepath", http.Dir("icon"))
+	router.ServeFiles("/fonts/*filepath", http.Dir("fonts"))
 	router.GET("/favicon.ico", faviconHandler)
 	router.GET("/", basicAuth(index))
 	router.GET("/index", basicAuth(index))

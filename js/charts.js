@@ -3,7 +3,6 @@ now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
 document.getElementById('to-date').value = now.toISOString().slice(0, 16);
 now.setHours(now.getHours() - 24);
 document.getElementById('from-date').value = now.toISOString().slice(0, 16);
-
 const dataOkButton = document.getElementById("data-ok-button")
 
 dataOkButton.addEventListener("click", (event) => {

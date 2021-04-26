@@ -17,6 +17,7 @@ var cachedBreakdownTypesByName = map[string]database.BreakdownType{}
 var cachedDevicesByName = map[string]database.Device{}
 var cachedDevicePortsByName = map[string]database.DevicePort{}
 var cachedWorkplaceDevicePorts = map[string][]database.DevicePort{}
+var cachedWorkplacePorts = map[string][]database.WorkplacePort{}
 var cachedDeviceTypesByName = map[string]database.DeviceType{}
 var cachedDevicePortTypesByName = map[string]database.DevicePortType{}
 var cachedDowntimeTypesByName = map[string]database.DowntimeType{}
@@ -59,7 +60,8 @@ var cachedWorkplaceModesById = map[uint]database.WorkplaceMode{}
 var cachedWorkplaceSectionsById = map[uint]database.WorkplaceSection{}
 var cachedWorkShiftsById = map[uint]database.Workshift{}
 var cachedWorkplaceWorkShiftsById = map[uint]database.WorkplaceWorkshift{}
-
+var cachedConsumptionDataByWorkplaceName = map[string]map[string]float32{}
+var consumptionDataLastFullDateTime time.Time
 var alarmsSync sync.RWMutex
 var breakdownsSync sync.RWMutex
 var companyNameSync sync.RWMutex
@@ -79,6 +81,7 @@ var userSettingsSync sync.RWMutex
 var workplacesSync sync.RWMutex
 var workplaceDevicePortsSync sync.RWMutex
 var workShiftsSync sync.RWMutex
+var consumptionDataSync sync.RWMutex
 
 type userSettings struct {
 	menuState          string
@@ -120,7 +123,29 @@ func cacheData() {
 	cacheStates(db)
 	cacheWorkplaceDevicePorts(db)
 	cacheWorkplacePorts(db)
+	cacheConsumptionData(db)
 	logInfo("CACHING", "Initial caching done in "+time.Since(timer).String())
+}
+
+func cacheConsumptionData(db *gorm.DB) {
+	loc, _ := time.LoadLocation(location)
+	consumptionDataSync.Lock()
+	for _, workplace := range cachedWorkplacesById {
+		for _, port := range cachedWorkplacePorts[workplace.Name] {
+			if port.StateID.Int32 == 3 {
+				var devicePortAnalogRecords []database.DevicePortAnalogRecord
+				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", time.Now().In(loc).AddDate(0, -1, 0)).Find(&devicePortAnalogRecords)
+				tempConsumptionData := make(map[string]float32)
+				for _, record := range devicePortAnalogRecords {
+					tempConsumptionData[record.DateTime.In(loc).Format("2006-01-02")] += record.Data
+				}
+				cachedConsumptionDataByWorkplaceName[workplace.Name] = tempConsumptionData
+			}
+		}
+	}
+	consumptionDataLastFullDateTime = time.Now().In(loc)
+	consumptionDataSync.Unlock()
+	logInfo("CACHING", "Cached consumption data for "+strconv.Itoa(len(cachedConsumptionDataByWorkplaceName))+" workplaces")
 }
 
 func cacheWorkplacePorts(db *gorm.DB) {
@@ -148,6 +173,7 @@ func cacheWorkplaceDevicePorts(db *gorm.DB) {
 			allDevicePorts = append(allDevicePorts, devicePort)
 		}
 		cachedWorkplaceDevicePorts[workplace.Name] = allDevicePorts
+		cachedWorkplacePorts[workplace.Name] = allWorkplacePorts
 
 	}
 	workplaceDevicePortsSync.Unlock()

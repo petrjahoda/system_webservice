@@ -11,9 +11,11 @@
     <link rel="icon" href="../icon/android-chrome-512x512.png" sizes="512x612">
     <meta charset="utf-8">
     <link rel="stylesheet" href="../css/metro-all.min.css">
+    <link rel="stylesheet" href="../css/index.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="../js/menu.js" defer></script>
     <script src="../js/metro.min.js" defer></script>
+    <script src="../js/statistics.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
@@ -76,6 +78,9 @@
                     <span class="mif-bell"></span>
                     <span class="badge bg-red fg-white">4</span>
                 </button>
+                <button class="button square m-1" id="info-button">
+                    <span class="mif-info"></span>
+                </button>
                 <h6 class="m-0">{{.UserName}} @ {{.Company}}</h6>
             </div>
             <br>
@@ -98,6 +103,9 @@
             <p class="pl-3">data</p>
         </div>
     </div>
+</div>
+<div data-role="charms" data-position="bottom" id="right-charms" class="charms bottom-side" data-opacity=".65"
+     style="height: 100px">
 </div>
 </body>
 </html>

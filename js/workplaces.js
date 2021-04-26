@@ -1,5 +1,4 @@
 const refreshButton = document.getElementById("data-refresh-button")
-
 refreshButton.addEventListener('click', () => {
     location.reload()
 })
