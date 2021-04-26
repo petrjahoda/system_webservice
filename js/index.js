@@ -33,6 +33,7 @@ window.addEventListener('resize', () => location.reload())
 
 
 refreshButton.addEventListener('click', () => {
+    startTime = performance.now();
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
     for (let index = 0; index < workplacesElement.length; index++) {
@@ -45,7 +46,10 @@ refreshButton.addEventListener('click', () => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-        updateCharm("updated")
+        endTime = performance.now();
+        var timeDiff = endTime - startTime; //in ms
+        console.log(moment.duration(timeDiff).asMilliseconds())
+        updateCharm("Data updated in " + moment.duration(timeDiff).asMilliseconds() + "ms")
         loadIndexData();
         timeleft=60
     }).catch((error) => {
