@@ -42,6 +42,7 @@ type WorkplaceSection struct {
 
 type WorkplacesData struct {
 	Version           string
+	Information       string
 	Company           string
 	Alarms            string
 	MenuOverview      string
@@ -266,6 +267,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.Compacted = cachedUserSettings[email].menuState
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/workplaces.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("MAIN", "Workplace page sent in "+time.Since(timer).String())

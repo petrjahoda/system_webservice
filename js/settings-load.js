@@ -7,10 +7,16 @@ function loadSettings() {
         body: JSON.stringify(data)
     }).then((response) => {
         response.text().then(function (data) {
-            document.getElementById("settings-container").innerHTML = data
+            if (data.includes("ERR: ")) {
+                let result = JSON.parse(data);
+                updateCharm(result["Result"])
+            } else {
+                document.getElementById("settings-container").innerHTML = data
+                updateCharm(document.getElementById("hidden-information").innerText)
+            }
         });
     }).catch((error) => {
-        console.log(error)
+        updateCharm("ERR: " + error)
     });
 }
 
@@ -27,10 +33,17 @@ function loadDetails(selectedItem, type) {
         body: JSON.stringify(data)
     }).then((response) => {
         response.text().then(function (data) {
-            document.getElementById("settings-container-detail").innerHTML = data
+            if (data.includes("ERR: ")) {
+                let result = JSON.parse(data);
+                updateCharm(result["Result"])
+            } else {
+                document.getElementById("settings-container-detail").innerHTML = data
+                updateCharm(document.getElementById("hidden-detail-information").innerText)
+            }
         });
     }).catch((error) => {
-        console.log(error)
+        updateCharm("ERR: " + error)
+
     });
 }
 
@@ -45,16 +58,23 @@ function loadWorkplacePortDetails(selectedPort) {
         body: JSON.stringify(data)
     }).then((response) => {
         response.text().then(function (data) {
-            document.getElementById("workplace-port-container").innerHTML = data
-            setTimeout(function () {
-                document.getElementById("workplace-port-container").scrollIntoView();
-            }, 100);
-            if (document.getElementById("workplace-port-created-at").value === "0001-01-01T00:00:00") {
-                document.getElementById("workplace-port-delete-button").hidden = true
+            if (data.includes("ERR: ")) {
+                let result = JSON.parse(data);
+                updateCharm(result["Result"])
+            } else {
+                document.getElementById("workplace-port-container").innerHTML = data
+                setTimeout(function () {
+                    document.getElementById("workplace-port-container").scrollIntoView();
+                }, 100);
+                if (document.getElementById("workplace-port-created-at").value === "0001-01-01T00:00:00") {
+                    document.getElementById("workplace-port-delete-button").hidden = true
+                }
+                updateCharm(document.getElementById("hidden-detail-port-information").innerText)
             }
+
         });
     }).catch((error) => {
-        console.log(error)
+        updateCharm("ERR: " + error)
     });
 }
 
@@ -69,12 +89,18 @@ function loadDevicePortDetails(selectedPort) {
         body: JSON.stringify(data)
     }).then((response) => {
         response.text().then(function (data) {
-            document.getElementById("port-container").innerHTML = data
-            setTimeout(function () {
-                document.getElementById("port-container").scrollIntoView();
-            }, 100);
+            if (data.includes("ERR: ")) {
+                let result = JSON.parse(data);
+                updateCharm(result["Result"])
+            } else {
+                document.getElementById("port-container").innerHTML = data
+                setTimeout(function () {
+                    document.getElementById("port-container").scrollIntoView();
+                }, 100);
+                updateCharm(document.getElementById("hidden-detail-port-information").innerText)
+            }
         });
     }).catch((error) => {
-        console.log(error)
+        updateCharm("ERR: " + error)
     });
 }

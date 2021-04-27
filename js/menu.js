@@ -34,10 +34,5 @@ infoButton.addEventListener('click', () => {
 })
 
 function updateCharm(text) {
-    var count = (charms.innerHTML.match(/<br>/g) || []).length;
-    console.log(count)
-    if (count>3) {
-        console.log(charms.innerHTML)
-    }
-    charms.innerHTML = charms.innerHTML + text+"<br>"
+    charms.innerHTML = text + "<br>" + charms.innerHTML
 }

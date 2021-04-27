@@ -18,6 +18,7 @@ type ProductsSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type ProductDetailsDataOutput struct {
@@ -35,6 +36,7 @@ type ProductDetailsDataOutput struct {
 	CreatedAtPrepend        string
 	UpdatedAt               string
 	UpdatedAtPrepend        string
+	Result                  string
 }
 
 type ProductDetailsDataInput struct {
@@ -54,8 +56,8 @@ func loadProducts(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData ProductsSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading products ended with error")
@@ -71,9 +73,18 @@ func loadProducts(writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addProductsTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Products loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OrdersSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Products processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Products loaded in "+time.Since(timer).String())
+	}
 }
 
 func addProductsTableRow(record database.Product, data *ProductsSettingsDataOutput) {
@@ -100,8 +111,8 @@ func loadProduct(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData ProductDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading product ended with error")
@@ -125,9 +136,18 @@ func loadProduct(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:               product.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:        getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-product.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Product "+product.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-product.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData ProductDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Product detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Product detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveProduct(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -138,7 +158,7 @@ func saveProduct(writer http.ResponseWriter, request *http.Request, _ httprouter
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving product ended with error")
@@ -150,7 +170,7 @@ func saveProduct(writer http.ResponseWriter, request *http.Request, _ httprouter
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving product ended with error")
@@ -174,7 +194,19 @@ func saveProduct(writer http.ResponseWriter, request *http.Request, _ httprouter
 	product.CycleTime = int(cycleTime.Seconds())
 	product.DownTimeDuration = duration
 	product.Note = data.Note
-	db.Debug().Save(&product)
+	result := db.Save(&product)
 	cacheProducts(db)
-	logInfo("SETTINGS", "Product "+product.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Product not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Product "+product.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Product saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Product "+product.Name+" saved in "+time.Since(timer).String())
+	}
 }

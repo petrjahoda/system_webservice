@@ -19,6 +19,7 @@ type AlarmsSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type AlarmDetailsDataInput struct {
@@ -55,6 +56,7 @@ type AlarmDetailsDataOutput struct {
 	UpdatedAt            string
 	UpdatedAtPrepend     string
 	Workplaces           []WorkplaceSelection
+	Result               string
 }
 
 type WorkplaceSelection struct {
@@ -71,8 +73,8 @@ func loadAlarms(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData AlarmsSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading alarms ended with error")
@@ -83,14 +85,24 @@ func loadAlarms(writer http.ResponseWriter, email string) {
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
 	var records []database.Alarm
+
 	db.Order("id desc").Find(&records)
 	addAlarmSettingsTableHeaders(email, &data)
 	for _, record := range records {
 		addAlarmSettingsTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Alarms loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData AlarmsSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Alarms processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Alarms loaded in "+time.Since(timer).String())
+	}
 }
 
 func addAlarmSettingsTableRow(record database.Alarm, data *AlarmsSettingsDataOutput) {
@@ -117,8 +129,8 @@ func loadAlarm(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData AlarmDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading alarm ended with error")
@@ -160,9 +172,19 @@ func loadAlarm(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		Workplaces:           workplaces,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-alarm.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Alarm "+alarm.Name+" loaded in "+time.Since(timer).String())
+
+	tmpl, err := template.ParseFiles("./html/settings-detail-alarm.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData AlarmsSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Alarm detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Alarm detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveAlarm(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -173,7 +195,7 @@ func saveAlarm(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving alarm ended with error")
@@ -185,7 +207,7 @@ func saveAlarm(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving alarm ended with error")
@@ -201,7 +223,19 @@ func saveAlarm(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	alarm.Recipients = data.Recipients
 	alarm.Url = data.Url
 	alarm.Pdf = data.Pdf
-	db.Save(&alarm)
+	result := db.Save(&alarm)
 	cacheAlarms(db)
-	logInfo("SETTINGS", "Alarm "+alarm.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Alarm not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Alarm "+alarm.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Alarm saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Alarm "+alarm.Name+" saved in "+time.Since(timer).String())
+	}
 }

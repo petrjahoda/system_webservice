@@ -33,7 +33,13 @@ function loadData() {
         body: JSON.stringify(data)
     }).then((response) => {
         response.text().then(function (data) {
-            document.getElementById("data-table-container").innerHTML = data
+            if (data.includes("ERR: ")) {
+                let result = JSON.parse(data);
+                updateCharm(result["Result"])
+            } else {
+                document.getElementById("data-table-container").innerHTML = data
+                updateCharm(document.getElementById("hidden-data-information").innerText)
+            }
         });
     }).catch((error) => {
         console.log(error)

@@ -20,7 +20,7 @@ func loadSystemStatsTable(writer http.ResponseWriter, dateFrom time.Time, dateTo
 	if err != nil {
 		logError("DATA-SYSTEM-STATS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA-SYSTEM-STATS", "Loading system stats table ended")
@@ -37,9 +37,18 @@ func loadSystemStatsTable(writer http.ResponseWriter, dateFrom time.Time, dateTo
 	for _, record := range systemRecords {
 		addSystemTableRow(record, &data, loc)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-SYSTEM-STATS", "System stats table loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/data-content.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: System data processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "System data loaded in "+time.Since(timer).String())
+	}
 }
 
 func addSystemTableRow(record database.SystemRecord, data *TableOutput, loc *time.Location) {

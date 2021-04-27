@@ -18,6 +18,7 @@ type SystemSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type SystemSettingsDetailsDataOutput struct {
@@ -34,6 +35,7 @@ type SystemSettingsDetailsDataOutput struct {
 	CreatedAtPrepend           string
 	UpdatedAt                  string
 	UpdatedAtPrepend           string
+	Result                     string
 }
 type SystemSettingsSelection struct {
 	SystemSettingsValue    string
@@ -56,8 +58,8 @@ func loadSystemSettings(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData SystemSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading system settings ended with error")
@@ -73,9 +75,18 @@ func loadSystemSettings(writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addSystemSettingsTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "System settings loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OrdersSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: System settings processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "System settings loaded in "+time.Since(timer).String())
+	}
 }
 
 func addSystemSettingsTableRow(record database.Setting, data *SystemSettingsDataOutput) {
@@ -102,8 +113,8 @@ func loadSystemSettingsDetails(id string, writer http.ResponseWriter, email stri
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData SystemSettingsDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading system settings details ended with error")
@@ -129,9 +140,18 @@ func loadSystemSettingsDetails(id string, writer http.ResponseWriter, email stri
 		UpdatedAtPrepend:           getLocale(email, "updated-at"),
 		SystemSettingsSelection:    systemSettingsSelection,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-system.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "System settings details for "+settings.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-system.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData SystemSettingsDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: System settings detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "System settings detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func checkSelection(enabled bool, selection string) string {
@@ -149,7 +169,7 @@ func saveSystemSettingsDetails(writer http.ResponseWriter, request *http.Request
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving system settings details ended with error")
@@ -161,7 +181,7 @@ func saveSystemSettingsDetails(writer http.ResponseWriter, request *http.Request
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving system settings details ended with error")
@@ -173,8 +193,20 @@ func saveSystemSettingsDetails(writer http.ResponseWriter, request *http.Request
 	settings.Value = data.Value
 	settings.Enabled, _ = strconv.ParseBool(data.Enabled)
 	settings.Note = data.Note
-	db.Save(&settings)
+	result := db.Save(&settings)
 	cacheUsers(db)
 	cacheSystemSettings(db)
-	logInfo("SETTINGS", "System settings details for "+settings.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: System settings not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "System settings "+settings.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: System settings saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "System settings "+settings.Name+" saved in "+time.Since(timer).String())
+	}
 }

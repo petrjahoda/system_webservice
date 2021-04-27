@@ -20,7 +20,7 @@ func loadPackagesTable(writer http.ResponseWriter, workplaceIds string, dateFrom
 	if err != nil {
 		logError("DATA-PACKAGES", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA-PACKAGES", "Loading packages table ended")
@@ -41,9 +41,18 @@ func loadPackagesTable(writer http.ResponseWriter, workplaceIds string, dateFrom
 	for _, record := range packageRecords {
 		addPackageTableRow(record, &data, db, loc)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-PACKAGES", "Packages table loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/data-content.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Packages data processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Packages data loaded in "+time.Since(timer).String())
+	}
 }
 
 func addPackageTableRow(record database.PackageRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {

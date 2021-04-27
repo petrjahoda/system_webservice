@@ -21,6 +21,7 @@ type PackagesSettingsDataOutput struct {
 	TableRows               []TableRow
 	TableHeaderType         []HeaderCellType
 	TableRowsType           []TableRowType
+	Result                  string
 }
 
 type PackageTypeDetailsDataOutput struct {
@@ -34,6 +35,7 @@ type PackageTypeDetailsDataOutput struct {
 	CreatedAtPrepend       string
 	UpdatedAt              string
 	UpdatedAtPrepend       string
+	Result                 string
 }
 
 type PackageDetailsDataOutput struct {
@@ -52,6 +54,7 @@ type PackageDetailsDataOutput struct {
 	UpdatedAtPrepend       string
 	PackageTypes           []PackageTypeSelection
 	Orders                 []OrderSelection
+	Result                 string
 }
 
 type PackageTypeSelection struct {
@@ -84,8 +87,8 @@ func loadPackages(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData PackagesSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading packages ended with error")
@@ -107,9 +110,18 @@ func loadPackages(writer http.ResponseWriter, email string) {
 	for _, record := range typeRecords {
 		addPackageTypesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Packages loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData FaultSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Packages processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Packages loaded in "+time.Since(timer).String())
+	}
 }
 
 func addPackageTypesTableRow(record database.PackageType, data *PackagesSettingsDataOutput) {
@@ -152,8 +164,8 @@ func loadPackage(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData PackageDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading package ended with error")
@@ -202,9 +214,18 @@ func loadPackage(id string, writer http.ResponseWriter, email string) {
 		PackageTypes:           packageTypes,
 		Orders:                 orderSelection,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-package.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Package "+onePackage.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-package.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData PackageDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Package detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Package detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadPackageType(id string, writer http.ResponseWriter, email string) {
@@ -215,8 +236,8 @@ func loadPackageType(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData PackageTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading package type ended with error")
@@ -236,9 +257,18 @@ func loadPackageType(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:              packageType.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:       getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-package-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Package type "+packageType.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-package-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData PackageTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Package type detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Package type detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func savePackage(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -249,7 +279,7 @@ func savePackage(writer http.ResponseWriter, request *http.Request, _ httprouter
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving package ended with error")
@@ -261,7 +291,7 @@ func savePackage(writer http.ResponseWriter, request *http.Request, _ httprouter
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving package ended with error")
@@ -274,9 +304,21 @@ func savePackage(writer http.ResponseWriter, request *http.Request, _ httprouter
 	onePackage.OrderID = int(cachedOrdersByName[data.Order].ID)
 	onePackage.Barcode = data.Barcode
 	onePackage.Note = data.Note
-	db.Save(&onePackage)
+	result := db.Save(&onePackage)
 	cachePackages(db)
-	logInfo("SETTINGS", "Package "+onePackage.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Package not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Package "+onePackage.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Package saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Package "+onePackage.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func savePackageType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -287,7 +329,7 @@ func savePackageType(writer http.ResponseWriter, request *http.Request, _ httpro
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving package type ended with error")
@@ -299,7 +341,7 @@ func savePackageType(writer http.ResponseWriter, request *http.Request, _ httpro
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving package type ended with error")
@@ -310,7 +352,19 @@ func savePackageType(writer http.ResponseWriter, request *http.Request, _ httpro
 	packageType.Name = data.Name
 	packageType.Count, _ = strconv.Atoi(data.Count)
 	packageType.Note = data.Note
-	db.Save(&packageType)
+	result := db.Save(&packageType)
 	cachePackages(db)
-	logInfo("SETTINGS", "Package type "+packageType.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Package type not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Package type "+packageType.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Package type saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Package type "+packageType.Name+" saved in "+time.Since(timer).String())
+	}
 }

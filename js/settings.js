@@ -44,7 +44,6 @@ const containerDetail = document.getElementById("settings-container-detail")
 containerDetail.addEventListener("click", (event) => {
     if (event.target.id === "data-save-button" || event.target.id === "data-save-button-mif") {
         let selection = document.getElementById("data-selection").value
-        console.log("Saving one of " + selection)
         switch (selection) {
             case "alarms" : {
                 saveAlarm();
@@ -109,7 +108,6 @@ containerDetail.addEventListener("click", (event) => {
         }
     } else if (event.target.id === "data-type-save-button" || event.target.id === "data-type-save-button-mif") {
         let selection = document.getElementById("data-selection").value
-        console.log("Saving type of " + selection)
         switch (selection) {
             case "breakdowns" : {
                 saveBreakdownType();

@@ -18,6 +18,7 @@ type ChartsDataPageInput struct {
 
 type ChartsPageData struct {
 	Version               string
+	Information           string
 	Company               string
 	Alarms                string
 	MenuOverview          string
@@ -140,6 +141,7 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/charts.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("CHARTS", "Charts page sent in "+time.Since(timer).String())

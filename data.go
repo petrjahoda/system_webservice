@@ -22,6 +22,7 @@ type DataPageInput struct {
 }
 type DataPageOutput struct {
 	Version               string
+	Information           string
 	Company               string
 	Alarms                string
 	MenuOverview          string
@@ -110,7 +111,7 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 		SelectionValue: "states",
 		Selection:      getSelected(cachedUserSettings[email].dataSelection, "states"),
 	})
-	if cachedUsersByEmail[email].UserTypeID == 2 {
+	if cachedUsersByEmail[email].UserRoleID == 1 {
 		logInfo("DATA", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
@@ -134,6 +135,7 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/data.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA", "Page sent in "+time.Since(timer).String())
@@ -165,7 +167,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	if err != nil {
 		logError("DATA", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA", "Loading table ended")
@@ -184,7 +186,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	if err != nil {
 		logError("DATA", "Problem parsing date: "+data.From)
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA", "Loading table ended")
@@ -195,7 +197,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	if err != nil {
 		logError("DATA", "Problem parsing date: "+data.To)
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA", "Loading table ended")

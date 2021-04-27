@@ -22,6 +22,7 @@ type UsersSettingsDataOutput struct {
 	TableRows               []TableRow
 	TableHeaderType         []HeaderCellType
 	TableRowsType           []TableRowType
+	Result                  string
 }
 
 type UserTypeDetailsDataOutput struct {
@@ -33,6 +34,7 @@ type UserTypeDetailsDataOutput struct {
 	CreatedAtPrepend    string
 	UpdatedAt           string
 	UpdatedAtPrepend    string
+	Result              string
 }
 
 type UserDetailsDataOutput struct {
@@ -71,6 +73,7 @@ type UserDetailsDataOutput struct {
 	UserTypes            []UserTypeSelection
 	UserRoles            []UserRoleSelection
 	Locales              []LocaleSelection
+	Result               string
 }
 
 type UserTypeSelection struct {
@@ -121,8 +124,8 @@ func loadUsers(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData UsersSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading users ended with error")
@@ -144,9 +147,18 @@ func loadUsers(writer http.ResponseWriter, email string) {
 	for _, record := range typeRecords {
 		addUserTypesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Users loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData FaultSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Users processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Users loaded in "+time.Since(timer).String())
+	}
 }
 
 func addUsersTableRow(record database.User, data *UsersSettingsDataOutput) {
@@ -189,7 +201,7 @@ func loadUser(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
+		var responseData UserDetailsDataOutput
 		responseData.Result = "nok: " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
@@ -265,9 +277,18 @@ func loadUser(id string, writer http.ResponseWriter, email string) {
 		UserRoles:           userRoles,
 		Locales:             locales,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "User "+user.FirstName+" "+user.SecondName+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-user.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData UserDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: User detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "User detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadUserType(id string, writer http.ResponseWriter, email string) {
@@ -278,8 +299,8 @@ func loadUserType(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData UserTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading user type ended with error")
@@ -297,9 +318,18 @@ func loadUserType(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:           userType.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:    getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-user-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "User type "+userType.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-user-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData UserTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: User type detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "User type detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveUser(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -310,7 +340,7 @@ func saveUser(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving user ended with error")
@@ -322,7 +352,7 @@ func saveUser(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving user ended with error")
@@ -344,9 +374,21 @@ func saveUser(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	if len(data.Password) > 0 {
 		user.Password = hashPasswordFromString([]byte(data.Password))
 	}
-	db.Save(&user)
+	result := db.Save(&user)
 	cacheUsers(db)
-	logInfo("SETTINGS", "User "+user.FirstName+" "+user.SecondName+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: User not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "User "+user.FirstName+" "+user.SecondName+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: User saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "User "+user.FirstName+" "+user.SecondName+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveUserType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -357,7 +399,7 @@ func saveUserType(writer http.ResponseWriter, request *http.Request, _ httproute
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving user type ended with error")
@@ -369,7 +411,7 @@ func saveUserType(writer http.ResponseWriter, request *http.Request, _ httproute
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving user type ended with error")
@@ -379,9 +421,21 @@ func saveUserType(writer http.ResponseWriter, request *http.Request, _ httproute
 	db.Where("id=?", data.Id).Find(&userType)
 	userType.Name = data.Name
 	userType.Note = data.Note
-	db.Save(&userType)
+	result := db.Save(&userType)
 	cacheUsers(db)
-	logInfo("SETTINGS", "User type "+userType.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: User type not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "User type "+userType.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: User type saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "User type "+userType.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func testLocaleForUser(userLocale string, locale string) string {

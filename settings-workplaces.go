@@ -26,6 +26,7 @@ type WorkplacesSettingsDataOutput struct {
 	TableRowsType           []TableRowType
 	TableHeaderTypeExtended []HeaderCellTypeExtended
 	TableRowsTypeExtended   []TableRowTypeExtended
+	Result                  string
 }
 
 type WorkplaceModeDetailsDataOutput struct {
@@ -41,6 +42,7 @@ type WorkplaceModeDetailsDataOutput struct {
 	CreatedAtPrepend         string
 	UpdatedAt                string
 	UpdatedAtPrepend         string
+	Result                   string
 }
 
 type WorkplaceSectionDetailsDataOutput struct {
@@ -52,6 +54,7 @@ type WorkplaceSectionDetailsDataOutput struct {
 	CreatedAtPrepend            string
 	UpdatedAt                   string
 	UpdatedAtPrepend            string
+	Result                      string
 }
 
 type WorkplaceDetailsDataOutput struct {
@@ -91,6 +94,7 @@ type WorkplaceDetailsDataOutput struct {
 	TableRows                 []TableRow
 	WorkshiftTableHeader      []WorkshiftHeaderCell
 	WorkshiftTableRows        []WorkshiftTableRow
+	Result                    string
 }
 
 type WorkshiftSelection struct {
@@ -177,6 +181,7 @@ type WorkplacePortDetailsDataOutput struct {
 	UpdatedAtPrepend               string
 	WorkplacePortDevicePorts       []WorkplacePortDevicePortSelection
 	WorkplacePortStates            []WorkplacePortStateSelection
+	Result                         string
 }
 
 type WorkplacePortDevicePortSelection struct {
@@ -199,8 +204,8 @@ func loadWorkplaces(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkplacesSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workplaces ended with error")
@@ -228,9 +233,18 @@ func loadWorkplaces(writer http.ResponseWriter, email string) {
 	for _, record := range extendedRecords {
 		addWorkplaceModesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type-extended.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Workplaces loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table-type-extended.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData FaultSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Workplaces processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Workplaces loaded in "+time.Since(timer).String())
+	}
 }
 
 func addWorkplaceModesTableRow(record database.WorkplaceMode, data *WorkplacesSettingsDataOutput) {
@@ -289,8 +303,9 @@ func loadWorkplaceSection(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
+		var responseData WorkplaceSectionDetailsDataOutput
 		responseData.Result = "nok: " + err.Error()
+
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS-USERS", "Loading workplace section ended with error")
@@ -308,9 +323,18 @@ func loadWorkplaceSection(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:                   workplaceSection.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:            getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-section.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Workplace section "+workplaceSection.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-workplace-section.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData WorkplaceSectionDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Workplace section detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Workplace section detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadWorkplaceMode(id string, writer http.ResponseWriter, email string) {
@@ -321,8 +345,8 @@ func loadWorkplaceMode(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkplaceModeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS-USERS", "Loading workplace mode ended with error")
@@ -344,9 +368,18 @@ func loadWorkplaceMode(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:                workplaceMode.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:         getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-mode.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Workplace mode "+workplaceMode.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-workplace-mode.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData WorkplaceModeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Workplace mode detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Workplace mode detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadWorkplace(id string, writer http.ResponseWriter, email string) {
@@ -357,8 +390,8 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkplaceDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workplace ended with error")
@@ -487,9 +520,18 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	})
 	data.Workshifts = workshiftSelection
 
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Workplace "+workplace.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-workplace.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData WorkplaceDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Workplace detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Workplace detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadWorkplaceModes(workplace database.Workplace) []WorkplaceModeSelection {
@@ -563,8 +605,8 @@ func loadWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkplacePortDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workplace port ended with error")
@@ -574,8 +616,8 @@ func loadWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 	err = json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkplacePortDetailsDataOutput
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workplace port ended with error")
@@ -622,9 +664,18 @@ func loadWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 		WorkplacePortDevicePorts:       workplacePortDevicePorts,
 		WorkplacePortStates:            states,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workplace-port.html"))
-	_ = tmpl.Execute(writer, dataOut)
-	logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-workplace-port.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData WorkplacePortDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		dataOut.Result = "INF: Workplace port detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, dataOut)
+		logInfo("SETTINGS", "Workplace port detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -635,7 +686,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workplace ended with error")
@@ -647,7 +698,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workplace ended with error")
@@ -660,7 +711,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 	workplace.WorkplaceSectionID = int(cachedWorkplaceSectionsByName[data.Section].ID)
 	workplace.Code = data.Code
 	workplace.Note = data.Note
-	db.Save(&workplace)
+	result := db.Save(&workplace)
 	var workplacePorts []database.WorkplacePort
 	db.Where("workplace_id = ?", workplace.ID).Find(&workplacePorts)
 	for _, port := range workplacePorts {
@@ -678,7 +729,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
 			workplacePort.Color = data.ProductionDowntimeColor
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
@@ -693,7 +744,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 				Time:  time.Time{},
 				Valid: false,
 			}
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		}
@@ -710,7 +761,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
 			workplacePort.Color = data.PowerOnPowerOffColor
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
@@ -725,7 +776,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 				Time:  time.Time{},
 				Valid: false,
 			}
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		}
@@ -743,7 +794,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			workplacePort.WorkplaceID = int(workplace.ID)
 			workplacePort.Color = data.CountOkColor
 			workplacePort.CounterOK = true
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
@@ -759,7 +810,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 				Time:  time.Time{},
 				Valid: false,
 			}
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		}
@@ -777,7 +828,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			workplacePort.WorkplaceID = int(workplace.ID)
 			workplacePort.Color = data.CountNokColor
 			workplacePort.CounterNOK = true
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
@@ -792,14 +843,13 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 				Time:  time.Time{},
 				Valid: false,
 			}
-			db.Save(&workplacePort)
+			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		}
 
 	}
 	cacheWorkplaces(db)
-
 	var databaseWorkplaceWorkshifts []database.WorkplaceWorkshift
 	db.Where("workplace_id = ?", workplace.ID).Find(&databaseWorkplaceWorkshifts)
 	pageWorkshiftIds := make(map[int]string)
@@ -814,7 +864,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			delete(pageWorkshiftIds, workplaceWorkshift.WorkshiftID)
 		} else {
 			logInfo("SETTINGS", "Deleting workplace workshift record id "+strconv.Itoa(int(workplaceWorkshift.ID)))
-			db.Delete(&workplaceWorkshift)
+			result = db.Delete(&workplaceWorkshift)
 		}
 	}
 	for _, name := range pageWorkshiftIds {
@@ -822,10 +872,22 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		var workplaceWorkshift database.WorkplaceWorkshift
 		workplaceWorkshift.WorkshiftID, _ = strconv.Atoi(strings.TrimRight(strings.Split(name, "[")[1], "]"))
 		workplaceWorkshift.WorkplaceID = int(workplace.ID)
-		db.Save(&workplaceWorkshift)
+		result = db.Save(&workplaceWorkshift)
 	}
 	cacheWorkShifts(db)
-	logInfo("SETTINGS", "Workplace "+workplace.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Workplace not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Workplace "+workplace.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Workplace saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Workplace "+workplace.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveWorkplaceSection(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -836,7 +898,7 @@ func saveWorkplaceSection(writer http.ResponseWriter, request *http.Request, _ h
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workplace section ended with error")
@@ -848,7 +910,7 @@ func saveWorkplaceSection(writer http.ResponseWriter, request *http.Request, _ h
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workplace section ended with error")
@@ -858,9 +920,21 @@ func saveWorkplaceSection(writer http.ResponseWriter, request *http.Request, _ h
 	db.Where("id=?", data.Id).Find(&workplaceSection)
 	workplaceSection.Name = data.Name
 	workplaceSection.Note = data.Note
-	db.Save(&workplaceSection)
+	result := db.Save(&workplaceSection)
 	cacheWorkplaces(db)
-	logInfo("SETTINGS", "Workplace section "+workplaceSection.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Workplace section not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Workplace section "+workplaceSection.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Workplace section saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Workplace section "+workplaceSection.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -871,7 +945,7 @@ func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, _ http
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workplace mode ended with error")
@@ -883,7 +957,7 @@ func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, _ http
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workplace mode ended with error")
@@ -905,9 +979,21 @@ func saveWorkplaceMode(writer http.ResponseWriter, request *http.Request, _ http
 	workplaceMode.PoweroffDuration = poweroffParsed
 	workplaceMode.DowntimeDuration = downtimeParsed
 	workplaceMode.Note = data.Note
-	db.Save(&workplaceMode)
+	result := db.Save(&workplaceMode)
 	cacheWorkplaces(db)
-	logInfo("SETTINGS", "Workplace mode "+workplaceMode.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Workplace mode not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Workplace mode "+workplaceMode.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Workplace mode saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Workplace mode "+workplaceMode.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -982,7 +1068,7 @@ func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, _ ht
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Deleting workplace port ended with error")
@@ -994,7 +1080,7 @@ func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, _ ht
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Deleting workplace port ended with error")
@@ -1005,5 +1091,9 @@ func deleteWorkplacePort(writer http.ResponseWriter, request *http.Request, _ ht
 	db.Where("id=?", data.Id).Find(&workplacePort)
 	db.Delete(&workplacePort)
 	cacheWorkplaces(db)
+	var responseData TableOutput
+	responseData.Result = "INF: Data deleted in " + time.Since(timer).String()
+	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(responseData)
 	logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" deleted in "+time.Since(timer).String())
 }

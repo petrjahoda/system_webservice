@@ -21,6 +21,7 @@ type BreakdownsSettingsDataOutput struct {
 	TableRows               []TableRow
 	TableHeaderType         []HeaderCellType
 	TableRowsType           []TableRowType
+	Result                  string
 }
 
 type BreakdownDetailsDataOutput struct {
@@ -39,6 +40,7 @@ type BreakdownDetailsDataOutput struct {
 	UpdatedAt                string
 	UpdatedAtPrepend         string
 	BreakdownTypes           []BreakdownTypeSelection
+	Result                   string
 }
 
 type BreakdownTypeSelection struct {
@@ -56,6 +58,7 @@ type BreakdownTypeDetailsDataOutput struct {
 	CreatedAtPrepend         string
 	UpdatedAt                string
 	UpdatedAtPrepend         string
+	Result                   string
 }
 
 type BreakdownDetailsDataInput struct {
@@ -81,8 +84,8 @@ func loadBreakdowns(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData BreakdownsSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading breakdowns ended with error")
@@ -104,9 +107,20 @@ func loadBreakdowns(writer http.ResponseWriter, email string) {
 	for _, record := range typeRecords {
 		addBreakdownTypesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Breakdowns loaded in "+time.Since(timer).String())
+	data.Result = "INF: Breakdowns processed in " + time.Since(timer).String()
+
+	tmpl, err := template.ParseFiles("./html/settings-table-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData AlarmsSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Breakdowns processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Breakdowns loaded in "+time.Since(timer).String())
+	}
 }
 
 func addBreakdownsTableRow(record database.Breakdown, data *BreakdownsSettingsDataOutput) {
@@ -148,8 +162,8 @@ func loadBreakdownTypes(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData BreakdownTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading breakdown types ended with error")
@@ -167,9 +181,18 @@ func loadBreakdownTypes(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:                breakdownType.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:         getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-breakdown-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Breakdown types loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-breakdown-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData BreakdownTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Breakdown type detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Breakdown type detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadBreakdown(id string, writer http.ResponseWriter, email string) {
@@ -180,8 +203,8 @@ func loadBreakdown(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData BreakdownDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading breakdown ended with error")
@@ -217,9 +240,18 @@ func loadBreakdown(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:         getLocale(email, "updated-at"),
 		BreakdownTypes:           breakdownTypes,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-breakdown.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Breakdown "+breakdown.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-breakdown.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData BreakdownDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Breakdown detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Breakdown detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveBreakdownType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -230,7 +262,7 @@ func saveBreakdownType(writer http.ResponseWriter, request *http.Request, _ http
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving breakdown type ended with error")
@@ -242,7 +274,7 @@ func saveBreakdownType(writer http.ResponseWriter, request *http.Request, _ http
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving breakdown type ended with error")
@@ -252,9 +284,21 @@ func saveBreakdownType(writer http.ResponseWriter, request *http.Request, _ http
 	db.Where("id=?", data.Id).Find(&breakdownType)
 	breakdownType.Name = data.Name
 	breakdownType.Note = data.Note
-	db.Save(&breakdownType)
+	result := db.Save(&breakdownType)
 	cacheBreakdowns(db)
-	logInfo("SETTINGS", "Breakdown type "+breakdownType.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Breakdown type not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Breakdown type "+breakdownType.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Breakdown type saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Breakdown type "+breakdownType.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveBreakdown(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -265,7 +309,7 @@ func saveBreakdown(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving breakdown ended with error")
@@ -277,7 +321,7 @@ func saveBreakdown(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving breakdown ended with error")
@@ -290,7 +334,19 @@ func saveBreakdown(writer http.ResponseWriter, request *http.Request, _ httprout
 	breakdown.Color = data.Color
 	breakdown.Barcode = data.Barcode
 	breakdown.Note = data.Note
-	db.Save(&breakdown)
+	result := db.Save(&breakdown)
 	cacheBreakdowns(db)
-	logInfo("SETTINGS", "Breakdown "+breakdown.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Breakdown not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Breakdown "+breakdown.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Breakdown saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Breakdown "+breakdown.Name+" saved in "+time.Since(timer).String())
+	}
 }

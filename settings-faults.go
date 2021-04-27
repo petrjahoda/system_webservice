@@ -21,6 +21,7 @@ type FaultSettingsDataOutput struct {
 	TableRows               []TableRow
 	TableHeaderType         []HeaderCellType
 	TableRowsType           []TableRowType
+	Result                  string
 }
 
 type FaultDetailsDataOutput struct {
@@ -39,6 +40,7 @@ type FaultDetailsDataOutput struct {
 	UpdatedAt            string
 	UpdatedAtPrepend     string
 	FaultTypes           []FaultTypeSelection
+	Result               string
 }
 
 type FaultTypeSelection struct {
@@ -56,6 +58,7 @@ type FaultTypeDetailsDataOutput struct {
 	CreatedAtPrepend     string
 	UpdatedAt            string
 	UpdatedAtPrepend     string
+	Result               string
 }
 
 type FaultDetailsDataInput struct {
@@ -80,8 +83,8 @@ func loadFaults(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData FaultSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading faults ended with error")
@@ -103,9 +106,18 @@ func loadFaults(writer http.ResponseWriter, email string) {
 	for _, record := range typeRecords {
 		addFaultTypesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Faults loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData FaultSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Faults processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Faults loaded in "+time.Since(timer).String())
+	}
 }
 
 func addFaultsTableRow(record database.Fault, data *FaultSettingsDataOutput) {
@@ -148,8 +160,8 @@ func loadFault(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData FaultDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading fault ended with error")
@@ -183,9 +195,18 @@ func loadFault(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		FaultTypes:           faultTypes,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-fault.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Fault "+fault.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-fault.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData FaultDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Fault detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Fault detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadFaultType(id string, writer http.ResponseWriter, email string) {
@@ -196,8 +217,8 @@ func loadFaultType(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData FaultTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading fault type ended with error")
@@ -216,9 +237,18 @@ func loadFaultType(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:            faultType.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-fault-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Fault type "+faultType.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-fault-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData FaultTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Fault type detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Fault type detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveFault(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -229,7 +259,7 @@ func saveFault(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving fault ended with error")
@@ -241,7 +271,7 @@ func saveFault(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving fault ended with error")
@@ -253,9 +283,21 @@ func saveFault(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	fault.FaultTypeID = int(cachedFaultTypesByName[data.Type].ID)
 	fault.Barcode = data.Barcode
 	fault.Note = data.Note
-	db.Save(&fault)
+	result := db.Save(&fault)
 	cacheFaults(db)
-	logInfo("SETTINGS", "Fault "+fault.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Fault not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Fault "+fault.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Fault saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Fault "+fault.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveFaultType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -266,7 +308,7 @@ func saveFaultType(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving fault type ended with error")
@@ -278,7 +320,7 @@ func saveFaultType(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving fault type ended with error")
@@ -288,7 +330,19 @@ func saveFaultType(writer http.ResponseWriter, request *http.Request, _ httprout
 	db.Where("id=?", data.Id).Find(&faultType)
 	faultType.Name = data.Name
 	faultType.Note = data.Note
-	db.Save(&faultType)
+	result := db.Save(&faultType)
 	cacheFaults(db)
-	logInfo("SETTINGS", "Fault type "+faultType.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Fault type not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Fault type "+faultType.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Fault type saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Fault type "+faultType.Name+" saved in "+time.Since(timer).String())
+	}
 }

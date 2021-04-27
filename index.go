@@ -18,6 +18,7 @@ import (
 
 type IndexPageData struct {
 	Version               string
+	Information           string
 	Company               string
 	Alarms                string
 	MenuOverview          string
@@ -72,6 +73,7 @@ type IndexData struct {
 	ProductionLocale           string
 	DowntimeLocale             string
 	PoweroffLocale             string
+	Result                     string
 }
 
 type IndexDataWorkplace struct {
@@ -89,7 +91,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("INDEX", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("INDEX", "Loading alarms table ended")
@@ -139,6 +141,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.PoweroffLocale = getLocale(email, "poweroff")
 	data.OverviewMonthTitle = getLocale(email, "month-overview")
 	data.ConsumptionMonthTitle = getLocale(email, "month-consumption-overview")
+	data.Result = "INF: Data processed in " + time.Since(timer).String()
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(data)
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
@@ -576,6 +579,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	})
 	data.Workplaces = dataWorkplaces
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
+	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("INDEX", "Index page sent in "+time.Since(timer).String())

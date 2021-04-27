@@ -27,13 +27,8 @@ let consumptionChart = echarts.init(consumptionChartDom);
 let daysChart = echarts.init(daysDom)
 
 loadIndexData();
-
 window.addEventListener('resize', () => location.reload())
-
-
-
 refreshButton.addEventListener('click', () => {
-    startTime = performance.now();
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
     for (let index = 0; index < workplacesElement.length; index++) {
@@ -46,14 +41,10 @@ refreshButton.addEventListener('click', () => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-        endTime = performance.now();
-        var timeDiff = endTime - startTime; //in ms
-        console.log(moment.duration(timeDiff).asMilliseconds())
-        updateCharm("Data updated in " + moment.duration(timeDiff).asMilliseconds() + "ms")
         loadIndexData();
         timeleft=60
     }).catch((error) => {
-        console.log(error)
+        updateCharm("ERR: " + error)
     });
 })
 
@@ -63,6 +54,7 @@ function loadIndexData() {
     }).then((response) => {
         response.text().then(function (data) {
             let result = JSON.parse(data);
+            updateCharm(result["Result"])
             drawProductivityChart(result);
             productivityChart.resize()
             drawCalendar(result);
@@ -79,7 +71,7 @@ function loadIndexData() {
             terminalAlarmChart.resize()
         });
     }).catch((error) => {
-        console.log(error)
+        updateCharm("ERR: " + error)
     });
 }
 
@@ -155,7 +147,6 @@ function drawProductivityChart(data) {
                 },
                 barWidth: 25,
                 data: data["WorkplacePercents"],
-
             }
         ]
     };
@@ -479,7 +470,6 @@ function drawCalendar(data) {
 function drawDaysChart(data) {
     daysDom.style.height = "250px"
     let option;
-
     option = {
         textStyle: {
             fontFamily: 'ProximaNova'

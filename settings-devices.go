@@ -19,6 +19,7 @@ type DevicesSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type DeviceDetailsDataOutput struct {
@@ -49,6 +50,7 @@ type DeviceDetailsDataOutput struct {
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
 	PortsHidden             string
+	Result                  string
 }
 
 type DeviceTypeSelection struct {
@@ -97,6 +99,7 @@ type DevicePortDetailsDataOutput struct {
 	UpdatedAtPrepend              string
 	DevicePortTypes               []DevicePortTypeSelection
 	PortVirtualSelection          []PortVirtualSelection
+	Result                        string
 }
 
 type DevicePortTypeSelection struct {
@@ -137,8 +140,8 @@ func loadDevices(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DevicesSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading devices ended with error")
@@ -154,9 +157,18 @@ func loadDevices(writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addDevicesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Devices loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OrdersSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Devices processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Devices loaded in "+time.Since(timer).String())
+	}
 }
 
 func addDevicesTableRow(record database.Device, data *DevicesSettingsDataOutput) {
@@ -183,8 +195,8 @@ func loadDevice(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DeviceDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading device ended with error")
@@ -237,9 +249,18 @@ func loadDevice(id string, writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addDeviceTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-device.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Device "+device.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-device.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData DeviceDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Device detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Device detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func addDeviceTableRow(record database.DevicePort, data *DeviceDetailsDataOutput) {
@@ -267,8 +288,8 @@ func loadDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DevicePortDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading device port ended with error")
@@ -278,8 +299,8 @@ func loadDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	err = json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DevicePortDetailsDataOutput
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workplace port ended with error")
@@ -325,9 +346,18 @@ func loadDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 		DevicePortTypes:               devicePortTypes,
 		PortVirtualSelection:          portVirtualSelection,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-device-port.html"))
-	_ = tmpl.Execute(writer, dataOut)
-	logInfo("SETTINGS", "Device port "+devicePort.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-device-port.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData DevicePortDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		dataOut.Result = "INF: Device port detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, dataOut)
+		logInfo("SETTINGS", "Device port detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveDevice(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -338,7 +368,7 @@ func saveDevice(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving device ended with error")
@@ -350,7 +380,7 @@ func saveDevice(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving device ended with error")
@@ -366,9 +396,21 @@ func saveDevice(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	device.TypeName = data.Version
 	device.Note = data.Note
 	device.Activated, _ = strconv.ParseBool(data.Enabled)
-	db.Save(&device)
+	result := db.Save(&device)
 	cacheDevices(db)
-	logInfo("SETTINGS", "Device "+device.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Device not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Device "+device.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Device saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Device "+device.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveDevicePort(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -379,7 +421,7 @@ func saveDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving device port ended with error")
@@ -391,7 +433,7 @@ func saveDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving device port ended with error")
@@ -409,7 +451,19 @@ func saveDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	port.Unit = data.Unit
 	port.Virtual, _ = strconv.ParseBool(data.Virtual)
 	port.Note = data.Note
-	db.Save(&port)
+	result := db.Save(&port)
 	cacheDevices(db)
-	logInfo("SETTINGS", "Device port "+port.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Device port not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Device port "+port.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Device port saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Device port "+port.Name+" saved in "+time.Since(timer).String())
+	}
 }

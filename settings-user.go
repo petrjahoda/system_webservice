@@ -33,6 +33,7 @@ type UserSettingsDataOutput struct {
 	UpdatedAt            string
 	UpdatedAtPrepend     string
 	Locales              []LocaleSelection
+	Result               string
 }
 
 func loadUserSettings(writer http.ResponseWriter, email string) {
@@ -44,7 +45,7 @@ func loadUserSettings(writer http.ResponseWriter, email string) {
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading user settings ended with error")
@@ -83,9 +84,18 @@ func loadUserSettings(writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:  getLocale(email, "updated-at"),
 		Locales:           locales,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-user.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "User settings for "+user.FirstName+" "+user.SecondName+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-user.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OrdersSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: User settings processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "User settings loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveUserSettings(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
@@ -97,7 +107,7 @@ func saveUserSettings(writer http.ResponseWriter, request *http.Request, params 
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving user settings ended with error")
@@ -109,7 +119,7 @@ func saveUserSettings(writer http.ResponseWriter, request *http.Request, params 
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving user settings ended with error")
@@ -126,7 +136,19 @@ func saveUserSettings(writer http.ResponseWriter, request *http.Request, params 
 	if len(data.Password) > 0 {
 		user.Password = hashPasswordFromString([]byte(data.Password))
 	}
-	db.Save(&user)
+	result := db.Save(&user)
 	cacheUsers(db)
-	logInfo("SETTINGS", "User settings for "+user.FirstName+" "+user.SecondName+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: User settings not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "User settings for "+user.FirstName+" "+user.SecondName+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: User settings saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "User settings for "+user.FirstName+" "+user.SecondName+" saved in "+time.Since(timer).String())
+	}
 }

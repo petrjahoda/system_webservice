@@ -19,6 +19,7 @@ type OperationsSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type OperationDetailsDataOutput struct {
@@ -35,6 +36,7 @@ type OperationDetailsDataOutput struct {
 	UpdatedAt            string
 	UpdatedAtPrepend     string
 	Orders               []OrderSelection
+	Result               string
 }
 
 type OrderSelection struct {
@@ -61,8 +63,8 @@ func loadOperations(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData OperationsSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading operations ended with error")
@@ -78,9 +80,18 @@ func loadOperations(writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addOperationsTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Operations loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem Parsing html file: "+err.Error())
+		var responseData AlarmsSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Operations processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Operations loaded in "+time.Since(timer).String())
+	}
 }
 
 func addOperationsTableRow(record database.Operation, data *OperationsSettingsDataOutput) {
@@ -107,8 +118,8 @@ func loadOperation(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData OperationDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading operation ended with error")
@@ -142,9 +153,18 @@ func loadOperation(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		Orders:               orders,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-operation.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Operation "+operation.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-operation.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OperationDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Operation detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Operation detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveOperation(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -155,7 +175,7 @@ func saveOperation(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving operation ended with error")
@@ -167,7 +187,7 @@ func saveOperation(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving operation ended with error")
@@ -179,7 +199,19 @@ func saveOperation(writer http.ResponseWriter, request *http.Request, _ httprout
 	operation.OrderID = int(cachedOrdersByName[data.Order].ID)
 	operation.Barcode = data.Barcode
 	operation.Note = data.Note
-	db.Save(&operation)
+	result := db.Save(&operation)
 	cacheOperations(db)
-	logInfo("SETTINGS", "Operation "+operation.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Operation not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Operation "+operation.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Operation saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Operation "+operation.Name+" saved in "+time.Since(timer).String())
+	}
 }

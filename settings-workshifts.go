@@ -19,6 +19,7 @@ type WorkShiftsSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type WorkShiftDetailsDataOutput struct {
@@ -34,6 +35,7 @@ type WorkShiftDetailsDataOutput struct {
 	CreatedAtPrepend     string
 	UpdatedAt            string
 	UpdatedAtPrepend     string
+	Result               string
 }
 
 type WorkShiftDetailsDataInput struct {
@@ -52,8 +54,8 @@ func loadWorkShifts(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkShiftsSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workshifts ended with error")
@@ -69,9 +71,18 @@ func loadWorkShifts(writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addWorkShiftsTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Workshifts loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OrdersSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Workshifts processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Workshifts loaded in "+time.Since(timer).String())
+	}
 }
 
 func addWorkShiftsTableRow(record database.Workshift, data *WorkShiftsSettingsDataOutput) {
@@ -98,8 +109,8 @@ func loadWorkshift(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData WorkShiftDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading workshift ended with error")
@@ -121,9 +132,18 @@ func loadWorkshift(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:            workshift.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-workshift.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Workshift "+workshift.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-workshift.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData WorkShiftDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Workshift detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Workshift detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveWorkshift(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -134,7 +154,7 @@ func saveWorkshift(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workshift ended with error")
@@ -146,7 +166,7 @@ func saveWorkshift(writer http.ResponseWriter, request *http.Request, _ httprout
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving workshift ended with error")
@@ -166,7 +186,19 @@ func saveWorkshift(writer http.ResponseWriter, request *http.Request, _ httprout
 	shift.Name = data.Name
 	shift.WorkshiftStart = time.Date(2000, 1, 1, workshiftStartHour, workshiftStartMinute, workshiftStartSecond, 0, time.UTC)
 	shift.WorkshiftEnd = time.Date(2000, 1, 1, workshiftEndHour, workshiftEndMinute, workshiftEndSecond, 0, time.UTC)
-	db.Save(&shift)
+	result := db.Save(&shift)
 	cacheWorkShifts(db)
-	logInfo("SETTINGS", "Workshift "+shift.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Workshift not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Workshift "+shift.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Workshift saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Workshift "+shift.Name+" saved in "+time.Since(timer).String())
+	}
 }

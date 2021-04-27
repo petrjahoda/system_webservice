@@ -20,7 +20,7 @@ func loadFaultsTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	if err != nil {
 		logError("DATA-FAULTS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA-FAULTS", "Loading faults table ended")
@@ -41,9 +41,18 @@ func loadFaultsTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	for _, record := range orderRecords {
 		addFaultTableRow(record, &data, db, loc)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-FAULTS", "Faults table loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/data-content.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Faults data processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Faults data loaded in "+time.Since(timer).String())
+	}
 }
 
 func addFaultTableRow(record database.FaultRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {

@@ -19,7 +19,7 @@ func loadUsersTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 	if err != nil {
 		logError("DATA-USERS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA-USERS", "Loading users table ended")
@@ -40,9 +40,18 @@ func loadUsersTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 	for _, record := range userRecords {
 		addUserTableRow(record, &data, db, loc)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-USERS", "Users table loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/data-content.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Users data processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Users data loaded in "+time.Since(timer).String())
+	}
 }
 
 func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {

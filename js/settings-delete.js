@@ -25,11 +25,13 @@ function deleteWorkplacePort() {
                     body: JSON.stringify(data)
                 }).then((response) => {
                     response.text().then(function (data) {
+                        let result = JSON.parse(data);
+                        updateCharm(result["Result"])
                         document.getElementById("workplace-port-container").innerHTML = ""
                         loadDetails(sessionStorage.getItem("selected_id"), "first");
                     });
                 }).catch((error) => {
-                    console.log(error)
+                    updateCharm("ERR: " + error)
                     document.getElementById("workplace-port-container").innerHTML = ""
                     loadDetails(sessionStorage.getItem("selected_id"), "first");
                 });

@@ -16,6 +16,7 @@ type SettingsPageInput struct {
 
 type SettingsPageOutput struct {
 	Version        string
+	Information    string
 	Company        string
 	Alarms         string
 	MenuOverview   string
@@ -136,7 +137,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 			Selection:      getSelected(cachedUserSettings[email].settingsSelection, "system-settings"),
 		})
 	}
-
+	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/settings.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("SETTINGS", "Page sent in "+time.Since(timer).String())
@@ -152,7 +153,7 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, _ httpr
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading settings ended with error")
@@ -207,13 +208,12 @@ func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, _ htt
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading settings detail ended with error")
 		return
 	}
-
 	logInfo("SETTINGS", "Loading details settings for "+data.Data+", "+data.Id)
 	switch data.Type {
 	case "first":

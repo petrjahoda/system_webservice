@@ -19,7 +19,7 @@ func loadAlarmsTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	if err != nil {
 		logError("DATA-ALARMS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA-ALARMS", "Loading alarms table ended")
@@ -40,9 +40,18 @@ func loadAlarmsTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	for _, record := range alarmRecords {
 		addAlarmTableRow(record, &data, loc)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-ALARMS", "Alarms table loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/data-content.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Alarms data processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Alarms data loaded in "+time.Since(timer).String())
+	}
 }
 
 func addAlarmTableRow(record database.AlarmRecord, data *TableOutput, loc *time.Location) {

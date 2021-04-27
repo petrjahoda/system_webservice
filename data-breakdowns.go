@@ -19,7 +19,7 @@ func loadBreakdownTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	if err != nil {
 		logError("DATA-BREAKDOWNS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("DATA-BREAKDOWNS", "Loading breakdowns table ended")
@@ -40,9 +40,18 @@ func loadBreakdownTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	for _, record := range breakdownRecords {
 		addBreakdownTableRow(record, &data, loc)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/data-content.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("DATA-BREAKDOWNS", "Breakdowns table loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/data-content.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData TableOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Breakdowns data processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Breakdowns data loaded in "+time.Since(timer).String())
+	}
 }
 
 func addBreakdownTableRow(record database.BreakdownRecord, data *TableOutput, loc *time.Location) {

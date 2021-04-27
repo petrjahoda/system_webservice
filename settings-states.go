@@ -18,6 +18,7 @@ type StatesSettingsDataOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Result                  string
 }
 
 type StateDetailsDataOutput struct {
@@ -31,6 +32,7 @@ type StateDetailsDataOutput struct {
 	CreatedAtPrepend string
 	UpdatedAt        string
 	UpdatedAtPrepend string
+	Result           string
 }
 
 type StateDetailsDataInput struct {
@@ -48,8 +50,8 @@ func loadStates(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData StatesSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading states ended with error")
@@ -65,9 +67,18 @@ func loadStates(writer http.ResponseWriter, email string) {
 	for _, record := range records {
 		addStatesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "States loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData OrdersSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: States processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "States loaded in "+time.Since(timer).String())
+	}
 }
 
 func addStatesTableRow(record database.State, data *StatesSettingsDataOutput) {
@@ -94,8 +105,8 @@ func loadState(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData StateDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading state ended with error")
@@ -115,9 +126,18 @@ func loadState(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:        state.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend: getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-state.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "State "+state.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-state.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData StateDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: State detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "State detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveState(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -128,7 +148,7 @@ func saveState(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving state ended with error")
@@ -140,7 +160,7 @@ func saveState(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving state ended with error")
@@ -151,7 +171,19 @@ func saveState(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	state.Color = data.Color
 	state.Name = data.Name
 	state.Note = data.Note
-	db.Save(&state)
+	result := db.Save(&state)
 	cacheStates(db)
-	logInfo("SETTINGS", "State "+state.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: State not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "State "+state.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: State saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "State "+state.Name+" saved in "+time.Since(timer).String())
+	}
 }

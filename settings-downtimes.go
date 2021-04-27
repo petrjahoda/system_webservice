@@ -21,6 +21,7 @@ type DowntimesSettingsDataOutput struct {
 	TableRows               []TableRow
 	TableHeaderType         []HeaderCellType
 	TableRowsType           []TableRowType
+	Result                  string
 }
 
 type DowntimeDetailsDataOutput struct {
@@ -39,6 +40,7 @@ type DowntimeDetailsDataOutput struct {
 	UpdatedAt               string
 	UpdatedAtPrepend        string
 	DowntimeTypes           []DowntimeTypeSelection
+	Result                  string
 }
 
 type DowntimeTypeSelection struct {
@@ -56,6 +58,7 @@ type DowntimeTypeDetailsDataOutput struct {
 	CreatedAtPrepend        string
 	UpdatedAt               string
 	UpdatedAtPrepend        string
+	Result                  string
 }
 
 type DowntimeDetailsDataInput struct {
@@ -81,8 +84,8 @@ func loadDowntimes(writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DowntimesSettingsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading downtimes ended with error")
@@ -104,9 +107,18 @@ func loadDowntimes(writer http.ResponseWriter, email string) {
 	for _, record := range typeRecords {
 		addDowntimeTypesTableRow(record, &data)
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-table-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Downtimes loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-table-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData DowntimesSettingsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Downtimes processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Downtimes loaded in "+time.Since(timer).String())
+	}
 }
 
 func addDowntimesTableRow(record database.Downtime, data *DowntimesSettingsDataOutput) {
@@ -149,8 +161,8 @@ func loadDowntime(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DowntimeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading downtime ended with error")
@@ -186,9 +198,18 @@ func loadDowntime(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:        getLocale(email, "updated-at"),
 		DowntimeTypes:           downTypes,
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-downtime.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Downtime "+downtime.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-downtime.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData DowntimeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Downtime detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Downtime detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func loadDowntimeType(id string, writer http.ResponseWriter, email string) {
@@ -199,8 +220,8 @@ func loadDowntimeType(id string, writer http.ResponseWriter, email string) {
 	defer sqlDB.Close()
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
-		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		var responseData DowntimeTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Loading downtime type ended with error")
@@ -218,9 +239,18 @@ func loadDowntimeType(id string, writer http.ResponseWriter, email string) {
 		UpdatedAt:               downtimeType.UpdatedAt.Format("2006-01-02T15:04:05"),
 		UpdatedAtPrepend:        getLocale(email, "updated-at"),
 	}
-	tmpl := template.Must(template.ParseFiles("./html/settings-detail-downtime-type.html"))
-	_ = tmpl.Execute(writer, data)
-	logInfo("SETTINGS", "Downtime type "+downtimeType.Name+" loaded in "+time.Since(timer).String())
+	tmpl, err := template.ParseFiles("./html/settings-detail-downtime-type.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		var responseData DowntimeTypeDetailsDataOutput
+		responseData.Result = "ERR: Problem parsing html file: " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		data.Result = "INF: Downtime type detail processed in " + time.Since(timer).String()
+		_ = tmpl.Execute(writer, data)
+		logInfo("SETTINGS", "Downtime type detail loaded in "+time.Since(timer).String())
+	}
 }
 
 func saveDowntime(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -231,7 +261,7 @@ func saveDowntime(writer http.ResponseWriter, request *http.Request, _ httproute
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving downtime ended with error")
@@ -243,7 +273,7 @@ func saveDowntime(writer http.ResponseWriter, request *http.Request, _ httproute
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving downtime ended with error")
@@ -256,9 +286,21 @@ func saveDowntime(writer http.ResponseWriter, request *http.Request, _ httproute
 	downtime.Color = data.Color
 	downtime.Barcode = data.Barcode
 	downtime.Note = data.Note
-	db.Save(&downtime)
+	result := db.Save(&downtime)
 	cacheDowntimes(db)
-	logInfo("SETTINGS", "Downtime "+downtime.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Downtime not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Downtime "+downtime.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Downtime saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Downtime "+downtime.Name+" saved in "+time.Since(timer).String())
+	}
 }
 
 func saveDowntimeType(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -269,7 +311,7 @@ func saveDowntimeType(writer http.ResponseWriter, request *http.Request, _ httpr
 	if err != nil {
 		logError("SETTINGS", "Error parsing data: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving downtime type ended with error")
@@ -281,7 +323,7 @@ func saveDowntimeType(writer http.ResponseWriter, request *http.Request, _ httpr
 	if err != nil {
 		logError("SETTINGS", "Problem opening database: "+err.Error())
 		var responseData TableOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("SETTINGS", "Saving downtime ended with error")
@@ -291,7 +333,19 @@ func saveDowntimeType(writer http.ResponseWriter, request *http.Request, _ httpr
 	db.Where("id=?", data.Id).Find(&downtimeType)
 	downtimeType.Name = data.Name
 	downtimeType.Note = data.Note
-	db.Save(&downtimeType)
+	result := db.Save(&downtimeType)
 	cacheDowntimes(db)
-	logInfo("SETTINGS", "Downtime type "+downtimeType.Name+" saved in "+time.Since(timer).String())
+	if result.Error != nil {
+		var responseData TableOutput
+		responseData.Result = "ERR: Downtime Type not saved: " + result.Error.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logError("SETTINGS", "Downtime Type "+downtimeType.Name+" not saved: "+result.Error.Error())
+	} else {
+		var responseData TableOutput
+		responseData.Result = "INF: Downtime Type saved in " + time.Since(timer).String()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("SETTINGS", "Downtime Type "+downtimeType.Name+" saved in "+time.Since(timer).String())
+	}
 }
