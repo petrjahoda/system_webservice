@@ -19,6 +19,9 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Added
 - finished charm for displaying debug information
 
+### Changed
+- reloading workplaces silently in the background
+
 ## [2021.2.1.26] - 2021-04-26
 
 ### Changed

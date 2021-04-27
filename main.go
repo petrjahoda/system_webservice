@@ -64,6 +64,7 @@ func (p *program) run() {
 	router.GET("/settings", basicAuth(settings))
 	router.POST("/update_user_settings", updateUserSettings)
 	router.POST("/update_user_workplaces", updateUserWorkplaces)
+	router.POST("/update_workplaces", updateWorkplaces)
 	router.POST("/load_index_data", loadIndexData)
 	router.POST("/load_table_data", loadTableData)
 	router.POST("/load_chart_data", loadChartData)
