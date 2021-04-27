@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon"  href="../icon/favicon.ico">
+    <link rel="icon" href="../icon/favicon.ico">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="120x120">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="152x152">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="180x180">
@@ -89,13 +89,6 @@
             <br>
             <br>
             <div>
-                <button class="button square m-1">
-                    <span class="mif-bell"></span>
-                    <span class="badge bg-red fg-white">4</span>
-                </button>
-                <button class="button square m-1" id="info-button">
-                    <span class="mif-info"></span>
-                </button>
                 <h6 class="m-0">{{.UserName}} @ {{.Company}}</h6>
             </div>
             <br>
@@ -113,14 +106,14 @@
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto" style="margin: 0">
                 <div style="min-width:200px;margin-top: 3px">
-                    <select id="data-selection" data-filter="false"  data-role="select">
+                    <select id="data-selection" data-filter="false" data-role="select">
                         {{range .SelectionMenu}}
                         <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
                         {{end}}
                     </select>
                 </div>
                 <div style="min-width:200px;margin-left: 3px;margin-top: 3px;">
-                    <select id="workplace-selection" data-filter="false"  data-role="select">
+                    <select id="workplace-selection" data-filter="false" data-role="select">
                         {{range .Workplaces}}
                         <option value="{{.WorkplaceName}}">{{.WorkplaceName}}</option>
                         {{end}}
@@ -136,10 +129,17 @@
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-ok-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark">
+                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark"></span>
                     </button>
                 </div>
             </div>
+            <button class="button square m-1" id="alarm-button" style="position: absolute;top:5px;right: 51px">
+                <span class="mif-bell"></span>
+                <span class="badge bg-red fg-white">4</span>
+            </button>
+            <button class="button square m-1" id="info-button" style="position: absolute;top:5px;right: 9px">
+                <span class="mif-info"></span>
+            </button>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto">

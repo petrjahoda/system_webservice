@@ -21,6 +21,8 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 ### Changed
 - reloading workplaces silently in the background
+- debug button moved to right top
+- alarms button moved to right top
 
 ## [2021.2.1.26] - 2021-04-26
 

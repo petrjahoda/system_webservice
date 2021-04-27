@@ -78,13 +78,6 @@
             <br>
             <br>
             <div>
-                <button class="button square m-1">
-                    <span class="mif-bell"></span>
-                    <span class="badge bg-red fg-white">4</span>
-                </button>
-                <button class="button square m-1" id="info-button">
-                    <span class="mif-info"></span>
-                </button>
                 <h6 class="m-0">{{.UserName}} @ {{.Company}}</h6>
             </div>
             <br>
@@ -110,6 +103,13 @@
 
                 </div>
             </div>
+            <button class="button square m-1" id="alarm-button" style="position: absolute;top:5px;right: 51px">
+                <span class="mif-bell"></span>
+                <span class="badge bg-red fg-white">4</span>
+            </button>
+            <button class="button square m-1" id="info-button" style="position: absolute;top:5px;right: 9px">
+                <span class="mif-info"></span>
+            </button>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 60px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
