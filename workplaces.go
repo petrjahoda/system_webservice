@@ -268,7 +268,7 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 	} else {
-		data.Result = "INF: Workplaces updated in " + time.Since(timer).String()
+		data.Result = "INF: Workplaces processed in " + time.Since(timer).String()
 		_ = tmpl.Execute(writer, data)
 		logInfo("SETTINGS", "Workplaces updated in "+time.Since(timer).String())
 	}
