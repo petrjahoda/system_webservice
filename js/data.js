@@ -17,6 +17,7 @@ dataOkButton.addEventListener("click", (event) => {
 })
 
 function loadData() {
+    document.getElementById("loader").hidden = false
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
     for (let index = 0; index < workplacesElement.length; index++) {
@@ -40,9 +41,11 @@ function loadData() {
                 document.getElementById("data-table-container").innerHTML = data
                 updateCharm(document.getElementById("hidden-data-information").innerText)
             }
+            document.getElementById("loader").hidden = true
         });
     }).catch((error) => {
         console.log(error)
+        document.getElementById("loader").hidden = true
     });
 }
 

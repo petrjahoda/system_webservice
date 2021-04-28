@@ -27,7 +27,15 @@ let consumptionChart = echarts.init(consumptionChartDom);
 let daysChart = echarts.init(daysDom)
 
 loadIndexData();
-window.addEventListener('resize', () => location.reload())
+window.addEventListener('resize', () => {
+    daysChart.resize()
+    consumptionChart.resize()
+    terminalAlarmChart.resize()
+    terminalDowntimeChart.resize()
+    terminalBreakdownChart.resize()
+    calendarChart.resize()
+    productivityChart.resize()
+})
 refreshButton.addEventListener('click', () => {
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
@@ -42,13 +50,14 @@ refreshButton.addEventListener('click', () => {
         body: JSON.stringify(data)
     }).then(() => {
         loadIndexData();
-        timeleft=60
+        timeleft = 60
     }).catch((error) => {
         updateCharm("ERR: " + error)
     });
 })
 
 function loadIndexData() {
+    document.getElementById("loader").hidden = false
     fetch("/load_index_data", {
         method: "POST",
     }).then((response) => {
@@ -69,9 +78,11 @@ function loadIndexData() {
             terminalBreakdownChart.resize()
             drawTerminalAlarmChart(result);
             terminalAlarmChart.resize()
+            document.getElementById("loader").hidden = true
         });
     }).catch((error) => {
         updateCharm("ERR: " + error)
+        document.getElementById("loader").hidden = true
     });
 }
 
@@ -487,7 +498,7 @@ function drawDaysChart(data) {
                 type: 'none'
             },
             formatter: function (params) {
-                return "<b>"+echarts.format.formatTime('dd.MM.yyyy', params[0]["axisValue"]) +"</b><br>"+params[2]["seriesName"] +": <b>" + params[2]["data"]+"%</b><br>"+ params[1]["seriesName"] +": <b>" + params[1]["data"]+"%</b><br>"+ params[0]["seriesName"] +": <b>" + params[0]["data"]+"%</b><br>"
+                return "<b>" + echarts.format.formatTime('dd.MM.yyyy', params[0]["axisValue"]) + "</b><br>" + params[2]["seriesName"] + ": <b>" + params[2]["data"] + "%</b><br>" + params[1]["seriesName"] + ": <b>" + params[1]["data"] + "%</b><br>" + params[0]["seriesName"] + ": <b>" + params[0]["data"] + "%</b><br>"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -500,7 +511,7 @@ function drawDaysChart(data) {
             splitArea: {show: false}
         },
         yAxis: {
-            show:false,
+            show: false,
             axisLine: {onZero: true},
             splitLine: {show: false},
             splitArea: {show: false},

@@ -14,6 +14,7 @@ refreshButton.addEventListener('click', () => {
 })
 
 function updateWorkplaces() {
+    document.getElementById("loader").hidden = false
     fetch("/update_workplaces", {
         method: "POST",
     }).then((response) => {
@@ -26,10 +27,12 @@ function updateWorkplaces() {
                 updateCharm(document.getElementById("hidden-information").innerText)
                 timeleft = 60
                 document.getElementById("progress-bar").value = 60 - timeleft;
+                document.getElementById("loader").hidden = true
             }
         });
     }).catch((error) => {
         updateCharm("ERR: " + error)
+        document.getElementById("loader").hidden = true
     });
 }
 

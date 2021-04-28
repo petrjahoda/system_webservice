@@ -75,7 +75,7 @@ type PortData struct {
 }
 
 type Data struct {
-	Time  int64
+	Time  time.Time
 	Value float32
 }
 

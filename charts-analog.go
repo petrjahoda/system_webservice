@@ -19,7 +19,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	if err != nil {
 		logError("CHARTS-ANALOG", "Problem opening database: "+err.Error())
 		var responseData ChartDataPageOutput
-		responseData.Result = "nok: " + err.Error()
+		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
 		logInfo("CHARTS-ANALOG", "Processing data ended")
@@ -39,20 +39,20 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			for _, data := range analogData {
 				for data.DateTime.Sub(date).Seconds() > 20 {
 					var initialData Data
-					initialData.Time = date.Unix()
+					initialData.Time = date
 					initialData.Value = math.MinInt16
 					portData.PortData = append(portData.PortData, initialData)
 					date = date.Add(10 * time.Second)
 				}
 				var initialData Data
-				initialData.Time = data.DateTime.Unix()
+				initialData.Time = data.DateTime
 				initialData.Value = data.Data
 				date = data.DateTime
 				portData.PortData = append(portData.PortData, initialData)
 			}
 			for dateTo.Sub(date).Seconds() > 20 {
 				var initialData Data
-				initialData.Time = date.Unix()
+				initialData.Time = date
 				initialData.Value = math.MinInt16
 				portData.PortData = append(portData.PortData, initialData)
 				date = date.Add(10 * time.Second)
@@ -105,7 +105,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	}
 	responseData.OrderData = terminalData
 	responseData.Locale = cachedUsersByEmail[email].Locale
-	responseData.Result = "ok"
+	responseData.Result = "INF: Analog chart data processed in " + time.Since(timer).String()
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(responseData)

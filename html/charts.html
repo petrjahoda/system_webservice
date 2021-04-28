@@ -13,23 +13,10 @@
     <link rel="stylesheet" href="../css/metro-all.min.css">
     <link rel="stylesheet" href="../css/index.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="../js/plotly-latest.min.js" defer></script>
     <script src="../js/menu.js" defer></script>
     <script src="../js/metro.min.js" defer></script>
     <script src="../js/charts.js" defer></script>
-    <script src="../js/locales.js" defer></script>
-    <script src="../js/amcharts/core.js" defer></script>
-    <script src="../js/amcharts/charts.js" defer></script>
-    <script src="../js/amcharts/animated.js" defer></script>
-    <script src="../js/amcharts/locales/cs_CZ.js" defer></script>
-    <script src="../js/amcharts/locales/de_DE.js" defer></script>
-    <script src="../js/amcharts/locales/es_ES.js" defer></script>
-    <script src="../js/amcharts/locales/fr_FR.js" defer></script>
-    <script src="../js/amcharts/locales/it_IT.js" defer></script>
-    <script src="../js/amcharts/locales/pl_PL.js" defer></script>
-    <script src="../js/amcharts/locales/pt_PT.js" defer></script>
-    <script src="../js/amcharts/locales/sr_RS.js" defer></script>
-    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
@@ -132,6 +119,8 @@
                             style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark"></span>
                     </button>
                 </div>
+
+
             </div>
             <button class="button square m-1" id="alarm-button" style="position: absolute;top:5px;right: 51px">
                 <span class="mif-bell"></span>
@@ -140,14 +129,13 @@
             <button class="button square m-1" id="info-button" style="position: absolute;top:5px;right: 9px">
                 <span class="mif-info"></span>
             </button>
+            <div id="loader" hidden style="position: absolute;top:18px;right: 100px"><span class="mif-loop2 ani-spin"></span></div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div id="data-table-container" style="display: block;margin-top:10px;height: 90%">
-                <div id="chart" style="margin: 0;height: 70%"></div>
-                <div id="order-chart" style="margin: 0"></div>
+                <div id="chart" style="margin-top: 50px;height: 75%;width: 100%"></div>
             </div>
-
         </div>
     </div>
 </div>
