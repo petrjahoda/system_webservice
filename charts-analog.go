@@ -31,7 +31,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	for _, port := range allWorkplacePorts {
 		if port.DevicePortTypeID == 2 {
 			var analogData []database.DevicePortAnalogRecord
-			db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
+			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
 			portData.PortName = port.Name
 			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
