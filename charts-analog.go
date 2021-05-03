@@ -39,20 +39,20 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			for _, data := range analogData {
 				for data.DateTime.Sub(date).Seconds() > 20 {
 					var initialData Data
-					initialData.Time = date
+					initialData.Time = date.Unix()
 					initialData.Value = math.MinInt16
 					portData.PortData = append(portData.PortData, initialData)
 					date = date.Add(10 * time.Second)
 				}
 				var initialData Data
-				initialData.Time = data.DateTime
+				initialData.Time = data.DateTime.Unix()
 				initialData.Value = data.Data
 				date = data.DateTime
 				portData.PortData = append(portData.PortData, initialData)
 			}
 			for dateTo.Sub(date).Seconds() > 20 {
 				var initialData Data
-				initialData.Time = date
+				initialData.Time = date.Unix()
 				initialData.Value = math.MinInt16
 				portData.PortData = append(portData.PortData, initialData)
 				date = date.Add(10 * time.Second)

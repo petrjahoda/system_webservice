@@ -14,6 +14,14 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+
+## [2021.2.2.3] - 2021-05-03
+
+### Changed
+- updated to latest go libraries
+- tested drawing analog chart with more than 4 000 000 data: 10 seconds downloading data, 15 seconds drawing
+
+
 ## [2021.2.1.28] - 2021-04-28
 
 ### Added
