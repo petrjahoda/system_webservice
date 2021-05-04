@@ -140,12 +140,12 @@ function drawAnalogChart(chartData) {
         },
         dataZoom: [{
             type: 'inside',
-            realtime: false,
+            realtime: true,
             start: 0,
             end: 100
         }, {
             type: 'slider',
-            realtime: false,
+            realtime: true,
             start: 0,
             end: 100,
         }],
