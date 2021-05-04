@@ -14,28 +14,37 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.2.4] - 2021-05-04
+
+### Added
+
+- complete analog chart
 
 ## [2021.2.2.3] - 2021-05-03
 
 ### Changed
+
 - updated to latest go libraries
 - tested drawing analog chart with more than 4 000 000 data: 10 seconds downloading data, 15 seconds drawing
-
 
 ## [2021.2.1.28] - 2021-04-28
 
 ### Added
+
 - loading information
 
 ### Changed
+
 - charts changed to plotly
 
 ## [2021.2.1.27] - 2021-04-27
 
 ### Added
+
 - finished charm for displaying debug information
 
 ### Changed
+
 - reloading workplaces silently in the background
 - debug button moved to right top
 - alarms button moved to right top
@@ -43,50 +52,61 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ## [2021.2.1.26] - 2021-04-26
 
 ### Changed
+
 - font Milliard
 
 ### Added
+
 - power consumption overview chart
 - charm for displaying debug information
 
 ## [2021.2.1.14] - 2021-04-14
 
 ### Added
+
 - proper locales for index page
 - 30 days overview table for index page
 - workplace selection for index page
 
 ### Changed
+
 - control buttons reverted back to top
 
 ## [2021.2.1.13] - 2021-04-13
 
 ### Fixed
+
 - settings caching after save change
 - export data from data table
 
 ### Changed
+
 - gui structure for data
 
 ### Added
+
 - workplace selection for index page
 
 ## [2021.2.1.7] - 2021-04-07
 
 ### Changed
+
 - calendar data calculation changed for actual state_record table
 
 ## [2021.2.1.6] - 2021-04-06
 
 ### Added
+
 - calendar data calculation make fastest possible
 
 ## [2021.2.1.1] - 2021-04-04
 
 ### Added
+
 - calculating productivity for calendar overview
 
 ### Added
+
 - main page fully working production overview
 - main page fully working terminal data overview
 - main page partially working calendar overview
@@ -94,9 +114,11 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ## [2021.1.3.30] - 2021-03-30
 
 ### Changed
+
 - speed-up: workplaces page load in under 100ms
 
 ### Added
+
 - main page fully working production overview
 - main page fully working terminal data overview
 - main page partially working calendar overview
@@ -106,6 +128,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ## [2021.1.3.29] - 2021-03-29
 
 ### Added
+
 - main index.html positioning and dummy data
 
 ## [2021.1.3.26] - 2021-03-26
@@ -115,6 +138,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - workplaces port handling
 
 ### Changed
+
 - rendering html data the same for all pages
 
 ## [2021.1.3.25] - 2021-03-25

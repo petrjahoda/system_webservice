@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -33,7 +34,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			var analogData []database.DevicePortAnalogRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
-			portData.PortName = port.Name
+			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name + " (" + port.Unit + ")"
 			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
 			date := dateFrom
 			for _, data := range analogData {
@@ -105,7 +106,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	}
 	responseData.OrderData = terminalData
 	responseData.Locale = cachedUsersByEmail[email].Locale
-	responseData.Result = "INF: Analog chart data processed in " + time.Since(timer).String()
+	responseData.Result = "INF: Analog chart data downloaded from database in " + time.Since(timer).String()
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(responseData)
