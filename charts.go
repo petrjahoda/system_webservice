@@ -47,11 +47,11 @@ type ChartSelection struct {
 }
 
 type ChartDataPageOutput struct {
-	Result     string
-	Locale     string
-	Type       string
-	AnalogData []PortData
-	OrderData  []TerminalData
+	Result    string
+	Locale    string
+	Type      string
+	ChartData []PortData
+	OrderData []TerminalData
 }
 
 type TerminalData struct {
@@ -69,9 +69,10 @@ type TerminalData struct {
 }
 
 type PortData struct {
-	PortName  string
-	PortColor string
-	PortData  []Data
+	PortName    string
+	PortColor   string
+	AnalogData  []Data
+	DigitalData []Data
 }
 
 type Data struct {
@@ -199,6 +200,7 @@ func loadChartData(writer http.ResponseWriter, request *http.Request, params htt
 	case "analog-data":
 		processAnalogData(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "digital-data":
+		processDigitalData(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "production-chart":
 	case "consumption-chart":
 	}
