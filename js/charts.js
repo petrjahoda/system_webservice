@@ -212,7 +212,7 @@ function drawAnalogChart(chartData) {
             },
         });
     }
-    if (chartData["DownTimeData"] !== null) {
+    if (chartData["DowntimeData"] !== null) {
         let downtimeData = []
         let color = ""
         for (const element of chartData["DowntimeData"]) {

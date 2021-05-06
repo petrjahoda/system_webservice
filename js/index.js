@@ -426,7 +426,7 @@ function drawCalendar(data) {
         responsive: true,
         tooltip: {
             formatter: function (param) {
-                return '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + "<b>" + moment(new Date(param["value"][0])).format('LL') + "</b><br>" + param["value"][1] + "%"
+                return "<b>" + moment(new Date(param["value"][0])).format('LL') + "</b><br>"+'<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][1] + "%"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -457,7 +457,7 @@ function drawCalendar(data) {
             },
             yearLabel: {show: false},
             dayLabel: {
-                firstDay: 0,
+                firstDay: 1,
                 nameMap: data["CalendarDayLabel"]
             },
             monthLabel: {
