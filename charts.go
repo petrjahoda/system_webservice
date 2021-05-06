@@ -47,25 +47,28 @@ type ChartSelection struct {
 }
 
 type ChartDataPageOutput struct {
-	Result    string
-	Locale    string
-	Type      string
-	ChartData []PortData
-	OrderData []TerminalData
+	Result           string
+	Locale           string
+	Type             string
+	ChartData        []PortData
+	OrderData        []TerminalData
+	DowntimeData     []TerminalData
+	BreakdownData    []TerminalData
+	AlarmData        []TerminalData
+	UserData         []TerminalData
+	OrdersLocale     string
+	DowntimesLocale  string
+	BreakdownsLocale string
+	AlarmsLocale     string
+	UsersLocale      string
 }
 
 type TerminalData struct {
-	Name          string
-	Color         string
-	FromDate      int64
-	ToDate        int64
-	DataName      string
-	OperationName string
-	ProductName   string
-	AverageCycle  float32
-	CountOk       int
-	CountNok      int
-	Note          string
+	Color       string
+	FromDate    int64
+	ToDate      int64
+	Information string
+	Note        string
 }
 
 type PortData struct {

@@ -409,6 +409,8 @@ function drawTerminalAlarmChart(data) {
 }
 
 function drawCalendar(data) {
+    let locale = getLocaleFrom(data);
+    moment.locale(locale);
     calendarChartDom.style.height = '250px'
     let actualWidth = parseInt(window.getComputedStyle(document.getElementById("inside")).width)
     let option;
@@ -423,9 +425,8 @@ function drawCalendar(data) {
         scale: true,
         responsive: true,
         tooltip: {
-            formatter: function (p) {
-                let format = echarts.format.formatTime('dd.MM.yyyy', p.data[0]);
-                return format + ': ' + "<b>" + p.data[1] + "%</b>";
+            formatter: function (param) {
+                return '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + "<b>" + moment(new Date(param["value"][0])).format('LL') + "</b><br>" + param["value"][1] + "%"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -486,7 +487,8 @@ function drawDaysChart(data) {
             fontFamily: 'ProximaNova'
         },
         legend: {
-            bottom: "0"
+            bottom: "0",
+            data: [data['ProductionLocale'], data['DowntimeLocale'], data['PoweroffLocale']]
         },
         title: {
             text: data["OverviewMonthTitle"],
@@ -498,7 +500,12 @@ function drawDaysChart(data) {
                 type: 'none'
             },
             formatter: function (params) {
-                return "<b>" + echarts.format.formatTime('dd.MM.yyyy', params[0]["axisValue"]) + "</b><br>" + params[2]["seriesName"] + ": <b>" + params[2]["data"] + "%</b><br>" + params[1]["seriesName"] + ": <b>" + params[1]["data"] + "%</b><br>" + params[0]["seriesName"] + ": <b>" + params[0]["data"] + "%</b><br>"
+                let result = ""
+                for (const param of params) {
+                    result = '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + "<b>" + "</b>" + param["value"] + "%<br>"+result
+                }
+                result = "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + result
+                return result
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -553,6 +560,8 @@ function drawDaysChart(data) {
 }
 
 function drawConsumptionChart(data) {
+    let locale = getLocaleFrom(data);
+    moment.locale(locale);
     consumptionChartDom.style.height = "250px"
     let emphasisStyle = {
         itemStyle: {
@@ -591,7 +600,8 @@ function drawConsumptionChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return "<b>" + echarts.format.formatTime('dd.MM.yyyy', params[0]["name"]) + "</b>: " + params[0]["value"].replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') + " kWh"
+                console.log(params)
+                return "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + params[0]["color"] + '"></span>'+params[0]["value"].replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') + " kWh"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -606,4 +616,52 @@ function drawConsumptionChart(data) {
         }]
     };
     option && consumptionChart.setOption(option);
+}
+
+
+function getLocaleFrom(chartData) {
+    let locale = ""
+    switch (chartData["Locale"]) {
+        case "CsCZ": {
+            locale = "cs";
+            break;
+        }
+        case "DeDE": {
+            locale = "de";
+            break;
+        }
+        case "EnUS": {
+            locale = "en";
+            break;
+        }
+        case "EsES": {
+            locale = "es";
+            break;
+        }
+        case "FrFR": {
+            locale = "fr";
+            break;
+        }
+        case "ItIT": {
+            locale = "it";
+            break;
+        }
+        case "PlPL": {
+            locale = "pl";
+            break;
+        }
+        case "PtPT": {
+            locale = "pt";
+            break;
+        }
+        case "SkSK": {
+            locale = "sk";
+            break;
+        }
+        case "RuRU": {
+            locale = "ru";
+            break;
+        }
+    }
+    return locale;
 }
