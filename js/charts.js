@@ -476,6 +476,7 @@ function drawAnalogChart(chartData) {
             realtime: true,
             start: 0,
             end: 100,
+            filterMode: 'none',
             xAxisIndex: [0, 1, 2, 3, 4, 5]
         }, {
             type: 'slider',
@@ -483,6 +484,7 @@ function drawAnalogChart(chartData) {
             realtime: true,
             start: 0,
             end: 100,
+            filterMode: 'none',
             xAxisIndex: [0, 1, 2, 3, 4, 5]
         }],
         series: seriesList,
