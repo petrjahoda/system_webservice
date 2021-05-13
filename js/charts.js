@@ -329,6 +329,9 @@ function drawAnalogChart(chartData) {
         },
         tooltip: {
             trigger: 'axis',
+            axisPointer: {
+                type: 'line',
+            },
             formatter: function (params) {
                 let result = ""
                 for (const param of params) {
@@ -339,7 +342,7 @@ function drawAnalogChart(chartData) {
                         result += "<b>" + moment(new Date(params[0]["axisValue"])).format('LLL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["seriesName"] + " [" + param["value"][1] + "]<br><br>"
                     }
                 }
-                return result.replace(/^\s*<br\s*\/?>|<br\s*\/?>\s*$/g,'')
+                return result.replace(/^\s*<br\s*\/?>|<br\s*\/?>\s*$/g, '')
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -471,22 +474,24 @@ function drawAnalogChart(chartData) {
         axisPointer: {
             link: {xAxisIndex: 'all'}
         },
-        dataZoom: [{
-            type: 'inside',
-            realtime: true,
-            start: 0,
-            end: 100,
-            filterMode: 'none',
-            xAxisIndex: [0, 1, 2, 3, 4, 5]
-        }, {
-            type: 'slider',
-            showDataShadow: false,
-            realtime: true,
-            start: 0,
-            end: 100,
-            filterMode: 'none',
-            xAxisIndex: [0, 1, 2, 3, 4, 5]
-        }],
+        dataZoom: [
+            {
+                type: 'inside',
+                realtime: true,
+                start: 0,
+                end: 100,
+                // filterMode: 'none',
+                xAxisIndex: [0, 1, 2, 3, 4, 5]
+            }, {
+                type: 'slider',
+                showDataShadow: false,
+                realtime: true,
+                start: 0,
+                end: 100,
+                // filterMode: 'none',
+                xAxisIndex: [0, 1, 2, 3, 4, 5]
+            },
+        ],
         series: seriesList,
     };
     option && myChart.setOption(option);
