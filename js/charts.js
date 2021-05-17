@@ -486,8 +486,9 @@ function drawAnalogChart(chartData) {
                 id: 'sliderChartZoom',
 
                 labelFormatter: function (value) {
-                    return moment(new Date(value)).format('LLLs');
+                    return moment(new Date(value)).format('LLL');
                 },
+                realtime: true,
                 showDataShadow: false,
                 start: 0,
                 end: 100,
