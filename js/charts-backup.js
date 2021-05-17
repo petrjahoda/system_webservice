@@ -1,5 +1,7 @@
 let chartDom = document.getElementById('chart');
-let myChart = echarts.init(chartDom, null, {height: document.documentElement.clientHeight*0.85});
+let myChart = echarts.init(chartDom);
+let terminalChartDom = document.getElementById('terminal-chart');
+let myTerminalChart = echarts.init(terminalChartDom);
 let now = new Date();
 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
 document.getElementById('to-date').value = now.toISOString().slice(0, 16);
@@ -70,10 +72,6 @@ function drawDigitalChart(chartData) {
                 dataZoom: {
                     yAxisIndex: 'none'
                 },
-                saveAsImage: {
-                    type: "png",
-                    name: "analog"
-                }
             }
         },
         yAxis: {
@@ -81,7 +79,7 @@ function drawDigitalChart(chartData) {
         },
         xAxis: {
             type: 'time',
-            axisLabel: {}
+            axisLabel: {},
         },
         dataZoom: [{
             type: 'inside',
@@ -127,12 +125,14 @@ dataOkButton.addEventListener("click", (event) => {
                 myChart.clear()
                 if (result["ChartData"] !== null) {
                     drawAnalogChart(result)
+                    drawTerminalChart(result)
                 }
                 document.getElementById("loader").hidden = true
             } else if (result["Type"] === "digital-data") {
                 myChart.clear()
                 if (result["ChartData"] !== null) {
                     drawDigitalChart(result)
+                    drawTerminalChart(result)
                 }
                 document.getElementById("loader").hidden = true
             }
@@ -150,6 +150,288 @@ dataOkButton.addEventListener("click", (event) => {
         document.getElementById("loader").style.transform = "none"
     });
 })
+
+function drawTerminalChart(chartData) {
+    let minDate = document.getElementById("from-date").value
+    let maxDate = document.getElementById("to-date").value
+    let locale = getLocaleFrom(chartData);
+    let seriesList = [];
+    moment.locale(locale);
+    if (chartData["OrderData"] !== null) {
+        let orderData = []
+        let color = ""
+        for (const element of chartData["OrderData"]) {
+            color = element["Color"]
+            orderData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+            orderData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+        }
+        seriesList.push({
+            name: chartData["OrdersLocale"],
+            color: color,
+            areaStyle: {},
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            data: orderData,
+            sampling: 'none',
+            lineStyle: {
+                width: 0,
+            },
+            emphasis: {
+                focus: 'series'
+            },
+        });
+    }
+    if (chartData["DowntimeData"] !== null) {
+        let downtimeData = []
+        let color = ""
+        for (const element of chartData["DowntimeData"]) {
+            color = element["Color"]
+            downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+            downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+        }
+        seriesList.push({
+            name: chartData["DowntimesLocale"],
+            color: color,
+            areaStyle: {},
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            data: downtimeData,
+            sampling: 'none',
+            lineStyle: {
+                width: 0,
+            },
+            xAxisIndex: 1,
+            yAxisIndex: 1,
+            emphasis: {
+                focus: 'series'
+            },
+        });
+    }
+    if (chartData["BreakdownData"] !== null) {
+        let breakdownData = []
+        let color = ""
+        for (const element of chartData["BreakdownData"]) {
+            color = element["Color"]
+            breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+            breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+        }
+        seriesList.push({
+            name: chartData["BreakdownsLocale"],
+            color: color,
+            areaStyle: {},
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            data: breakdownData,
+            sampling: 'none',
+            lineStyle: {
+                width: 0,
+            },
+            xAxisIndex: 2,
+            yAxisIndex: 2,
+            emphasis: {
+                focus: 'series'
+            },
+        });
+    }
+    if (chartData["UserData"] !== null) {
+        let userData = []
+        let color = ""
+        for (const element of chartData["UserData"]) {
+            color = element["Color"]
+            userData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+            userData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+        }
+        seriesList.push({
+            name: chartData["UsersLocale"],
+            color: color,
+            areaStyle: {},
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            data: userData,
+            sampling: 'none',
+            lineStyle: {
+                width: 0,
+            },
+            xAxisIndex: 3,
+            yAxisIndex: 3,
+            emphasis: {
+                focus: 'series'
+            },
+        });
+    }
+    if (chartData["AlarmData"] !== null) {
+        let alarmData = []
+        let color = ""
+        for (const element of chartData["AlarmData"]) {
+            color = element["Color"]
+            alarmData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+            alarmData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+        }
+        seriesList.push({
+            name: chartData["AlarmsLocale"],
+            color: color,
+            areaStyle: {},
+            type: 'line',
+            step: 'end',
+            symbol: 'none',
+            data: alarmData,
+            sampling: 'none',
+            lineStyle: {
+                width: 0,
+            },
+            xAxisIndex: 4,
+            yAxisIndex: 4,
+            emphasis: {
+                focus: 'series'
+            },
+        });
+    }
+
+    let option;
+    option = {
+        animation: false,
+        textStyle: {
+            fontFamily: 'ProximaNova'
+        },
+        tooltip: {
+            trigger: 'axis',
+            axisPointer: {
+                type: 'line',
+            },
+            formatter: function (params) {
+                let result = ""
+                for (const param of params) {
+                    let color = param["color"]
+                    result += "<b>" + param["value"][3] + " - " + param["value"][4] + '</b><br><span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["value"][2] + "<br><br>"
+
+                }
+                return result.replace(/^\s*<br\s*\/?>|<br\s*\/?>\s*$/g, '')
+            },
+            position: function (point, params, dom, rect, size) {
+                return [point[0] - size["contentSize"][0] / 2, point[1]];
+            }
+        },
+        legend: {
+        },
+        grid: [{
+            left: 50,
+            right: 100,
+            top: '15%',
+            height: '14%'
+        }, {
+            left: 50,
+            right: 100,
+            top: '30%',
+            height: '14%'
+        }, {
+            left: 50,
+            right: 100,
+            top: '45%',
+            height: '14%'
+        }, {
+            left: 50,
+            right: 100,
+            top: '60%',
+            height: '14%'
+        }, {
+            left: 50,
+            right: 100,
+            top: '75%',
+            height: '14%'
+        }],
+        xAxis: [
+            {
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                show: false
+            },
+            {
+                gridIndex: 1,
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                show: false,
+            },
+            {
+                gridIndex: 2,
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                show: false,
+            },
+            {
+                gridIndex: 3,
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                show: false,
+            },
+            {
+                gridIndex: 4,
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                show: false,
+            },
+        ],
+        yAxis: [
+            {
+                type: 'value',
+                show: false,
+            },
+            {
+                gridIndex: 1,
+                type: 'value',
+                show: false,
+            },
+            {
+                gridIndex: 2,
+                type: 'value',
+                show: false,
+            },
+            {
+                gridIndex: 3,
+                type: 'value',
+                show: false,
+            },
+            {
+                gridIndex: 4,
+                type: 'value',
+                show: false,
+            }
+        ],
+        axisPointer: {
+            link: {xAxisIndex: 'all'}
+        },
+        dataZoom: [
+            {
+                type: 'inside',
+                realtime: true,
+                start: 0,
+                end: 100,
+                show: false,
+                filterMode: 'none',
+                xAxisIndex: [0, 1, 2, 3, 4]
+            }, {
+                type: 'slider',
+                showDataShadow: false,
+                realtime: true,
+                start: 0,
+                end: 100,
+                show: false,
+                filterMode: 'none',
+                xAxisIndex: [0, 1, 2, 3, 4]
+            },
+        ],
+        series: seriesList,
+    };
+    option && myTerminalChart.setOption(option);
+}
 
 function drawAnalogChart(chartData) {
     let minDate = document.getElementById("from-date").value
@@ -185,144 +467,10 @@ function drawAnalogChart(chartData) {
             },
         });
     }
-    if (chartData["OrderData"] !== null) {
-        let orderData = []
-        let color = ""
-        for (const element of chartData["OrderData"]) {
-            color = element["Color"]
-            orderData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-            orderData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-        }
-        seriesList.push({
-            name: chartData["OrdersLocale"],
-            color: color,
-            areaStyle: {},
-            type: 'line',
-            step: 'end',
-            symbol: 'none',
-            data: orderData,
-            sampling: 'none',
-            lineStyle: {
-                width: 0,
-            },
-            xAxisIndex: 1,
-            yAxisIndex: 1,
-            emphasis: {
-                focus: 'series'
-            },
-        });
-    }
-    if (chartData["DowntimeData"] !== null) {
-        let downtimeData = []
-        let color = ""
-        for (const element of chartData["DowntimeData"]) {
-            color = element["Color"]
-            downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-            downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-        }
-        seriesList.push({
-            name: chartData["DowntimesLocale"],
-            color: color,
-            areaStyle: {},
-            type: 'line',
-            step: 'end',
-            symbol: 'none',
-            data: downtimeData,
-            sampling: 'none',
-            lineStyle: {
-                width: 0,
-            },
-            xAxisIndex: 2,
-            yAxisIndex: 2,
-            emphasis: {
-                focus: 'series'
-            },
-        });
-    }
-    if (chartData["BreakdownData"] !== null) {
-        let breakdownData = []
-        let color = ""
-        for (const element of chartData["BreakdownData"]) {
-            color = element["Color"]
-            breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-            breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-        }
-        seriesList.push({
-            name: chartData["BreakdownsLocale"],
-            color: color,
-            areaStyle: {},
-            type: 'line',
-            step: 'end',
-            symbol: 'none',
-            data: breakdownData,
-            sampling: 'none',
-            lineStyle: {
-                width: 0,
-            },
-            xAxisIndex: 3,
-            yAxisIndex: 3,
-            emphasis: {
-                focus: 'series'
-            },
-        });
-    }
-    if (chartData["UserData"] !== null) {
-        let userData = []
-        let color = ""
-        for (const element of chartData["UserData"]) {
-            color = element["Color"]
-            userData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-            userData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-        }
-        seriesList.push({
-            name: chartData["UsersLocale"],
-            color: color,
-            areaStyle: {},
-            type: 'line',
-            step: 'end',
-            symbol: 'none',
-            data: userData,
-            sampling: 'none',
-            lineStyle: {
-                width: 0,
-            },
-            xAxisIndex: 4,
-            yAxisIndex: 4,
-            emphasis: {
-                focus: 'series'
-            },
-        });
-    }
-    if (chartData["AlarmData"] !== null) {
-        let alarmData = []
-        let color = ""
-        for (const element of chartData["AlarmData"]) {
-            color = element["Color"]
-            alarmData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-            alarmData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-        }
-        seriesList.push({
-            name: chartData["AlarmsLocale"],
-            color: color,
-            areaStyle: {},
-            type: 'line',
-            step: 'end',
-            symbol: 'none',
-            data: alarmData,
-            sampling: 'none',
-            lineStyle: {
-                width: 0,
-            },
-            xAxisIndex: 5,
-            yAxisIndex: 5,
-            emphasis: {
-                focus: 'series'
-            },
-        });
-    }
 
     let option;
     option = {
+
         animation: false,
         textStyle: {
             fontFamily: 'ProximaNova'
@@ -349,35 +497,8 @@ function drawAnalogChart(chartData) {
             }
         },
         grid: [{
-            top: 50,
             left: 50,
             right: 100,
-            height: '60%'
-        }, {
-            left: 50,
-            right: 100,
-            top: '70%',
-            height: '4%'
-        }, {
-            left: 50,
-            right: 100,
-            top: '75%',
-            height: '4%'
-        }, {
-            left: 50,
-            right: 100,
-            top: '80%',
-            height: '4%'
-        }, {
-            left: 50,
-            right: 100,
-            top: '85%',
-            height: '4%'
-        }, {
-            left: 50,
-            right: 100,
-            top: '90%',
-            height: '4%'
         }],
         legend: {},
         toolbox: {
@@ -387,10 +508,6 @@ function drawAnalogChart(chartData) {
                 dataZoom: {
                     yAxisIndex: 'none'
                 },
-                saveAsImage: {
-                    type: "png",
-                    name: "analog"
-                }
             }
         },
         xAxis: [
@@ -404,72 +521,12 @@ function drawAnalogChart(chartData) {
                 min: minDate,
                 max: maxDate,
                 show: true
-            },
-            {
-                gridIndex: 1,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            },
-            {
-                gridIndex: 2,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            },
-            {
-                gridIndex: 3,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            },
-            {
-                gridIndex: 4,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            },
-            {
-                gridIndex: 5,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
             }
         ],
         yAxis: [
             {
                 type: 'value',
             },
-            {
-                gridIndex: 1,
-                type: 'value',
-                show: false,
-            },
-            {
-                gridIndex: 2,
-                type: 'value',
-                show: false,
-            },
-            {
-                gridIndex: 3,
-                type: 'value',
-                show: false,
-            },
-            {
-                gridIndex: 4,
-                type: 'value',
-                show: false,
-            },
-            {
-                gridIndex: 5,
-                type: 'value',
-                show: false,
-            }
         ],
         axisPointer: {
             link: {xAxisIndex: 'all'}
@@ -477,35 +534,15 @@ function drawAnalogChart(chartData) {
         dataZoom: [
             {
                 type: 'inside',
-                id: 'insideChartZoom',
+                realtime: true,
                 start: 0,
                 end: 100,
-                xAxisIndex: [0]
             }, {
                 type: 'slider',
-                id: 'sliderChartZoom',
-
-                labelFormatter: function (value) {
-                    return moment(new Date(value)).format('LLLs');
-                },
                 showDataShadow: false,
+                realtime: true,
                 start: 0,
                 end: 100,
-                xAxisIndex: [0]
-            },
-            {
-                type: 'inside',
-                id: 'terminalInsideChartZoom',
-                filterMode: 'none',
-                show: false,
-                xAxisIndex: [1, 2, 3, 4, 5]
-            }, {
-                type: 'slider',
-                id: 'terminalSliderChartZoom',
-                showDataShadow: false,
-                filterMode: 'none',
-                show: false,
-                xAxisIndex: [1, 2, 3, 4, 5]
             },
         ],
         series: seriesList,
@@ -565,27 +602,16 @@ window.addEventListener('resize', () => {
 
 })
 
-myChart.on('dataZoom', function (evt) {
-    let option = myChart.getOption();
-    if (evt["dataZoomId"] !== undefined) {
-        myChart.dispatchAction({
-            type: 'dataZoom',
-            startValue: option.dataZoom[0].startValue,
-            endValue: option.dataZoom[0].endValue
-        });
-    } else if (evt["batch"] !== undefined) {
-        myChart.dispatchAction({
-            type: 'dataZoom',
-            startValue: evt["batch"][0]["startValue"],
-            endValue: evt["batch"][0]["endValue"]
-        });
-    } else if (evt["startValue"] === undefined){
-        myChart.dispatchAction({
-            type: 'dataZoom',
-            startValue: option.dataZoom[0].startValue,
-            endValue: option.dataZoom[0].endValue
-        });
-    }
+
+myChart.on('datazoom', function (evt) {
+    let zoom = myChart.getOption().dataZoom[0];
+    console.log(zoom)
+    myTerminalChart.dispatchAction({
+        type: 'dataZoom',
+        dataZoomIndex: 0,
+        startValue: zoom.startValue,
+        endValue: zoom.endValue
+    });
 });
 
 
