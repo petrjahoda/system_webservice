@@ -339,7 +339,7 @@ function drawAnalogChart(chartData) {
                     if (param["axisIndex"] > 0) {
                         result += "<b>" + param["value"][3] + " - " + param["value"][4] + '</b><br><span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["value"][2] + "<br><br>"
                     } else {
-                        result += "<b>" + moment(new Date(params[0]["axisValue"])).format('LLL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["seriesName"] + " [" + param["value"][1] + "]<br><br>"
+                        result += "<b>" + moment(new Date(params[0]["axisValue"])).format('Do MMMM YYYY h:mm:ss') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["seriesName"] + " [" + param["value"][1] + "]<br><br>"
                     }
                 }
                 return result.replace(/^\s*<br\s*\/?>|<br\s*\/?>\s*$/g, '')
@@ -398,7 +398,7 @@ function drawAnalogChart(chartData) {
                 type: 'time',
                 axisLabel: {
                     formatter: function (value) {
-                        return moment(new Date(value)).format('LLLs');
+                        return moment(new Date(value)).format('LLL');
                     }
                 },
                 min: minDate,
