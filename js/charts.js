@@ -419,6 +419,10 @@ function drawDigitalChart(chartData) {
         }
     }
     let option;
+    let sliderTopPosition = "90%"
+    if (phonelinkButton.classList.contains("mif-phonelink-off")) {
+        sliderTopPosition = "70%"
+    }
     option = {
         animation: false,
         textStyle: {
@@ -476,6 +480,7 @@ function drawDigitalChart(chartData) {
             showDataShadow: false,
             start: 0,
             end: 100,
+            top: sliderTopPosition,
         }],
         series: seriesList,
     };
@@ -656,7 +661,10 @@ function drawAnalogChart(chartData) {
         }
     }
 
-
+    let sliderTopPosition = "90%"
+    if (phonelinkButton.classList.contains("mif-phonelink-off")) {
+        sliderTopPosition = "70%"
+    }
     let option;
     option = {
         animation: false,
@@ -828,7 +836,8 @@ function drawAnalogChart(chartData) {
                 showDataShadow: false,
                 start: 0,
                 end: 100,
-                xAxisIndex: [0]
+                xAxisIndex: [0],
+                top: sliderTopPosition
             },
             {
                 type: 'inside',
