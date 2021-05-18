@@ -8,6 +8,14 @@ const downloadTimer = setInterval(function () {
     timeleft -= 1;
 }, 1000);
 
+const photoBooth = document.getElementById("alarm-button")
+photoBooth.addEventListener('click', () => {
+    console.log("called")
+
+})
+
+
+
 let productivityChartDom = document.getElementById('productivity-overview');
 let calendarChartDom = document.getElementById('calendar-heatmap');
 let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
