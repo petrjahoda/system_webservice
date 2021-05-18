@@ -33,6 +33,7 @@ func loadPackagesTable(writer http.ResponseWriter, workplaceIds string, dateFrom
 		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where(workplaceIds).Order("date_time desc").Find(&packageRecords)
 	}
 	var data TableOutput
+	data.Compacted = cachedUserSettings[email].compacted
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")

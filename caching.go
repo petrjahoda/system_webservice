@@ -89,6 +89,7 @@ type userSettings struct {
 	dataSelection      string
 	settingsSelection  string
 	selectedWorkplaces []string
+	compacted          string
 }
 type sectionState struct {
 	section string

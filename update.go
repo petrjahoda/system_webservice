@@ -89,7 +89,16 @@ func updateUserSettings(writer http.ResponseWriter, request *http.Request, param
 			cachedUserSettings[email] = userSettings
 			userSettingsSync.Unlock()
 		}
+	case "compact":
+		{
+			userSettingsSync.Lock()
+			userSettings := cachedUserSettings[email]
+			userSettings.compacted = data.State
+			cachedUserSettings[email] = userSettings
+			userSettingsSync.Unlock()
+		}
 	}
+
 	logInfo("UPDATE", "User settings updated in "+time.Since(timer).String())
 }
 

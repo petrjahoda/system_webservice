@@ -20,7 +20,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 - digital chart, complete
 - charts: two buttons for faster loading and terminal data loading
-- data: one button for compacting table size
+- data: one button for compacting table size with proper saving to user config
 
 ## [2021.2.2.17] - 2021-05-17
 

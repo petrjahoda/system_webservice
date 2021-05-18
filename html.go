@@ -17,6 +17,7 @@ type TableOutput struct {
 	DataTableRowsCountTitle string
 	TableHeader             []HeaderCell
 	TableRows               []TableRow
+	Compacted               string
 }
 
 type WorkshiftHeaderCell struct {

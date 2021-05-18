@@ -469,19 +469,42 @@ function drawDigitalChart(chartData) {
         },
         yAxis: yAxisData,
         xAxis: xAxisData,
-        dataZoom: [{
-            type: 'inside',
-            realtime: true,
-            start: 0,
-            end: 100
-        }, {
-            type: 'slider',
-            realtime: true,
-            showDataShadow: false,
-            start: 0,
-            end: 100,
-            top: sliderTopPosition,
-        }],
+        dataZoom: [
+            {
+                type: 'inside',
+                id: 'insideChartZoom',
+                start: 0,
+                end: 100,
+                xAxisIndex: [0]
+            }, {
+                type: 'slider',
+                id: 'sliderChartZoom',
+
+                labelFormatter: function (value) {
+                    return moment(new Date(value)).format('LLL');
+                },
+                realtime: true,
+                showDataShadow: false,
+                start: 0,
+                end: 100,
+                xAxisIndex: [0],
+                top: sliderTopPosition
+            },
+            {
+                type: 'inside',
+                id: 'terminalInsideChartZoom',
+                filterMode: 'none',
+                show: false,
+                xAxisIndex: [1, 2, 3, 4, 5]
+            }, {
+                type: 'slider',
+                id: 'terminalSliderChartZoom',
+                showDataShadow: false,
+                filterMode: 'none',
+                show: false,
+                xAxisIndex: [1, 2, 3, 4, 5]
+            },
+        ],
         series: seriesList,
     };
     option && myChart.setOption(option);
