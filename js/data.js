@@ -1,10 +1,22 @@
-
 let now = new Date();
 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
 document.getElementById('to-date').value = now.toISOString().slice(0, 16);
 now.setMonth(now.getMonth() - 1);
 document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 
+
+const tableButton = document.getElementById("table-button")
+tableButton.addEventListener("click", (event) => {
+    if (tableButton.classList.contains("mif-menu")) {
+        tableButton.classList.remove("mif-menu")
+        tableButton.classList.add("mif-lines")
+        document.getElementById("data-table").classList.add("compact")
+    } else {
+        tableButton.classList.remove("mif-lines")
+        tableButton.classList.add("mif-menu")
+        document.getElementById("data-table").classList.remove("compact")
+    }
+})
 
 const dataSelection = document.getElementById("data-selection")
 dataSelection.addEventListener("change", (event) => {

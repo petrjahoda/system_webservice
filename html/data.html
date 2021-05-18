@@ -113,24 +113,27 @@
                     </button>
                 </div>
             </div>
-            <button class="button square m-1" id="alarm-button" style="position: absolute;top:5px;right: 51px">
-                <span class="mif-bell"></span>
+            <button class="button square m-1 mif-menu" id="table-button"
+                    style="position: absolute;top:5px;right: 93px">
+            </button>
+            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px">
                 <span class="badge bg-red fg-white">4</span>
             </button>
-            <button class="button square m-1" id="info-button" style="position: absolute;top:5px;right: 9px">
-                <span class="mif-info"></span>
+            <button class="button square m-1 mif-info" id="info-button"
+                    style="position: absolute;top:5px;right: 9px">
             </button>
-            <div id="loader" hidden style="position: absolute;top:18px;right: 100px"><span class="mif-loop2 ani-spin"></span></div>
+            <div id="loader" hidden style="position: absolute;top:18px;right: 144px"><span
+                    class="mif-loop2 ani-spin"></span></div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 60px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
             <div class="row" style="margin: 6px 1px 7px 2px;">
-                    <select data-role="select" multiple data-clear-button="true"
-                            data-filter-placeholder="{{.DataFilterPlaceholder}}">
-                        {{range .Workplaces}}
-                        <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
-                        {{end}}
-                    </select>
+                <select data-role="select" multiple data-clear-button="true"
+                        data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                    {{range .Workplaces}}
+                    <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
+                    {{end}}
+                </select>
             </div>
             <div id="data-table-container" style="display: block">
             </div>

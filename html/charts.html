@@ -120,22 +120,26 @@
                             style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark"></span>
                     </button>
                 </div>
-
-
             </div>
-            <button class="button square m-1" id="alarm-button" style="position: absolute;top:5px;right: 51px">
-                <span class="mif-bell"></span>
+            <button class="button square m-1 mif-flash-on" id="flash-button"
+                    style="position: absolute;top:5px;right: 135px">
+            </button>
+            <button class="button square m-1 mif-phonelink" id="phonelink-button"
+                    style="position: absolute;top:5px;right: 93px"></button>
+            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px">
                 <span class="badge bg-red fg-white">4</span>
             </button>
-            <button class="button square m-1" id="info-button" style="position: absolute;top:5px;right: 9px">
-                <span class="mif-info"></span>
+            <button class="button square m-1 mif-info" id="info-button"
+                    style="position: absolute;top:5px;right: 9px">
             </button>
-            <div id="loader" hidden style="position: absolute;top:18px;right: 100px"><span class="mif-loop2 ani-spin"></span></div>
+            <div id="loader" hidden style="position: absolute;top:18px;right: 186px">
+                <span class="mif-loop2 ani-spin"></span>
+            </div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
-             style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div id="data-table-container" style="display: block;margin-top:10px;height: 90%">
-                <div id="chart" style="margin-top: 50px;width: 100%"></div>
+             style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto;">
+            <div id="data-table-container" style="display: block;">
+                <div id="chart" style="margin-top: 50px;width: 100%;"></div>
             </div>
         </div>
     </div>
