@@ -15,7 +15,6 @@ photoBooth.addEventListener('click', () => {
 })
 
 
-
 let productivityChartDom = document.getElementById('productivity-overview');
 let calendarChartDom = document.getElementById('calendar-heatmap');
 let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');

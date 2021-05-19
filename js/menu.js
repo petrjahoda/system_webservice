@@ -36,3 +36,14 @@ infoButton.addEventListener('click', () => {
 function updateCharm(text) {
     charms.innerHTML = text + "<br>" + charms.innerHTML
 }
+
+const logout = document.getElementById("logout-button")
+logout.addEventListener('click', () => {
+    let request = new XMLHttpRequest();
+    request.open("get", "/rest/login", false, "a", "false");
+    request.send();
+    window.location.replace("/");
+    document.execCommand("ClearAuthenticationCache")
+    document.execCommand('ClearAuthenticationCache', false);
+    window.location= ("http://log:out@localhost:82/")
+})

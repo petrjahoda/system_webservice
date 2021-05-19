@@ -101,13 +101,17 @@
                     </button>
                 </div>
             </div>
-            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px">
+            <div id="loader" hidden style="position: absolute;top:18px;right: 143px"><span
+                    class="mif-loop2 ani-spin"></span></div>
+            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 93px">
                 <span class="badge bg-red fg-white">4</span>
             </button>
             <button class="button square m-1 mif-info" id="info-button"
+                    style="position: absolute;top:5px;right: 51px">
+            </button>
+            <button class="button square m-1 mif-switch" id="logout-button"
                     style="position: absolute;top:5px;right: 9px">
             </button>
-            <div id="loader" hidden style="position: absolute;top:18px;right: 100px"><span class="mif-loop2 ani-spin"></span></div>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
@@ -123,7 +127,8 @@
 
                         <div class="card-header text-center" style="{{.WorkplaceColor}}">
                             <div style="mix-blend-mode: multiply;position: absolute;width: 50px;opacity: 0.3">
-                                <img data-role="gravatar" data-email="{{.WorkplaceName}}" data-default="identicon" alt="gravatar">
+                                <img data-role="gravatar" data-email="{{.WorkplaceName}}" data-default="identicon"
+                                     alt="gravatar">
                             </div>
                             <div class="text-leader2 text-medium"
                                  style="white-space: nowrap; overflow: hidden;text-overflow: ellipsis">
@@ -145,7 +150,8 @@
                             {{.BreakdownInformation}} <span class="text-small text-light va-middle">{{.BreakdownDuration}}</span>
                         </div>
                         <div class="card-content text-left"
-                        style="margin-bottom: 10px;margin-left: 15px;font-size: 16px"> {{.AlarmInformation}} <span class="text-small text-light va-middle">{{.AlarmDuration}}</span>
+                             style="margin-bottom: 10px;margin-left: 15px;font-size: 16px"> {{.AlarmInformation}} <span
+                                class="text-small text-light va-middle">{{.AlarmDuration}}</span>
                         </div>
 
                         <div class="card-footer">

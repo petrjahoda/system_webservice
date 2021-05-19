@@ -14,6 +14,12 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.2.19] - 2021-05-19
+
+### Added
+
+- logout button and functionality
+
 ## [2021.2.2.18] - 2021-05-18
 
 ### Added

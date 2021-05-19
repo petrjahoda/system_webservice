@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/kardianos/service"
 	"net/http"
 	"os"
 )
 
-const version = "2021.2.2.18"
+const version = "2021.2.2.19"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable application_name=system_webservice"
@@ -108,6 +107,5 @@ func (p *program) run() {
 }
 
 func faviconHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	fmt.Println("FAVIKON")
 	http.ServeFile(w, r, "./icon/favicon.ico")
 }
