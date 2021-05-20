@@ -33,7 +33,7 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("id asc").Find(&digitalData)
 			var portData PortData
-			portData.PortName = "ID" + strconv.Itoa(int(port.ID))
+			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
 			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
 			initialCounter := 1
 			for _, data := range digitalData {
@@ -45,6 +45,11 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 					portData.DigitalData = append(portData.DigitalData, initialData)
 				}
 			}
+			initialCounter--
+			var initialData Data
+			initialData.Time = dateTo.Unix()
+			initialData.Value = float32(initialCounter)
+			portData.DigitalData = append(portData.DigitalData, initialData)
 			digitalOutputData = append(digitalOutputData, portData)
 		}
 	}

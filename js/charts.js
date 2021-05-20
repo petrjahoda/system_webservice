@@ -166,7 +166,7 @@ function drawDigitalChart(chartData) {
             });
         }
         if (digitalData["DigitalData"] === null) {
-            document.getElementById("loader").hidden = false
+            document.getElementById("loader").hidden = true
         }
         updateCharm("INF: " + digitalData["PortName"] + " with size: " + digitalData["DigitalData"].length)
         if (digitalData["DigitalData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
@@ -526,6 +526,9 @@ function drawProductionChart(chartData) {
     let sampling = "none"
     moment.locale(locale);
     for (const analogData of chartData["ChartData"]) {
+        if (analogData["DigitalData"] === null) {
+            document.getElementById("loader").hidden = true
+        }
         if (analogData["DigitalData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
             sampling = "average"
         }
@@ -542,7 +545,7 @@ function drawProductionChart(chartData) {
             name: analogData["PortName"],
             color: analogData["PortColor"],
             type: 'line',
-            symbol: 'none',
+            symbolSize: [2, 2],
             data: data,
             sampling: sampling,
             lineStyle: {
