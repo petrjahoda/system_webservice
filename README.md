@@ -45,5 +45,6 @@ Do not run under linux, windows or mac on its own.
 > ![actual screenshot](screenshots/Screenshot%202021-04-26%20at%2013.04.42.png)
 > ![actual screenshot](screenshots/Screenshot%202021-04-27%20at%2011.08.02.png)
 > ![actual screenshot](screenshots/Screenshot%202021-05-19%20at%2010.00.46.png)
+> ![actual screenshot](screenshots/Screenshot%202021-05-20%20at%2011.30.57.png)
 
 © 2021 Petr Jahoda

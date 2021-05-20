@@ -35,14 +35,13 @@ phoneLinkButton.addEventListener("click", () => {
         phoneLinkButton.classList.remove("mif-phonelink")
         phoneLinkButton.classList.add("mif-phonelink-off")
     }
+
 })
 
 const dataOkButton = document.getElementById("data-ok-button")
 
 function loadChart() {
     document.getElementById("loader").hidden = false
-    console.log("getting chart data for " + document.getElementById("data-selection").value)
-    console.log("getting chart data for " + document.getElementById("workplace-selection").value)
     let data = {
         data: document.getElementById("data-selection").value,
         workplace: document.getElementById("workplace-selection").value,

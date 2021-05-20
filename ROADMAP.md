@@ -1,7 +1,8 @@
 # System Webservice
 1. Charts
-   - CT timeline-combined chart w/ terminal data (assigned digital and analog port
-   - PA consumption chart
+   - combined chart w/ terminal data (timeline, assigned digital and analog port
+   - consumption chart
+   - remember chart selected and datetime selected
 2. Performance tuning
    - check in location
    - check RWMutex

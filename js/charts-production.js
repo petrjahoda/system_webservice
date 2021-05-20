@@ -1,5 +1,4 @@
 function drawProductionChart(chartData) {
-    console.log(chartData["ChartData"])
     let minDate = document.getElementById("from-date").value
     let maxDate = document.getElementById("to-date").value
     let locale = getLocaleFrom(chartData);
