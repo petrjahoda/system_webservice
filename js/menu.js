@@ -47,3 +47,50 @@ logout.addEventListener('click', () => {
     document.execCommand('ClearAuthenticationCache', false);
     window.location= ("http://log:out@localhost:82/")
 })
+
+function getLocaleFrom(chartData) {
+    let locale = ""
+    switch (chartData["Locale"]) {
+        case "CsCZ": {
+            locale = "cs";
+            break;
+        }
+        case "DeDE": {
+            locale = "de";
+            break;
+        }
+        case "EnUS": {
+            locale = "en";
+            break;
+        }
+        case "EsES": {
+            locale = "es";
+            break;
+        }
+        case "FrFR": {
+            locale = "fr";
+            break;
+        }
+        case "ItIT": {
+            locale = "it";
+            break;
+        }
+        case "PlPL": {
+            locale = "pl";
+            break;
+        }
+        case "PtPT": {
+            locale = "pt";
+            break;
+        }
+        case "SkSK": {
+            locale = "sk";
+            break;
+        }
+        case "RuRU": {
+            locale = "ru";
+            break;
+        }
+    }
+    return locale;
+}
