@@ -19,6 +19,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Added
 
 - production chart
+- automatic chart change when chart switched
 
 
 ## [2021.2.2.19] - 2021-05-19

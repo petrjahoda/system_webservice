@@ -108,10 +108,21 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 		SelectionValue: "combined-chart",
 		Selection:      getSelected(cachedUserSettings[email].dataSelection, "combined-chart"),
 	})
+	//data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
+	//	SelectionName:  getLocale(email, "timeline-chart"),
+	//	SelectionValue: "timeline-chart",
+	//	Selection:      getSelected(cachedUserSettings[email].dataSelection, "timeline-chart"),
+	//})
+
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName:  getLocale(email, "timeline-chart"),
-		SelectionValue: "timeline-chart",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "timeline-chart"),
+		SelectionName:  getLocale(email, "production-chart"),
+		SelectionValue: "production-chart",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "production-chart"),
+	})
+	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
+		SelectionName:  getLocale(email, "consumption-chart"),
+		SelectionValue: "consumption-chart",
+		Selection:      getSelected(cachedUserSettings[email].dataSelection, "consumption-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "analog-data"),
@@ -123,17 +134,6 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 		SelectionValue: "digital-data",
 		Selection:      getSelected(cachedUserSettings[email].dataSelection, "digital-data"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName:  getLocale(email, "production-chart"),
-		SelectionValue: "production-chart",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "production-chart"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName:  getLocale(email, "consumption-chart"),
-		SelectionValue: "consumption-chart",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "consumption-chart"),
-	})
-
 	var dataWorkplaces []ChartWorkplaceSelection
 	for _, workplace := range cachedWorkplacesById {
 		dataWorkplaces = append(dataWorkplaces, ChartWorkplaceSelection{

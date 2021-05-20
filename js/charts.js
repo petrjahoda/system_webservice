@@ -10,6 +10,11 @@ document.getElementById('to-date').value = now.toISOString().slice(0, 16);
 now.setHours(now.getHours() - 24);
 document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 
+const dataSelection = document.getElementById("data-selection")
+dataSelection.addEventListener("change", () => {
+    loadChart();
+})
+
 const flashButton = document.getElementById("flash-button")
 flashButton.addEventListener("click", () => {
     if (flashButton.classList.contains("mif-flash-on")) {
@@ -33,7 +38,8 @@ phoneLinkButton.addEventListener("click", () => {
 })
 
 const dataOkButton = document.getElementById("data-ok-button")
-dataOkButton.addEventListener("click", () => {
+
+function loadChart() {
     document.getElementById("loader").hidden = false
     console.log("getting chart data for " + document.getElementById("data-selection").value)
     console.log("getting chart data for " + document.getElementById("workplace-selection").value)
@@ -89,6 +95,10 @@ dataOkButton.addEventListener("click", () => {
         document.getElementById("loader").hidden = true
         document.getElementById("loader").style.transform = "none"
     });
+}
+
+dataOkButton.addEventListener("click", () => {
+    loadChart();
 })
 
 myChart.on('dataZoom', function (evt) {
