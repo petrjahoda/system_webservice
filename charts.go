@@ -205,6 +205,7 @@ func loadChartData(writer http.ResponseWriter, request *http.Request, params htt
 	case "digital-data":
 		processDigitalData(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "production-chart":
+		processProductionChart(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "consumption-chart":
 	}
 	logInfo("CHARTS", "Chart data sent in "+time.Since(timer).String())
