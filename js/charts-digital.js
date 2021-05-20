@@ -386,7 +386,6 @@ function drawDigitalChart(chartData) {
             }, {
                 type: 'slider',
                 id: 'sliderChartZoom',
-
                 labelFormatter: function (value) {
                     return moment(new Date(value)).format('LLL');
                 },

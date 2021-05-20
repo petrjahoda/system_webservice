@@ -56,10 +56,11 @@ func processDigitalData(writer http.ResponseWriter, workplaceName string, dateFr
 			var initialData Data
 			initialData.Time = dateTo.Unix()
 			if lastValue == 0 {
-				initialData.Value = float32(1)
-			} else {
 				initialData.Value = float32(0)
+			} else {
+				initialData.Value = float32(1)
 			}
+			portData.DigitalData = append(portData.DigitalData, initialData)
 			digitalOutputData = append(digitalOutputData, portData)
 		}
 	}

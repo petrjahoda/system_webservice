@@ -1,6 +1,5 @@
 # System Webservice
 1. Charts
-   - ST production chart w/ terminal data
    - CT timeline-combined chart w/ terminal data (assigned digital and analog port
    - PA consumption chart
 2. Performance tuning
