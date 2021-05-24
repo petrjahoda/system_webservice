@@ -12,17 +12,17 @@ import (
 
 func processProductionChart(writer http.ResponseWriter, workplaceName string, dateFrom time.Time, dateTo time.Time, email string, chartName string) {
 	timer := time.Now()
-	logInfo("CHARTS-DIGITAL", "Processing digital chart data started")
+	logInfo("CHARTS-PRODUCTION", "Processing production chart data started")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
 	if err != nil {
-		logError("CHARTS-DIGITAL", "Problem opening database: "+err.Error())
+		logError("CHARTS-PRODUCTION", "Problem opening database: "+err.Error())
 		var responseData ChartDataPageOutput
 		responseData.Result = "ERR: Problem opening database, " + err.Error()
 		writer.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(writer).Encode(responseData)
-		logInfo("CHARTS-DIGITAL", "Processing data ended")
+		logInfo("CHARTS-PRODUCTION", "Processing data ended")
 		return
 	}
 	var responseData ChartDataPageOutput
@@ -71,9 +71,9 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 	responseData.UsersLocale = getLocale(email, "users")
 	responseData.AlarmsLocale = getLocale(email, "alarms")
 	responseData.Locale = cachedUsersByEmail[email].Locale
-	responseData.Result = "INF: Digital chart data downloaded from database in " + time.Since(timer).String()
+	responseData.Result = "INF: Production chart data downloaded from database in " + time.Since(timer).String()
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(responseData)
-	logInfo("CHARTS-DIGITAL", "Digital chart data processed in "+time.Since(timer).String())
+	logInfo("CHARTS-PRODUCTION", "Production chart data processed in "+time.Since(timer).String())
 }

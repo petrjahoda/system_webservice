@@ -9,11 +9,20 @@ function drawDigitalChart(chartData) {
     let gridData = [];
     let sampling = "none"
     let counter = 1;
+    let showAxis = false
+    if (chartData["ChartData"].length === 1) {
+        showAxis = true
+    }
     xAxisData.push({
+        axisLabel: {
+            formatter: function (value) {
+                return moment(new Date(value)).format('LLL');
+            }
+        },
         type: 'time',
         min: minDate,
         max: maxDate,
-        show: false
+        show: showAxis
     });
     yAxisData.push({
         type: 'value',

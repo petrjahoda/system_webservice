@@ -102,27 +102,15 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
 	data.Compacted = cachedUserSettings[email].menuState
-
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "combined-chart"),
 		SelectionValue: "combined-chart",
 		Selection:      getSelected(cachedUserSettings[email].dataSelection, "combined-chart"),
 	})
-	//data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-	//	SelectionName:  getLocale(email, "timeline-chart"),
-	//	SelectionValue: "timeline-chart",
-	//	Selection:      getSelected(cachedUserSettings[email].dataSelection, "timeline-chart"),
-	//})
-
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "production-chart"),
 		SelectionValue: "production-chart",
 		Selection:      getSelected(cachedUserSettings[email].dataSelection, "production-chart"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
-		SelectionName:  getLocale(email, "consumption-chart"),
-		SelectionValue: "consumption-chart",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "consumption-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "analog-data"),
@@ -134,6 +122,16 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 		SelectionValue: "digital-data",
 		Selection:      getSelected(cachedUserSettings[email].dataSelection, "digital-data"),
 	})
+	//data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
+	//	SelectionName:  getLocale(email, "timeline-chart"),
+	//	SelectionValue: "timeline-chart",
+	//	Selection:      getSelected(cachedUserSettings[email].dataSelection, "timeline-chart"),
+	//})
+	//data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
+	//	SelectionName:  getLocale(email, "consumption-chart"),
+	//	SelectionValue: "consumption-chart",
+	//	Selection:      getSelected(cachedUserSettings[email].dataSelection, "consumption-chart"),
+	//})
 	var dataWorkplaces []ChartWorkplaceSelection
 	for _, workplace := range cachedWorkplacesById {
 		dataWorkplaces = append(dataWorkplaces, ChartWorkplaceSelection{
@@ -199,6 +197,7 @@ func loadChartData(writer http.ResponseWriter, request *http.Request, params htt
 	logInfo("CHARTS", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "combined-chart":
+		processCombinedChart(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
 	case "timeline-chart":
 	case "analog-data":
 		processAnalogData(writer, data.Workplace, dateFrom, dateTo, email, data.Data)

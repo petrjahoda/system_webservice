@@ -1,7 +1,6 @@
 # System Webservice
 1. Charts
-   - combined chart w/ terminal data (timeline, assigned digital and analog port
-   - consumption chart
+   - better tooltips
    - remember chart selected and datetime selected
 2. Performance tuning
    - check in location

@@ -80,7 +80,16 @@ function loadChart() {
                     drawProductionChart(result)
                 }
                 document.getElementById("loader").hidden = true
+            }else if (result["Type"] === "combined-chart") {
+                myChart.clear()
+                if (result["ChartData"] !== null) {
+                    drawCombinedChart(result)
+                }
+                document.getElementById("loader").hidden = true
             }
+
+
+
             const draw = performance.now();
             let difference = draw - download
             if (difference < 1000) {
