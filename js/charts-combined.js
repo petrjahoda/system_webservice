@@ -6,7 +6,6 @@ function drawCombinedChart(chartData) {
     let sampling = "none"
     moment.locale(locale);
     chartData["ChartData"].forEach((element, index) => {
-        console.log(element)
         let data = []
         switch (index) {
             case 0:
@@ -235,10 +234,9 @@ function drawCombinedChart(chartData) {
     let option;
     let positionInChart
 
-    let dateDifferenceAsValue = (new Date(maxDate) * 1000) / (new Date(minDate) * 1000)
     let borderStart = 50
-    let borderEnd = chartDom.clientWidth
-    let borderChange = borderEnd - borderStart
+    let borderEnd = chartDom.scrollWidth-100
+    let borderChange = borderEnd-borderStart
     let startDateAsValue = new Date(minDate) * 1000
     let endDateAsValue = new Date(maxDate) * 1000
     let dateChange = endDateAsValue - startDateAsValue
@@ -257,28 +255,23 @@ function drawCombinedChart(chartData) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
             },
             formatter: function (params, point) {
-
-                console.log("")
-                console.log(startDateAsValue)
-                console.log(new Date(startDateAsValue/1000))
-                console.log(startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))
-                console.log(new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))/1000))
-                console.log(endDateAsValue)
-                console.log(new Date(endDateAsValue/1000))
                 let result = ""
-                // for (const series of seriesList) {
-                //     if (series["xAxisIndex"] === 0) {
-                //         for (let i = 0; i < series["data"].length; i++) {
-                //             if (series["data"][i][0]<new Date(actualDateValue * 1000) && series["data"][i][1] === 1&&series["data"][i+1][0]>new Date(actualDateValue * 1000) ) {
-                //                 console.log(series["name"] + " " + new Date(actualDateValue * 1000)+ " MATCH from " + series["data"][i][0] + " to " + series["data"][i+1][0])
-                //             }
-                //         }
-                //
-                //     }
-                //
-                // }
+                let doIt = true
+                for (const series of seriesList) {
+                    if (series["xAxisIndex"] === 0 && doIt) {
+                        for (let i = 0; i < series["data"].length; i++) {
+                            if (series["data"][i][0]<new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) && series["data"][i][1] === 1&&series["data"][i+1][0]>new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) ) {
+                                result += series["name"]
+                                doIt = false
+                                break
+                            }
+                        }
+
+                    }
+
+                }
                 // return "<b>" + moment(new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))/1000).format('LLL') + "</b><br>" + result)
-                return "<b>" + new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))/1000) + "</b><br>" + result
+                return "<b>" + new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) + "</b><br>" + result
             },
 
         },
