@@ -6,11 +6,9 @@ function drawCombinedChart(chartData) {
     let sampling = "none"
     moment.locale(locale);
     chartData["ChartData"].forEach((element, index) => {
-        console.log(element)
         let data = []
         switch (element["PortType"]) {
             case "digital":
-
                 for (const record of element["DigitalData"]) {
                     data.push([new Date(record["Time"] * 1000), record["Value"]]);
                 }
@@ -63,9 +61,17 @@ function drawCombinedChart(chartData) {
                 break;
             default:
                 if (element["DigitalData"] !== null) {
-                    for (const record of element["DigitalData"]) {
-                        data.push([new Date(record["Time"] * 1000), record["Value"]]);
+                    for (let i = 0; i <element["DigitalData"].length; i++) {
+                            if (i+1===element["DigitalData"].length) {
+                                data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], new Date(element["PortName"], element["DigitalData"][i]["Time"] * 1000), new Date(element["DigitalData"][i]["Time"] * 1000)]);
+                                break
+                            }
+                            data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], element["PortName"], new Date(element["DigitalData"][i]["Time"] * 1000), new Date(element["DigitalData"][i+1]["Time"] * 1000)]);
                     }
+                    // for (const record of element["DigitalData"]) {
+                    //     data.push([new Date(record["Time"] * 1000), record["Value"]]);
+                    // }
+                    console.log(data)
                     seriesList.push({
                         name: element["PortName"],
                         color: element["PortColor"],
@@ -94,8 +100,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["UserData"]) {
                 color = element["Color"]
-                userData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                userData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                userData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                userData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["UsersLocale"],
@@ -123,8 +129,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["OrderData"]) {
                 color = element["Color"]
-                orderData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                orderData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                orderData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
+                orderData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["OrdersLocale"],
@@ -150,8 +156,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["DowntimeData"]) {
                 color = element["Color"]
-                downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                downtimeData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
+                downtimeData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["DowntimesLocale"],
@@ -177,8 +183,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["BreakdownData"]) {
                 color = element["Color"]
-                breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                breakdownData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
+                breakdownData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["BreakdownsLocale"],
@@ -204,8 +210,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["AlarmData"]) {
                 color = element["Color"]
-                alarmData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                alarmData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                alarmData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
+                alarmData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["AlarmsLocale"],
@@ -255,27 +261,22 @@ function drawCombinedChart(chartData) {
                 positionInChart = point[0]
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
             },
-            // formatter: function (params, point) {
-            //     let result = ""
-            //     let doIt = true
-            //     let pointerDate = new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000)
-            //     for (const series of seriesList) {
-            //         if (series["xAxisIndex"] === 0 && doIt) {
-            //             console.log(series["data"].filter(word => word[1] === 1))
-            //             for (let i = 0; i < series["data"].length; i++) {
-            //                 if (series["data"][i][0]<pointerDate && series["data"][i][1] === 1&&series["data"][i+1][0]>new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) ) {
-            //                     result += series["name"]
-            //                     doIt = false
-            //                     break
-            //                 }
-            //             }
-            //
-            //         }
-            //
-            //     }
-            //     // return "<b>" + moment(new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))/1000).format('LLL') + "</b><br>" + result)
-            //     return "<b>" + new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) + "</b><br>" + result
-            // },
+            formatter: function (params) {
+                let pointerValue = (startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000
+                let result =  pointerValue.toLocaleString() + "<br>"
+                for (const param of params) {
+                    if (pointerValue>+param["value"][3] && pointerValue<+param["value"][4]) {
+                        result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][2]+'&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">'+ moment(param["value"][3]).format('LLL') + " - " + moment(param["value"][4]).format("LLL")+'</span>'+"<br>"
+                    } else {
+                        if (param["seriesName"] === "Výroba") {
+                            result += param["value"][3] + " - " + pointerValue + " - " + param["value"][4] + "<br>"
+                        }
+
+                    }
+
+                }
+                return "<b>" + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</b><br>" + result
+            },
 
         },
         grid: [{
