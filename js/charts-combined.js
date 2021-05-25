@@ -6,9 +6,11 @@ function drawCombinedChart(chartData) {
     let sampling = "none"
     moment.locale(locale);
     chartData["ChartData"].forEach((element, index) => {
+        console.log(element)
         let data = []
-        switch (index) {
-            case 0:
+        switch (element["PortType"]) {
+            case "digital":
+
                 for (const record of element["DigitalData"]) {
                     data.push([new Date(record["Time"] * 1000), record["Value"]]);
                 }
@@ -31,7 +33,7 @@ function drawCombinedChart(chartData) {
                     yAxisIndex: 1,
                 });
                 break;
-            case 1:
+            case "analog":
                 if (element["AnalogData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
                     sampling = "average"
                 }
@@ -42,7 +44,6 @@ function drawCombinedChart(chartData) {
                         data.push([new Date(record["Time"] * 1000), record["Value"]]);
                     }
                 }
-
                 seriesList.push({
                     name: element["PortName"],
                     color: element["PortColor"],
@@ -254,25 +255,27 @@ function drawCombinedChart(chartData) {
                 positionInChart = point[0]
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
             },
-            formatter: function (params, point) {
-                let result = ""
-                let doIt = true
-                for (const series of seriesList) {
-                    if (series["xAxisIndex"] === 0 && doIt) {
-                        for (let i = 0; i < series["data"].length; i++) {
-                            if (series["data"][i][0]<new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) && series["data"][i][1] === 1&&series["data"][i+1][0]>new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) ) {
-                                result += series["name"]
-                                doIt = false
-                                break
-                            }
-                        }
-
-                    }
-
-                }
-                // return "<b>" + moment(new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))/1000).format('LLL') + "</b><br>" + result)
-                return "<b>" + new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) + "</b><br>" + result
-            },
+            // formatter: function (params, point) {
+            //     let result = ""
+            //     let doIt = true
+            //     let pointerDate = new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000)
+            //     for (const series of seriesList) {
+            //         if (series["xAxisIndex"] === 0 && doIt) {
+            //             console.log(series["data"].filter(word => word[1] === 1))
+            //             for (let i = 0; i < series["data"].length; i++) {
+            //                 if (series["data"][i][0]<pointerDate && series["data"][i][1] === 1&&series["data"][i+1][0]>new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) ) {
+            //                     result += series["name"]
+            //                     doIt = false
+            //                     break
+            //                 }
+            //             }
+            //
+            //         }
+            //
+            //     }
+            //     // return "<b>" + moment(new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange)))/1000).format('LLL') + "</b><br>" + result)
+            //     return "<b>" + new Date((startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000) + "</b><br>" + result
+            // },
 
         },
         grid: [{

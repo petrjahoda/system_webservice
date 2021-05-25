@@ -34,6 +34,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("id asc").Find(&digitalData)
 			var portData PortData
+			portData.PortType = "digital"
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
 			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
 			if len(digitalData) > 0 {
@@ -68,6 +69,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			var analogData []database.DevicePortAnalogRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
+			portData.PortType = "analog"
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
 			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
 			date := dateFrom
@@ -99,6 +101,9 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	var productionStateData PortData
 	var downtimeStateData PortData
 	var poweroffStateData PortData
+	productionStateData.PortType = "state"
+	downtimeStateData.PortType = "state"
+	poweroffStateData.PortType = "state"
 	productionStateData.PortName = getLocale(email, "production")
 	productionStateData.PortColor = cachedStatesById[1].Color
 	downtimeStateData.PortName = getLocale(email, "downtime")

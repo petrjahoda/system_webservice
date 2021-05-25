@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const version = "2021.2.2.24"
+const version = "2021.2.2.25"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable application_name=system_webservice"
@@ -61,8 +61,7 @@ func (p *program) run() {
 	router.GET("/statistics", basicAuth(statistics))
 	router.GET("/data", basicAuth(data))
 	router.GET("/settings", basicAuth(settings))
-	router.POST("/update_user_settings", updateUserSettings)
-	router.POST("/update_user_workplaces", updateUserWorkplaces)
+	router.POST("/update_user_web_settings_from_web", updateUserWebSettingsFromWeb)
 	router.POST("/update_workplaces", updateWorkplaces)
 	router.POST("/load_index_data", loadIndexData)
 	router.POST("/load_table_data", loadTableData)

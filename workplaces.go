@@ -115,15 +115,7 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 	for _, workplaceSection := range workplaceSections {
 		var section WorkplaceSection
 		section.SectionName = workplaceSection.Name
-		section.PanelCompacted = "display:block"
-		userSettings := cachedUserSettings[email]
-		for _, state := range userSettings.sectionStates {
-			if state.section == workplaceSection.Name {
-				if state.state != "expand" {
-					section.PanelCompacted = "display:none"
-				}
-			}
-		}
+		section.PanelCompacted = cachedUserWebSettings[email][workplaceSection.Name]
 		var tempWorkplaces []database.Workplace
 		for _, workplace := range cachedWorkplacesById {
 			tempWorkplaces = append(tempWorkplaces, workplace)
@@ -330,15 +322,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	for _, workplaceSection := range workplaceSections {
 		var section WorkplaceSection
 		section.SectionName = workplaceSection.Name
-		section.PanelCompacted = "display:block"
-		userSettings := cachedUserSettings[email]
-		for _, state := range userSettings.sectionStates {
-			if state.section == workplaceSection.Name {
-				if state.state != "expand" {
-					section.PanelCompacted = "display:none"
-				}
-			}
-		}
+		section.PanelCompacted = cachedUserWebSettings[email][workplaceSection.Name]
 		var tempWorkplaces []database.Workplace
 		for _, workplace := range cachedWorkplacesById {
 			tempWorkplaces = append(tempWorkplaces, workplace)
@@ -482,7 +466,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.WorkplaceSections = sections
-	data.Compacted = cachedUserSettings[email].menuState
+	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.Result = "INF: Page processed in " + time.Since(timer).String()

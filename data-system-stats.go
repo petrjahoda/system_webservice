@@ -29,7 +29,7 @@ func loadSystemStatsTable(writer http.ResponseWriter, dateFrom time.Time, dateTo
 	var systemRecords []database.SystemRecord
 	db.Debug().Where("created_at >= ?", dateFrom).Where("created_at <= ?", dateTo).Order("created_at desc").Find(&systemRecords)
 	var data TableOutput
-	data.Compacted = cachedUserSettings[email].compacted
+	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")

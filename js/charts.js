@@ -4,14 +4,21 @@ if (chartHeight < 800) {
     chartHeight = 800;
 }
 let myChart = echarts.init(chartDom, null, {height: chartHeight});
-let now = new Date();
-now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-document.getElementById('to-date').value = now.toISOString().slice(0, 16);
-now.setHours(now.getHours() - 24);
-document.getElementById('from-date').value = now.toISOString().slice(0, 16);
+if (document.getElementById('to-date').value === "") {
+    let now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('to-date').value = now.toISOString().slice(0, 16);
+    now.setHours(now.getHours() - 24);
+    document.getElementById('from-date').value = now.toISOString().slice(0, 16);
+}
 
 const dataSelection = document.getElementById("data-selection")
 dataSelection.addEventListener("change", () => {
+    loadChart();
+})
+
+const workplaceSelection = document.getElementById("workplace-selection")
+workplaceSelection.addEventListener("change", () => {
     loadChart();
 })
 
@@ -35,18 +42,27 @@ phoneLinkButton.addEventListener("click", () => {
         phoneLinkButton.classList.remove("mif-phonelink")
         phoneLinkButton.classList.add("mif-phonelink-off")
     }
-
 })
 
 const dataOkButton = document.getElementById("data-ok-button")
 
 function loadChart() {
     document.getElementById("loader").hidden = false
+    let flashData = "mif-flash-off"
+    let terminalData = "mif-phonelink"
+    if (phoneLinkButton.classList.contains("mif-phonelink-off")) {
+        terminalData = "mif-phonelink-off"
+    }
+    if (flashButton.classList.contains("mif-flash-on")) {
+        flashData = "mif-flash-on"
+    }
     let data = {
         data: document.getElementById("data-selection").value,
         workplace: document.getElementById("workplace-selection").value,
         from: document.getElementById("from-date").value,
-        to: document.getElementById("to-date").value
+        to: document.getElementById("to-date").value,
+        flash: flashData,
+        terminal: terminalData,
     };
     const start = performance.now();
     fetch("/load_chart_data", {
@@ -80,14 +96,13 @@ function loadChart() {
                     drawProductionChart(result)
                 }
                 document.getElementById("loader").hidden = true
-            }else if (result["Type"] === "combined-chart") {
+            } else if (result["Type"] === "combined-chart") {
                 myChart.clear()
                 if (result["ChartData"] !== null) {
                     drawCombinedChart(result)
                 }
                 document.getElementById("loader").hidden = true
             }
-
 
 
             const draw = performance.now();

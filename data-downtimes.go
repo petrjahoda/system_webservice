@@ -39,7 +39,7 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 		userRecordsByRecordId[record.OrderRecordID] = record
 	}
 	var data TableOutput
-	data.Compacted = cachedUserSettings[email].compacted
+	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")

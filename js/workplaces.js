@@ -39,10 +39,10 @@ function updateWorkplaces() {
 function dataCollapse(element) {
     console.log(element.dataset.titleCaption + " collapsed")
     let data = {
-        settings: "section",
-        state: "collapse-" + element.dataset.titleCaption
+        key: element.dataset.titleCaption,
+        value: "display:none"
     };
-    fetch("/update_user_settings", {
+    fetch("/update_user_web_settings_from_web", {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
@@ -54,10 +54,10 @@ function dataCollapse(element) {
 function dataExpand(element) {
     console.log(element.dataset.titleCaption + " expanded")
     let data = {
-        settings: "section",
-        state: "expand-" + element.dataset.titleCaption
+        key: element.dataset.titleCaption,
+        value: "display:block"
     };
-    fetch("/update_user_settings", {
+    fetch("/update_user_web_settings_from_web", {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {

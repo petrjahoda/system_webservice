@@ -1,8 +1,11 @@
-let now = new Date();
-now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-document.getElementById('to-date').value = now.toISOString().slice(0, 16);
-now.setMonth(now.getMonth() - 1);
-document.getElementById('from-date').value = now.toISOString().slice(0, 16);
+if (document.getElementById('to-date').value === "") {
+    let now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('to-date').value = now.toISOString().slice(0, 16);
+    now.setMonth(now.getMonth() - 1);
+    document.getElementById('from-date').value = now.toISOString().slice(0, 16);
+}
+
 
 const tableButton = document.getElementById("table-button")
 tableButton.addEventListener("click", () => {
@@ -12,8 +15,8 @@ tableButton.addEventListener("click", () => {
         tableButton.classList.add("mif-lines")
         document.getElementById("data-table").classList.add("compact")
         data = {
-            settings: "compact",
-            state: "compact"
+            key: "data-selected-size",
+            value: "compact"
         };
 
     } else {
@@ -21,12 +24,12 @@ tableButton.addEventListener("click", () => {
         tableButton.classList.add("mif-menu")
         document.getElementById("data-table").classList.remove("compact")
         data = {
-            settings: "compact",
-            state: ""
+            key: "data-selected-size",
+            value: ""
         };
 
     }
-    fetch("/update_user_settings", {
+    fetch("/update_user_web_settings_from_web", {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {

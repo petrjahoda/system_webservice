@@ -45,14 +45,17 @@ window.addEventListener('resize', () => {
 })
 refreshButton.addEventListener('click', () => {
     const workplacesElement = document.getElementsByClassName("tag short-tag");
-    let workplaces = []
+    let workplaces = ""
     for (let index = 0; index < workplacesElement.length; index++) {
-        workplaces.push(workplacesElement[index].children[0].innerHTML)
+        workplaces += workplacesElement[index].children[0].innerHTML + ";"
     }
+    workplaces = workplaces.slice(0, -1)
     let data = {
-        workplaces: workplaces,
+        key: "index-selected-workplaces",
+        value: workplaces,
     };
-    fetch("/update_user_workplaces", {
+    console.log(workplaces)
+    fetch("/update_user_web_settings_from_web", {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
@@ -433,7 +436,7 @@ function drawCalendar(data) {
         responsive: true,
         tooltip: {
             formatter: function (param) {
-                return "<b>" + moment(new Date(param["value"][0])).format('LL') + "</b><br>"+'<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][1] + "%"
+                return "<b>" + moment(new Date(param["value"][0])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][1] + "%"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -509,7 +512,7 @@ function drawDaysChart(data) {
             formatter: function (params) {
                 let result = ""
                 for (const param of params) {
-                    result = '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + "<b>" + "</b>" + param["value"] + "%<br>"+result
+                    result = '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + "<b>" + "</b>" + param["value"] + "%<br>" + result
                 }
                 result = "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + result
                 return result
@@ -608,7 +611,7 @@ function drawConsumptionChart(data) {
             },
             formatter: function (params) {
                 console.log(params)
-                return "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + params[0]["color"] + '"></span>'+params[0]["value"].replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') + " kWh"
+                return "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + params[0]["color"] + '"></span>' + params[0]["value"].replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') + " kWh"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];

@@ -1,11 +1,7 @@
 # System Webservice
 1. Charts
    - better tooltips
-   - remember chart selected and datetime selected
 2. Performance tuning
-   - check in location
-   - check RWMutex
-   - reduce database returned values
    - remove magic numbers
 3. Statistics
    - company
@@ -20,3 +16,5 @@
    - states
    - users
    - system data
+   
+

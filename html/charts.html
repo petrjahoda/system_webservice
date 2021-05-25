@@ -107,17 +107,17 @@
                 <div style="min-width:200px;margin-left: 3px;margin-top: 3px;">
                     <select id="workplace-selection" data-filter="false" data-role="select">
                         {{range .Workplaces}}
-                        <option value="{{.WorkplaceName}}">{{.WorkplaceName}}</option>
+                        <option value="{{.WorkplaceValue}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
                         {{end}}
                     </select>
                 </div>
                 <div style="margin-top: 3px;margin-left: 3px">
                     <input id="from-date" type="datetime-local"
-                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px">
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateFrom}}">
                 </div>
                 <div style="margin-top: 3px;margin-left: 3px">
                     <input id="to-date" type="datetime-local"
-                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px">
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateTo}}">
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-ok-button" class="button primary"
@@ -128,10 +128,10 @@
             <div id="loader" hidden style="position: absolute;top:18px;right: 227px"><span
                     class="mif-loop2 ani-spin"></span>
             </div>
-            <button class="button square m-1 mif-flash-on" id="flash-button"
+            <button class="button square m-1 {{.FlashClass}}" id="flash-button"
                     style="position: absolute;top:5px;right: 177px">
             </button>
-            <button class="button square m-1 mif-phonelink" id="phonelink-button"
+            <button class="button square m-1 {{.TerminalClass}}" id="phonelink-button"
                     style="position: absolute;top:5px;right: 135px"></button>
             <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 93px">
                 <span class="badge bg-red fg-white">4</span>

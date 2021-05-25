@@ -1,11 +1,14 @@
 const menu = document.getElementById("menu")
 menu.addEventListener("click", (event) => {
-    console.log("changing menu state")
+    let compacted = "compacted js-compact"
+    if (document.getElementById("mainmenu").classList.contains("compacted")){
+        compacted = ""
+    }
     let data = {
-        settings: "menu",
-        state: document.getElementById("mainmenu").classList.contains("compacted").toString()
+        key: "menu",
+        value: compacted
     };
-    fetch("/update_user_settings", {
+    fetch("/update_user_web_settings_from_web", {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {

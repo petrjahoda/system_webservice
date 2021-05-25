@@ -38,6 +38,8 @@ type DataPageOutput struct {
 	DateLocale            string
 	UserEmail             string
 	UserName              string
+	DateFrom              string
+	DateTo                string
 }
 
 type TableSelection struct {
@@ -61,6 +63,8 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	data.DateFrom = cachedUserWebSettings[email]["data-selected-from"]
+	data.DateTo = cachedUserWebSettings[email]["data-selected-to"]
 	data.Company = cachedCompanyName
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
@@ -69,66 +73,66 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
-	data.Compacted = cachedUserSettings[email].menuState
+	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "alarms"),
 		SelectionValue: "alarms",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "alarms"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "alarms"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "breakdowns"),
 		SelectionValue: "breakdowns",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "breakdowns"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "breakdowns"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "downtimes"),
 		SelectionValue: "downtimes",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "downtimes"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "downtimes"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "faults"),
 		SelectionValue: "faults",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "faults"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "faults"),
 	})
 
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "orders"),
 		SelectionValue: "orders",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "orders"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "orders"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "packages"),
 		SelectionValue: "packages",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "packages"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "packages"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "parts"),
 		SelectionValue: "parts",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "parts"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "parts"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "states"),
 		SelectionValue: "states",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "states"),
+		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "states"),
 	})
 	if cachedUsersByEmail[email].UserRoleID == 1 {
 		logInfo("DATA", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
 			SelectionValue: "users",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "users"),
+			Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "users"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "system-statistics"),
 			SelectionValue: "system-statistics",
-			Selection:      getSelected(cachedUserSettings[email].dataSelection, "system-statistics"),
+			Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "system-statistics"),
 		})
 	}
 	var dataWorkplaces []TableWorkplaceSelection
 	for _, workplace := range cachedWorkplacesById {
 		dataWorkplaces = append(dataWorkplaces, TableWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
-			WorkplaceSelection: getWorkplaceSelection(cachedUserSettings[email].selectedWorkplaces, workplace.Name),
+			WorkplaceSelection: getWorkplaceWebSelection(cachedUserWebSettings[email]["data-selected-workplaces"], workplace.Name),
 		})
 	}
 	sort.Slice(dataWorkplaces, func(i, j int) bool {
@@ -139,6 +143,15 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	tmpl := template.Must(template.ParseFiles("./html/data.html"))
 	_ = tmpl.Execute(writer, data)
 	logInfo("DATA", "Page sent in "+time.Since(timer).String())
+}
+
+func getWorkplaceWebSelection(selectedWorkplaces string, workplace string) string {
+	for _, selectedWorkplace := range strings.Split(selectedWorkplaces, ";") {
+		if selectedWorkplace == workplace {
+			return "selected"
+		}
+	}
+	return ""
 }
 
 func getWorkplaceSelection(selectedWorkplaces []string, workplace string) string {
@@ -204,8 +217,16 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 		return
 	}
 	logInfo("DATA", "From "+dateFrom.String()+" to "+dateTo.String())
+	updateUserWebSettings(email, "data-selected-type", data.Data)
+	updateUserWebSettings(email, "data-selected-from", data.From)
+	updateUserWebSettings(email, "data-selected-to", data.To)
+	selectedWorkplaces := ""
+	for _, workplace := range data.Workplaces {
+		selectedWorkplaces += workplace + ";"
+	}
+	selectedWorkplaces = strings.TrimRight(selectedWorkplaces, ";")
+	updateUserWebSettings(email, "data-selected-workplaces", selectedWorkplaces)
 	workplaceIds := getWorkplaceIds(data)
-	updateUserDataSettings(email, data.Data, "", data.Workplaces)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "alarms":

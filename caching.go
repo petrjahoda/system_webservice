@@ -12,7 +12,7 @@ import (
 var cachedCompanyName string
 var location string
 var cachedLocales = map[string]string{}
-var cachedUserSettings = map[string]userSettings{}
+var cachedUserWebSettings = map[string]map[string]string{}
 var cachedBreakdownTypesByName = map[string]database.BreakdownType{}
 var cachedDevicesByName = map[string]database.Device{}
 var cachedDevicePortsByName = map[string]database.DevicePort{}
@@ -84,12 +84,18 @@ var workShiftsSync sync.RWMutex
 var consumptionDataSync sync.RWMutex
 
 type userSettings struct {
-	menuState          string
-	sectionStates      []sectionState
-	dataSelection      string
-	settingsSelection  string
-	selectedWorkplaces []string
-	compacted          string
+	compacted               string
+	menuState               string
+	sectionStates           []sectionState
+	dataSelection           string
+	settingsSelection       string
+	selectedWorkplaces      []string
+	chartTypeSelection      string
+	chartWorkplaceSelection string
+	chartDateFromSelection  string
+	chartDateToSelection    string
+	chartShowFastData       string
+	chartShowTerminalData   string
 }
 type sectionState struct {
 	section string
@@ -324,14 +330,16 @@ func cacheUsers(db *gorm.DB) {
 	userSettingsSync.Lock()
 	cachedUsersByEmail = map[string]database.User{}
 	cachedUsersById = map[uint]database.User{}
+	cachedUserWebSettings = map[string]map[string]string{}
 	for _, user := range users {
 		if len(user.Email) > 0 {
 			cachedUsersByEmail[user.Email] = user
-			_, userCached := cachedUserSettings[user.Email]
-			if !userCached {
-				var userSettings userSettings
-				cachedUserSettings[user.Email] = userSettings
+			_, userWebCached := cachedUserWebSettings[user.Email]
+			if !userWebCached {
+				data := map[string]string{}
+				cachedUserWebSettings[user.Email] = data
 			}
+
 		}
 		cachedUsersById[user.ID] = user
 	}
@@ -350,7 +358,7 @@ func cacheUsers(db *gorm.DB) {
 	usersSync.Unlock()
 	userSettingsSync.Unlock()
 	logInfo("CACHING", "Cached "+strconv.Itoa(len(cachedUsersByEmail))+" users")
-	logInfo("CACHING", "Cached "+strconv.Itoa(len(cachedUserSettings))+" user settings")
+	logInfo("CACHING", "Cached "+strconv.Itoa(len(cachedUserWebSettings))+" user settings")
 }
 
 func cachePackages(db *gorm.DB) {

@@ -39,7 +39,7 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.MenuStatistics = getLocale(email, "menu-statistics")
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
-	data.Compacted = cachedUserSettings[email].menuState
+	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.Information = "INF: Page processed in " + time.Since(timer).String()

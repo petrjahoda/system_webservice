@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"html/template"
 	"net/http"
@@ -14,6 +15,8 @@ type ChartsDataPageInput struct {
 	Workplace string
 	From      string
 	To        string
+	Flash     string
+	Terminal  string
 }
 
 type ChartsPageData struct {
@@ -34,10 +37,15 @@ type ChartsPageData struct {
 	DateLocale            string
 	UserEmail             string
 	UserName              string
+	DateFrom              string
+	DateTo                string
+	FlashClass            string
+	TerminalClass         string
 }
 
 type ChartWorkplaceSelection struct {
 	WorkplaceName      string
+	WorkplaceValue     string
 	WorkplaceSelection string
 }
 type ChartSelection struct {
@@ -72,6 +80,7 @@ type TerminalData struct {
 }
 
 type PortData struct {
+	PortType    string
 	PortName    string
 	PortColor   string
 	AnalogData  []Data
@@ -101,26 +110,26 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
-	data.Compacted = cachedUserSettings[email].menuState
+	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "combined-chart"),
 		SelectionValue: "combined-chart",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "combined-chart"),
+		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "combined-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "production-chart"),
 		SelectionValue: "production-chart",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "production-chart"),
+		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "production-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "analog-data"),
 		SelectionValue: "analog-data",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "analog-data"),
+		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "analog-data"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "digital-data"),
 		SelectionValue: "digital-data",
-		Selection:      getSelected(cachedUserSettings[email].dataSelection, "digital-data"),
+		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "digital-data"),
 	})
 	//data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 	//	SelectionName:  getLocale(email, "timeline-chart"),
@@ -136,13 +145,26 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	for _, workplace := range cachedWorkplacesById {
 		dataWorkplaces = append(dataWorkplaces, ChartWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
-			WorkplaceSelection: getWorkplaceSelection(cachedUserSettings[email].selectedWorkplaces, workplace.Name),
+			WorkplaceValue:     workplace.Name,
+			WorkplaceSelection: getSelected(cachedUserWebSettings[email]["charts-selected-workplace"], workplace.Name),
 		})
 	}
 	sort.Slice(dataWorkplaces, func(i, j int) bool {
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+	data.DateFrom = cachedUserWebSettings[email]["charts-selected-from"]
+	data.DateTo = cachedUserWebSettings[email]["charts-selected-to"]
+	fmt.Println("FLASH", cachedUserWebSettings[email]["charts-selected-flash"])
+	fmt.Println("TERMINAL", cachedUserWebSettings[email]["charts-selected-terminal"])
+	data.FlashClass = "mif-flash-on"
+	if len(cachedUserWebSettings[email]["charts-selected-flash"]) > 0 {
+		data.FlashClass = cachedUserWebSettings[email]["charts-selected-flash"]
+	}
+	data.TerminalClass = "mif-phonelink"
+	if len(cachedUserWebSettings[email]["charts-selected-terminal"]) > 0 {
+		data.TerminalClass = cachedUserWebSettings[email]["charts-selected-terminal"]
+	}
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/charts.html"))
 	_ = tmpl.Execute(writer, data)
@@ -195,6 +217,12 @@ func loadChartData(writer http.ResponseWriter, request *http.Request, params htt
 	}
 	logInfo("CHARTS", "From "+dateFrom.String()+" to "+dateTo.String())
 	logInfo("CHARTS", "Preprocessing takes "+time.Since(timer).String())
+	updateUserWebSettings(email, "charts-selected-workplace", data.Workplace)
+	updateUserWebSettings(email, "charts-selected-chart", data.Data)
+	updateUserWebSettings(email, "charts-selected-from", data.From)
+	updateUserWebSettings(email, "charts-selected-to", data.To)
+	updateUserWebSettings(email, "charts-selected-flash", data.Flash)
+	updateUserWebSettings(email, "charts-selected-terminal", data.Terminal)
 	switch data.Data {
 	case "combined-chart":
 		processCombinedChart(writer, data.Workplace, dateFrom, dateTo, email, data.Data)
