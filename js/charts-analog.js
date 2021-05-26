@@ -249,7 +249,7 @@ function drawAnalogChart(chartData) {
                 },
                 saveAsImage: {
                     type: "png",
-                    name: "analog"
+                    name: "analog-data"
                 }
             }
         },

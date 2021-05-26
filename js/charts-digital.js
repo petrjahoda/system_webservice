@@ -355,7 +355,7 @@ function drawDigitalChart(chartData) {
                 },
                 saveAsImage: {
                     type: "png",
-                    name: "digital"
+                    name: "digital-data"
                 }
             }
         },

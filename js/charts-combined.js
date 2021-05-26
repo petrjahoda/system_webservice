@@ -6,6 +6,7 @@ function drawCombinedChart(chartData) {
     let positionInChart
     let locale = getLocaleFrom(chartData);
     let seriesList = [];
+    let digitalSampling = "none"
     let sampling = "none"
     moment.locale(locale);
     chartData["ChartData"].forEach((element) => {
@@ -15,6 +16,9 @@ function drawCombinedChart(chartData) {
                 for (const record of element["DigitalData"]) {
                     data.push([new Date(record["Time"] * 1000), record["Value"]]);
                 }
+                if (element["DigitalData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
+                    digitalSampling = "lttb"
+                }
                 seriesList.push({
                     name: element["PortName"],
                     color: element["PortColor"],
@@ -23,7 +27,7 @@ function drawCombinedChart(chartData) {
                     areaStyle: {},
                     symbol: 'none',
                     data: data,
-                    sampling: sampling,
+                    sampling: digitalSampling,
                     lineStyle: {
                         width: 1,
                     },
@@ -332,7 +336,7 @@ function drawCombinedChart(chartData) {
                 },
                 saveAsImage: {
                     type: "png",
-                    name: "analog"
+                    name: "combined-chart"
                 }
             }
         },
@@ -468,14 +472,14 @@ function drawCombinedChart(chartData) {
                 id: 'terminalInsideChartZoom',
                 filterMode: 'none',
                 show: false,
-                xAxisIndex: [0, 1, 3, 4, 5, 6, 7]
+                xAxisIndex: [0, 1, 3, 4, 5, 6, 7,8,9]
             }, {
                 type: 'slider',
                 id: 'terminalSliderChartZoom',
                 showDataShadow: false,
                 filterMode: 'none',
                 show: false,
-                xAxisIndex: [0, 1, 3, 4, 5, 6, 7]
+                xAxisIndex: [0, 1, 3, 4, 5, 6, 7,8,9]
             },
         ],
         series: seriesList,

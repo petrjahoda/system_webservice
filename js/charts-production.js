@@ -252,7 +252,7 @@ function drawProductionChart(chartData) {
                 },
                 saveAsImage: {
                     type: "png",
-                    name: "analog"
+                    name: "production-chart"
                 }
             }
         },

@@ -165,4 +165,5 @@ myChart.on('datazoom', function () {
     let zoom = myChart.getOption().dataZoom[0];
     startDateAsValue = zoom.startValue * 1000
     endDateAsValue = zoom.endValue * 1000
+    console.log(myChart)
 });
