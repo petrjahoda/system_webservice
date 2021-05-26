@@ -746,6 +746,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			}
 			result = db.Save(&workplacePort)
 			cacheWorkplaces(db)
+			cacheWorkplacePorts(db)
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		}
 	}

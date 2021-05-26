@@ -272,6 +272,8 @@ function drawCombinedChart(chartData) {
                     } else {
                         if (param["seriesIndex"] === 1 && param["value"][1] !== null) {
                             result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' +param["seriesName"] +": "+ param["value"][1] + "<br>"
+                        } else if (param["seriesIndex"] === 0 && param["value"][1] !== null){
+                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' +param["seriesName"] +": "+ param["value"][1] + "<br>"
                         }
                     }
                 }
