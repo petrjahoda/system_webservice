@@ -154,7 +154,7 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
-						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.OrderDuration = "(" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
@@ -165,14 +165,14 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					}
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
-						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.AlarmDuration = "(" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
 						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
-						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.BreakdownDuration = "(" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
 						pageWorkplace.BreakdownDuration = ""
@@ -192,7 +192,7 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
-						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.OrderDuration = "(" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
@@ -203,14 +203,14 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					}
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
-						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.AlarmDuration = "(" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
 						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
-						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.BreakdownDuration = "(" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
 						pageWorkplace.BreakdownDuration = ""
@@ -229,14 +229,14 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
-						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.AlarmDuration = "(" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
 						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
-						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.BreakdownDuration = "(" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
 						pageWorkplace.BreakdownDuration = ""
@@ -361,7 +361,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
-						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.OrderDuration = "(" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
@@ -372,14 +372,14 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					}
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
-						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.AlarmDuration = "(" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
 						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
-						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.BreakdownDuration = "(" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
 						pageWorkplace.BreakdownDuration = ""
@@ -399,7 +399,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + cachedOrdersById[uint(orderRecordId)].Name
-						pageWorkplace.OrderDuration = "[" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.OrderDuration = "(" + time.Now().Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
@@ -410,14 +410,14 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					}
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
-						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.AlarmDuration = "(" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
 						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
-						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.BreakdownDuration = "(" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
 						pageWorkplace.BreakdownDuration = ""
@@ -436,14 +436,14 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if alarmRecordId > 0 {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": " + cachedAlarmsById[uint(alarmRecordId)].Name
-						pageWorkplace.AlarmDuration = "[" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.AlarmDuration = "(" + time.Now().Sub(cachedAlarmRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.AlarmInformation = getLocale(email, "alarm-name") + ": -"
 						pageWorkplace.AlarmDuration = ""
 					}
 					if breakdownRecordId > 0 {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": " + cachedBreakdownsById[uint(breakdownRecordId)].Name
-						pageWorkplace.BreakdownDuration = "[" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + "]"
+						pageWorkplace.BreakdownDuration = "(" + time.Now().Sub(cachedBreakdownRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
 					} else {
 						pageWorkplace.BreakdownInformation = getLocale(email, "breakdown-name") + ": -"
 						pageWorkplace.BreakdownDuration = ""
