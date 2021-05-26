@@ -1,9 +1,9 @@
-let startDateAsValue = new Date()
-let endDateAsValue = new Date()
-
 function drawCombinedChart(chartData) {
     let minDate = document.getElementById("from-date").value
     let maxDate = document.getElementById("to-date").value
+    startDateAsValue = new Date(minDate) * 1000
+    endDateAsValue = new Date(maxDate) * 1000
+    let positionInChart
     let locale = getLocaleFrom(chartData);
     let seriesList = [];
     let sampling = "none"
@@ -248,13 +248,6 @@ function drawCombinedChart(chartData) {
         sliderTopPosition = "70%"
     }
     let option;
-    let positionInChart
-
-    let borderStart = 50
-    let borderEnd = chartDom.scrollWidth - 100
-    let borderChange = borderEnd - borderStart
-    startDateAsValue = new Date(minDate) * 1000
-    endDateAsValue = new Date(maxDate) * 1000
     option = {
         animation: false,
         textStyle: {
@@ -487,9 +480,3 @@ function drawCombinedChart(chartData) {
     };
     option && myChart.setOption(option);
 }
-
-myChart.on('datazoom', function () {
-    let zoom = myChart.getOption().dataZoom[0];
-    startDateAsValue = zoom.startValue * 1000
-    endDateAsValue = zoom.endValue * 1000
-});

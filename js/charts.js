@@ -3,6 +3,12 @@ let chartHeight = document.documentElement.clientHeight * 0.9
 if (chartHeight < 800) {
     chartHeight = 800;
 }
+let startDateAsValue = new Date()
+let endDateAsValue = new Date()
+let borderStart = 50
+let borderEnd = chartDom.scrollWidth - 100
+let borderChange = borderEnd - borderStart
+
 let myChart = echarts.init(chartDom, null, {height: chartHeight});
 if (document.getElementById('to-date').value === "") {
     let now = new Date();
@@ -150,3 +156,8 @@ myChart.on('dataZoom', function (evt) {
 window.addEventListener('resize', () => {
     myChart.resize()
 })
+myChart.on('datazoom', function () {
+    let zoom = myChart.getOption().dataZoom[0];
+    startDateAsValue = zoom.startValue * 1000
+    endDateAsValue = zoom.endValue * 1000
+});

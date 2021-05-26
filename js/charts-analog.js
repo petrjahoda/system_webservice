@@ -1,6 +1,9 @@
 function drawAnalogChart(chartData) {
     let minDate = document.getElementById("from-date").value
     let maxDate = document.getElementById("to-date").value
+    startDateAsValue = new Date(minDate) * 1000
+    endDateAsValue = new Date(maxDate) * 1000
+    let positionInChart
     let locale = getLocaleFrom(chartData);
     let seriesList = [];
     let sampling = "none"
@@ -39,8 +42,8 @@ function drawAnalogChart(chartData) {
             let color = ""
             for (const element of chartData["UserData"]) {
                 color = element["Color"]
-                userData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                userData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                userData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                userData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["UsersLocale"],
@@ -50,7 +53,7 @@ function drawAnalogChart(chartData) {
                 step: 'end',
                 symbol: 'none',
                 data: userData,
-                sampling: 'none',
+                sampling: sampling,
                 lineStyle: {
                     width: 0,
                 },
@@ -66,8 +69,8 @@ function drawAnalogChart(chartData) {
             let color = ""
             for (const element of chartData["OrderData"]) {
                 color = element["Color"]
-                orderData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                orderData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                orderData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                orderData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["OrdersLocale"],
@@ -93,8 +96,8 @@ function drawAnalogChart(chartData) {
             let color = ""
             for (const element of chartData["DowntimeData"]) {
                 color = element["Color"]
-                downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["DowntimesLocale"],
@@ -120,8 +123,8 @@ function drawAnalogChart(chartData) {
             let color = ""
             for (const element of chartData["BreakdownData"]) {
                 color = element["Color"]
-                breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["BreakdownsLocale"],
@@ -147,8 +150,8 @@ function drawAnalogChart(chartData) {
             let color = ""
             for (const element of chartData["AlarmData"]) {
                 color = element["Color"]
-                alarmData.push([new Date(element["FromDate"]), 1, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
-                alarmData.push([new Date(element["ToDate"]), 0, element["Information"], moment(new Date(element["FromDate"])).format('LLL'), moment(new Date(element["ToDate"])).format('LLL')]);
+                alarmData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                alarmData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["AlarmsLocale"],
@@ -185,21 +188,25 @@ function drawAnalogChart(chartData) {
             axisPointer: {
                 type: 'line',
             },
+            position: function (point) {
+                positionInChart = point[0]
+            },
             formatter: function (params) {
+                let dateChange = endDateAsValue - startDateAsValue
+                let pointerValue = (startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000
                 let result = ""
                 for (const param of params) {
-                    let color = param["color"]
-                    if (param["axisIndex"] > 0) {
-                        result += "<b>" + param["value"][3] + " - " + param["value"][4] + '</b><br><span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["value"][2] + "<br><br>"
+                    if (pointerValue > +param["value"][3] && pointerValue < +param["value"][4]) {
+                        result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][2] + '&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">' + moment(param["value"][3]).format('LLL') + " - " + moment(param["value"][4]).format("LLL") + '</span>' + "<br>"
                     } else {
-                        result += "<b>" + moment(new Date(params[0]["axisValue"])).format('Do MMMM YYYY h:mm:ss') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + color + '"></span>' + param["seriesName"] + " [" + param["value"][1] + "]<br><br>"
+                        if (param["seriesIndex"] === 0 && param["value"][1] !== null) {
+                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["seriesName"] + ": " + param["value"][1] + "<br>"
+                        }
                     }
                 }
-                return result.replace(/^\s*<br\s*\/?>|<br\s*\/?>\s*$/g, '')
+                return "<b>" + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</b><br>" + result
             },
-            position: function (point, params, dom, rect, size) {
-                return [point[0] - size["contentSize"][0] / 2, point[1]];
-            }
+
         },
         grid: [{
             top: '5%',
