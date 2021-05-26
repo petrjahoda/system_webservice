@@ -11,108 +11,91 @@ function drawDigitalChart(chartData) {
     let yAxisData = [];
     let gridData = [];
     let sampling = "none"
-    let counter = 1;
-    let showAxis = false
-    if (chartData["ChartData"].length === 1) {
-        showAxis = true
-    }
-    xAxisData.push({
-        axisLabel: {
-            formatter: function (value) {
-                return moment(new Date(value)).format('LLL');
-            }
-        },
-        type: 'time',
-        min: minDate,
-        max: maxDate,
-        show: showAxis
-    });
-    yAxisData.push({
-        type: 'value',
-        show: false,
-    });
-    let initialHeight = "60%"
-    if (chartData["ChartData"].length !== 1) {
-        initialHeight = (55 / chartData["ChartData"].length) - 1 + "%"
-    }
-    gridData.push({
-        top: '5%',
-        bottom: 75,
-        left: 50,
-        right: 100,
-        height: initialHeight,
-    });
-    let dateAlreadyAdded = false
+    let position = 0
     for (const digitalData of chartData["ChartData"]) {
-        if (counter > 1) {
-            gridData.push({
-                left: 50,
-                right: 100,
-                top: ((counter - 1) * (55 / chartData["ChartData"].length) + 5) + "%",
-                height: initialHeight
-            });
-            if (counter === chartData["ChartData"].length) {
-                xAxisData.push({
-                    axisLabel: {
-                        formatter: function (value) {
-                            return moment(new Date(value)).format('LLL');
-                        }
-                    },
-                    gridIndex: counter - 1,
-                    type: 'time',
-                    min: minDate,
-                    max: maxDate,
-                    show: true,
-                });
-            } else {
-                xAxisData.push({
-                    gridIndex: counter - 1,
-                    type: 'time',
-                    min: minDate,
-                    max: maxDate,
-                    show: false,
-                });
-            }
-            yAxisData.push({
-                gridIndex: counter - 1,
-                type: 'value',
-                show: false,
-            });
-        }
-        if (digitalData["DigitalData"] === null) {
-            document.getElementById("loader").hidden = true
-        }
-        updateCharm("INF: " + digitalData["PortName"] + " with size: " + digitalData["DigitalData"].length)
         if (digitalData["DigitalData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
             sampling = "lttb"
         }
         let data = []
-        let color = ""
         for (const element of digitalData["DigitalData"]) {
-            color = element["Color"]
-            data.push([new Date(element["Time"] * 1000), element["Value"]]);
+            if (element["Value"] === -32768) {
+                data.push([new Date(element["Time"] * 1000), null]);
+            } else {
+                data.push([new Date(element["Time"] * 1000), element["Value"]]);
+            }
         }
-        dateAlreadyAdded = true
+        gridData.push({
+            left: 50,
+            right: 100,
+            top: (position*7)+10+"%",
+            height: "3%"
+        });
+        if (position === chartData["ChartData"].length-1) {
+            xAxisData.push({
+                gridIndex: position,
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                axisLabel: {
+                    formatter: function (value) {
+                        return moment(new Date(value)).format('LLL');
+                    }
+                },
+                show: true,
+            });
+        } else {
+            xAxisData.push({
+                gridIndex: position,
+                type: 'time',
+                min: minDate,
+                max: maxDate,
+                show: false,
+            });
+        }
+        yAxisData.push({
+            gridIndex: position,
+            type: 'value',
+            show: false,
+        });
         seriesList.push({
             name: digitalData["PortName"],
-            color: color,
+            color: digitalData["PortColor"],
             areaStyle: {},
             type: 'line',
-            step: 'end',
             symbol: 'none',
+            step: 'end',
             data: data,
             sampling: sampling,
             lineStyle: {
-                width: 0,
+                width: 1,
             },
-            xAxisIndex: counter - 1,
-            yAxisIndex: counter - 1,
             emphasis: {
                 focus: 'series'
             },
+            xAxisIndex: position,
+            yAxisIndex: position,
         });
-        counter++;
+        position++
     }
+    let initialTerminalPosition = (position*7)+11
+    gridData.push({
+        left: 50,
+        right: 100,
+        top: initialTerminalPosition+"%",
+        height: "3%"
+    });
+    xAxisData.push({
+        gridIndex: position,
+        type: 'time',
+        min: minDate,
+        max: maxDate,
+        show: false,
+    });
+    yAxisData.push({
+        gridIndex: position,
+        type: 'value',
+        show: false,
+    });
     if (!phoneLinkButton.classList.contains("mif-phonelink-off")) {
         if (chartData["UserData"] !== null) {
             let userData = []
@@ -122,24 +105,6 @@ function drawDigitalChart(chartData) {
                 userData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
                 userData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
-            gridData.push({
-                left: 50,
-                right: 100,
-                top: "70%",
-                height: "3%"
-            });
-            xAxisData.push({
-                gridIndex: chartData["ChartData"].length,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            });
-            yAxisData.push({
-                gridIndex: chartData["ChartData"].length,
-                type: 'value',
-                show: false,
-            });
             seriesList.push({
                 name: chartData["UsersLocale"],
                 color: color,
@@ -152,13 +117,31 @@ function drawDigitalChart(chartData) {
                 lineStyle: {
                     width: 0,
                 },
-                xAxisIndex: chartData["ChartData"].length,
-                yAxisIndex: chartData["ChartData"].length,
+                xAxisIndex: position,
+                yAxisIndex: position,
                 emphasis: {
                     focus: 'series'
                 },
             });
         }
+        gridData.push({
+            left: 50,
+            right: 100,
+            top: initialTerminalPosition+4+"%",
+            height: "3%"
+        });
+        xAxisData.push({
+            gridIndex: position+1,
+            type: 'time',
+            min: minDate,
+            max: maxDate,
+            show: false,
+        });
+        yAxisData.push({
+            gridIndex: position+1,
+            type: 'value',
+            show: false,
+        });
         if (chartData["OrderData"] !== null) {
             let orderData = []
             let color = ""
@@ -167,24 +150,6 @@ function drawDigitalChart(chartData) {
                 orderData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
                 orderData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
-            gridData.push({
-                left: 50,
-                right: 100,
-                top: "74%",
-                height: "3%"
-            });
-            xAxisData.push({
-                gridIndex: chartData["ChartData"].length + 1,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            });
-            yAxisData.push({
-                gridIndex: chartData["ChartData"].length + 1,
-                type: 'value',
-                show: false,
-            });
             seriesList.push({
                 name: chartData["OrdersLocale"],
                 color: color,
@@ -197,13 +162,32 @@ function drawDigitalChart(chartData) {
                 lineStyle: {
                     width: 0,
                 },
-                xAxisIndex: chartData["ChartData"].length + 1,
-                yAxisIndex: chartData["ChartData"].length + 1,
+                xAxisIndex: position+1,
+                yAxisIndex: position+1,
                 emphasis: {
                     focus: 'series'
                 },
             });
+
         }
+        gridData.push({
+            left: 50,
+            right: 100,
+            top: initialTerminalPosition+8+"%",
+            height: "3%"
+        });
+        xAxisData.push({
+            gridIndex: position+2,
+            type: 'time',
+            min: minDate,
+            max: maxDate,
+            show: false,
+        });
+        yAxisData.push({
+            gridIndex: position+2,
+            type: 'value',
+            show: false,
+        });
         if (chartData["DowntimeData"] !== null) {
             let downtimeData = []
             let color = ""
@@ -212,24 +196,6 @@ function drawDigitalChart(chartData) {
                 downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
                 downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
-            gridData.push({
-                left: 50,
-                right: 100,
-                top: "78%",
-                height: "3%"
-            });
-            xAxisData.push({
-                gridIndex: chartData["ChartData"].length + 2,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            });
-            yAxisData.push({
-                gridIndex: chartData["ChartData"].length + 2,
-                type: 'value',
-                show: false,
-            });
             seriesList.push({
                 name: chartData["DowntimesLocale"],
                 color: color,
@@ -242,13 +208,31 @@ function drawDigitalChart(chartData) {
                 lineStyle: {
                     width: 0,
                 },
-                xAxisIndex: chartData["ChartData"].length + 2,
-                yAxisIndex: chartData["ChartData"].length + 2,
+                xAxisIndex: position+2,
+                yAxisIndex: position+2,
                 emphasis: {
                     focus: 'series'
                 },
             });
         }
+        gridData.push({
+            left: 50,
+            right: 100,
+            top: initialTerminalPosition+12+"%",
+            height: "3%"
+        });
+        xAxisData.push({
+            gridIndex: position+3,
+            type: 'time',
+            min: minDate,
+            max: maxDate,
+            show: false,
+        });
+        yAxisData.push({
+            gridIndex: position+3,
+            type: 'value',
+            show: false,
+        });
         if (chartData["BreakdownData"] !== null) {
             let breakdownData = []
             let color = ""
@@ -257,24 +241,6 @@ function drawDigitalChart(chartData) {
                 breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
                 breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
-            gridData.push({
-                left: 50,
-                right: 100,
-                top: "82%",
-                height: "3%"
-            });
-            xAxisData.push({
-                gridIndex: chartData["ChartData"].length + 3,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            });
-            yAxisData.push({
-                gridIndex: chartData["ChartData"].length + 3,
-                type: 'value',
-                show: false,
-            });
             seriesList.push({
                 name: chartData["BreakdownsLocale"],
                 color: color,
@@ -287,13 +253,32 @@ function drawDigitalChart(chartData) {
                 lineStyle: {
                     width: 0,
                 },
-                xAxisIndex: chartData["ChartData"].length + 3,
-                yAxisIndex: chartData["ChartData"].length + 3,
+                xAxisIndex: position+3,
+                yAxisIndex: position+3,
                 emphasis: {
                     focus: 'series'
                 },
             });
         }
+        gridData.push({
+            left: 50,
+            right: 100,
+            top: initialTerminalPosition+16+"%",
+            height: "3%"
+        });
+        xAxisData.push({
+            gridIndex: position+4,
+            type: 'time',
+            min: minDate,
+            max: maxDate,
+            show: false,
+        });
+        yAxisData.push({
+            gridIndex: position+4,
+            type: 'value',
+            show: false,
+        });
+        console.log(chartData["AlarmData"] !== null)
         if (chartData["AlarmData"] !== null) {
             let alarmData = []
             let color = ""
@@ -302,24 +287,6 @@ function drawDigitalChart(chartData) {
                 alarmData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
                 alarmData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
-            gridData.push({
-                left: 50,
-                right: 100,
-                top: "86%",
-                height: "3%"
-            });
-            xAxisData.push({
-                gridIndex: chartData["ChartData"].length + 4,
-                type: 'time',
-                min: minDate,
-                max: maxDate,
-                show: false,
-            });
-            yAxisData.push({
-                gridIndex: chartData["ChartData"].length + 4,
-                type: 'value',
-                show: false,
-            });
             seriesList.push({
                 name: chartData["AlarmsLocale"],
                 color: color,
@@ -332,8 +299,8 @@ function drawDigitalChart(chartData) {
                 lineStyle: {
                     width: 0,
                 },
-                xAxisIndex: chartData["ChartData"].length + 4,
-                yAxisIndex: chartData["ChartData"].length + 4,
+                xAxisIndex: position+4,
+                yAxisIndex: position+4,
                 emphasis: {
                     focus: 'series'
                 },
@@ -341,9 +308,9 @@ function drawDigitalChart(chartData) {
         }
     }
     let option;
-    let sliderTopPosition = "90%"
+    let sliderTopPosition = initialTerminalPosition+20+"%"
     if (phoneLinkButton.classList.contains("mif-phonelink-off")) {
-        sliderTopPosition = "70%"
+        sliderTopPosition = initialTerminalPosition+"%"
     }
     option = {
         animation: false,
@@ -367,11 +334,11 @@ function drawDigitalChart(chartData) {
                         result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][2] + '&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">' + moment(param["value"][3]).format('LLL') + " - " + moment(param["value"][4]).format("LLL") + '</span>' + "<br>"
                     } else {
                         if (param["seriesIndex"] < chartData["ChartData"].length && param["value"][1] !== null) {
-                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["seriesName"] + ": " + param["value"][1] + "<br>"
+                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["seriesName"] + ": " + param["value"][1] + '&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">' + moment(param["value"][0]).format('Do MMMM YYYY, h:mm:ss') + "</span><br>"
                         }
                     }
                 }
-                return "<b>" + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</b><br>" + result
+                return "<b>" + '<span style="border-bottom: 1px solid;width: 100%;display: block;">' + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</span></b><br>" + result
             },
         },
         axisPointer: {
@@ -412,21 +379,21 @@ function drawDigitalChart(chartData) {
                 start: 0,
                 end: 100,
                 xAxisIndex: [0],
-                top: sliderTopPosition
+                top: sliderTopPosition,
             },
             {
                 type: 'inside',
                 id: 'terminalInsideChartZoom',
                 filterMode: 'none',
                 show: false,
-                xAxisIndex: [1, 2, 3, 4, 5]
+                xAxisIndex: [1, 2, 3, 4, 5,6]
             }, {
                 type: 'slider',
                 id: 'terminalSliderChartZoom',
                 showDataShadow: false,
                 filterMode: 'none',
                 show: false,
-                xAxisIndex: [1, 2, 3, 4, 5]
+                xAxisIndex: [1, 2, 3, 4, 5,6]
             },
         ],
         series: seriesList,

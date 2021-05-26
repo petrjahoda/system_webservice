@@ -29,7 +29,7 @@ function drawAnalogChart(chartData) {
             data: data,
             sampling: sampling,
             lineStyle: {
-                width: 1,
+                width: 0.5,
             },
             emphasis: {
                 focus: 'series'
@@ -200,11 +200,11 @@ function drawAnalogChart(chartData) {
                         result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][2] + '&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">' + moment(param["value"][3]).format('LLL') + " - " + moment(param["value"][4]).format("LLL") + '</span>' + "<br>"
                     } else {
                         if (param["seriesIndex"] === 0 && param["value"][1] !== null) {
-                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["seriesName"] + ": " + param["value"][1] + "<br>"
+                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["seriesName"] + ": " + param["value"][1] + '&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">' + moment(param["value"][0]).format('Do MMMM YYYY, h:mm:ss') + "</span><br>"
                         }
                     }
                 }
-                return "<b>" + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</b><br>" + result
+                return "<b>" + '<span style="border-bottom: 1px solid;width: 100%;display: block;">' + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</span></b><br>" + result
             },
 
         },

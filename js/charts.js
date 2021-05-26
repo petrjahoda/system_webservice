@@ -1,3 +1,18 @@
+let chartIsLoading = false
+const workplaceSelection = document.getElementById("workplace-selection")
+workplaceSelection.addEventListener("change", () => {
+    if (!chartIsLoading) {
+        loadChart();
+    }
+})
+
+const dataSelection = document.getElementById("data-selection")
+dataSelection.addEventListener("change", () => {
+    if (!chartIsLoading) {
+        loadChart();
+    }
+})
+
 let chartDom = document.getElementById('chart');
 let chartHeight = document.documentElement.clientHeight * 0.9
 if (chartHeight < 800) {
@@ -17,17 +32,6 @@ if (document.getElementById('to-date').value === "") {
     now.setHours(now.getHours() - 24);
     document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 }
-
-const dataSelection = document.getElementById("data-selection")
-dataSelection.addEventListener("change", () => {
-    loadChart();
-})
-
-const workplaceSelection = document.getElementById("workplace-selection")
-workplaceSelection.addEventListener("change", () => {
-    loadChart();
-})
-
 const flashButton = document.getElementById("flash-button")
 flashButton.addEventListener("click", () => {
     if (flashButton.classList.contains("mif-flash-on")) {
@@ -53,6 +57,7 @@ phoneLinkButton.addEventListener("click", () => {
 const dataOkButton = document.getElementById("data-ok-button")
 
 function loadChart() {
+    chartIsLoading = true
     document.getElementById("loader").hidden = false
     let flashData = "mif-flash-off"
     let terminalData = "mif-phonelink"
@@ -83,6 +88,7 @@ function loadChart() {
             updateCharm("INF: Chart data downloaded from database in " + difference / 1000 + "s")
         }
         response.text().then(function (data) {
+            chartIsLoading = false
             let result = JSON.parse(data);
             if (result["Type"] === "analog-data") {
                 myChart.clear()
@@ -109,8 +115,6 @@ function loadChart() {
                 }
                 document.getElementById("loader").hidden = true
             }
-
-
             const draw = performance.now();
             let difference = draw - download
             if (difference < 1000) {
@@ -118,6 +122,7 @@ function loadChart() {
             } else {
                 updateCharm("INF: Chart data drew in " + difference / 1000 + "s")
             }
+
         });
     }).catch((error) => {
         updateCharm("ERR: " + error)
