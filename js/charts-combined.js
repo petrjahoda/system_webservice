@@ -1,3 +1,6 @@
+let startDateAsValue = new Date()
+let endDateAsValue = new Date()
+
 function drawCombinedChart(chartData) {
     let minDate = document.getElementById("from-date").value
     let maxDate = document.getElementById("to-date").value
@@ -5,7 +8,7 @@ function drawCombinedChart(chartData) {
     let seriesList = [];
     let sampling = "none"
     moment.locale(locale);
-    chartData["ChartData"].forEach((element, index) => {
+    chartData["ChartData"].forEach((element) => {
         let data = []
         switch (element["PortType"]) {
             case "digital":
@@ -61,17 +64,23 @@ function drawCombinedChart(chartData) {
                 break;
             default:
                 if (element["DigitalData"] !== null) {
-                    for (let i = 0; i <element["DigitalData"].length; i++) {
-                            if (i+1===element["DigitalData"].length) {
-                                data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], new Date(element["PortName"], element["DigitalData"][i]["Time"] * 1000), new Date(element["DigitalData"][i]["Time"] * 1000)]);
-                                break
+                    data.push([new Date(element["DigitalData"][0]["Time"] * 1000), element["DigitalData"][0]["Value"], element["PortName"], new Date(element["DigitalData"][0]["Time"] * 1000), new Date(element["DigitalData"][1]["Time"] * 1000)]);
+                    for (let i = 1; i < element["DigitalData"].length; i++) {
+                        if (i + 1 === element["DigitalData"].length) {
+                            if (element["DigitalData"][i]["Value"] === 1) {
+                                data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], element["PortName"], new Date(element["DigitalData"][i]["Time"] * 1000), new Date(element["DigitalData"][i]["Time"] * 1000)]);
+                            } else {
+                                data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], element["PortName"], new Date(element["DigitalData"][i - 1]["Time"] * 1000), new Date(element["DigitalData"][i]["Time"] * 1000)]);
                             }
-                            data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], element["PortName"], new Date(element["DigitalData"][i]["Time"] * 1000), new Date(element["DigitalData"][i+1]["Time"] * 1000)]);
+                            break
+                        }
+                        if (element["DigitalData"][i]["Value"] === 1) {
+                            data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], element["PortName"], new Date(element["DigitalData"][i]["Time"] * 1000), new Date(element["DigitalData"][i + 1]["Time"] * 1000)]);
+                        } else {
+                            data.push([new Date(element["DigitalData"][i]["Time"] * 1000), element["DigitalData"][i]["Value"], element["PortName"], new Date(element["DigitalData"][i - 1]["Time"] * 1000), new Date(element["DigitalData"][i]["Time"] * 1000)]);
+                        }
+
                     }
-                    // for (const record of element["DigitalData"]) {
-                    //     data.push([new Date(record["Time"] * 1000), record["Value"]]);
-                    // }
-                    console.log(data)
                     seriesList.push({
                         name: element["PortName"],
                         color: element["PortColor"],
@@ -129,8 +138,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["OrderData"]) {
                 color = element["Color"]
-                orderData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
-                orderData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
+                orderData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                orderData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["OrdersLocale"],
@@ -156,8 +165,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["DowntimeData"]) {
                 color = element["Color"]
-                downtimeData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
-                downtimeData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
+                downtimeData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                downtimeData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["DowntimesLocale"],
@@ -183,8 +192,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["BreakdownData"]) {
                 color = element["Color"]
-                breakdownData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
-                breakdownData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
+                breakdownData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                breakdownData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["BreakdownsLocale"],
@@ -210,8 +219,8 @@ function drawCombinedChart(chartData) {
             let color = ""
             for (const element of chartData["AlarmData"]) {
                 color = element["Color"]
-                alarmData.push([new Date(element["FromDate"]), 1, element["Information"],  element["FromDate"], element["ToDate"]]);
-                alarmData.push([new Date(element["ToDate"]), 0, element["Information"],  element["FromDate"], element["ToDate"]]);
+                alarmData.push([new Date(element["FromDate"]), 1, element["Information"], element["FromDate"], element["ToDate"]]);
+                alarmData.push([new Date(element["ToDate"]), 0, element["Information"], element["FromDate"], element["ToDate"]]);
             }
             seriesList.push({
                 name: chartData["AlarmsLocale"],
@@ -242,11 +251,10 @@ function drawCombinedChart(chartData) {
     let positionInChart
 
     let borderStart = 50
-    let borderEnd = chartDom.scrollWidth-100
-    let borderChange = borderEnd-borderStart
-    let startDateAsValue = new Date(minDate) * 1000
-    let endDateAsValue = new Date(maxDate) * 1000
-    let dateChange = endDateAsValue - startDateAsValue
+    let borderEnd = chartDom.scrollWidth - 100
+    let borderChange = borderEnd - borderStart
+    startDateAsValue = new Date(minDate) * 1000
+    endDateAsValue = new Date(maxDate) * 1000
     option = {
         animation: false,
         textStyle: {
@@ -255,25 +263,24 @@ function drawCombinedChart(chartData) {
         tooltip: {
             trigger: 'axis',
             axisPointer: {
-                type: 'none',
+                snap: true,
+                type: 'line',
             },
-            position: function (point, params, dom, rect, size) {
+            position: function (point) {
                 positionInChart = point[0]
-                return [point[0] - size["contentSize"][0] / 2, point[1]];
             },
             formatter: function (params) {
+                let dateChange = endDateAsValue - startDateAsValue
                 let pointerValue = (startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000
-                let result =  pointerValue.toLocaleString() + "<br>"
+                let result = ""
                 for (const param of params) {
-                    if (pointerValue>+param["value"][3] && pointerValue<+param["value"][4]) {
-                        result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][2]+'&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">'+ moment(param["value"][3]).format('LLL') + " - " + moment(param["value"][4]).format("LLL")+'</span>'+"<br>"
+                    if (pointerValue > +param["value"][3] && pointerValue < +param["value"][4]) {
+                        result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' + param["value"][2] + '&nbsp&nbsp&nbsp<span style="font-size:' + 10 + 'px">' + moment(param["value"][3]).format('LLL') + " - " + moment(param["value"][4]).format("LLL") + '</span>' + "<br>"
                     } else {
-                        if (param["seriesName"] === "Výroba") {
-                            result += param["value"][3] + " - " + pointerValue + " - " + param["value"][4] + "<br>"
+                        if (param["seriesIndex"] === 1 && param["value"][1] !== null) {
+                            result += '<span style="display:inline-block;margin-right:5px;border-radius:10px;width:9px;height:9px;background-color:' + param["color"] + '"></span>' +param["seriesName"] +": "+ param["value"][1] + "<br>"
                         }
-
                     }
-
                 }
                 return "<b>" + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</b><br>" + result
             },
@@ -480,3 +487,9 @@ function drawCombinedChart(chartData) {
     };
     option && myChart.setOption(option);
 }
+
+myChart.on('datazoom', function () {
+    let zoom = myChart.getOption().dataZoom[0];
+    startDateAsValue = zoom.startValue * 1000
+    endDateAsValue = zoom.endValue * 1000
+});
