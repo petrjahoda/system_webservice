@@ -19,6 +19,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Changed
 
 - improved tooltip for charts
+- improved digital chart
 
 ## [2021.2.2.25] - 2021-05-25
 
