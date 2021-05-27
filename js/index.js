@@ -8,12 +8,6 @@ const downloadTimer = setInterval(function () {
     timeleft -= 1;
 }, 1000);
 
-const photoBooth = document.getElementById("alarm-button")
-photoBooth.addEventListener('click', () => {
-    console.log("called")
-
-})
-
 
 let productivityChartDom = document.getElementById('productivity-overview');
 let calendarChartDom = document.getElementById('calendar-heatmap');
@@ -33,7 +27,6 @@ let terminalAlarmChart = echarts.init(terminalAlarmChartDom);
 let consumptionChart = echarts.init(consumptionChartDom);
 let daysChart = echarts.init(daysDom)
 
-loadIndexData();
 window.addEventListener('resize', () => {
     daysChart.resize()
     consumptionChart.resize()
@@ -67,6 +60,7 @@ refreshButton.addEventListener('click', () => {
 })
 
 function loadIndexData() {
+    console.log("LOADING INDEX DATA")
     document.getElementById("loader").hidden = false
     fetch("/load_index_data", {
         method: "POST",
@@ -75,20 +69,23 @@ function loadIndexData() {
             let result = JSON.parse(data);
             updateCharm(result["Result"])
             drawProductivityChart(result);
-            productivityChart.resize()
             drawCalendar(result);
-            calendarChart.resize();
             drawDaysChart(result);
-            daysChart.resize()
             drawConsumptionChart(result);
-            consumptionChart.resize()
             drawTerminalDowntimeChart(result);
-            terminalDowntimeChart.resize()
             drawTerminalBreakdownChart(result);
-            terminalBreakdownChart.resize()
             drawTerminalAlarmChart(result);
-            terminalAlarmChart.resize()
             document.getElementById("loader").hidden = true
+            setInterval(function () {
+                productivityChart.resize()
+                calendarChart.resize();
+                daysChart.resize()
+                consumptionChart.resize()
+                terminalDowntimeChart.resize()
+                terminalBreakdownChart.resize()
+                terminalAlarmChart.resize()
+            }, 1);
+
         });
     }).catch((error) => {
         updateCharm("ERR: " + error)
@@ -424,7 +421,6 @@ function drawCalendar(data) {
     calendarChartDom.style.height = '250px'
     let actualWidth = parseInt(window.getComputedStyle(document.getElementById("inside")).width)
     let option;
-    console.log(data["CalendarStart"], data["CalendarEnd"])
     option = {
         textStyle: {
             fontFamily: 'ProximaNova'
@@ -628,3 +624,4 @@ function drawConsumptionChart(data) {
     };
     option && consumptionChart.setOption(option);
 }
+loadIndexData();

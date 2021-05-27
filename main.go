@@ -121,7 +121,7 @@ func (p *program) run() {
 	router.POST("/delete_workplace_port", deleteWorkplacePort)
 	router.POST("/save_workplace_port_details", saveWorkplacePort)
 	go cacheData()
-	err := http.ListenAndServe("", router)
+	err := http.ListenAndServe(":80", router)
 	if err != nil {
 		logError("SYSTEM", "Problem starting service: "+err.Error())
 		os.Exit(-1)

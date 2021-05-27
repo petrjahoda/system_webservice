@@ -1,7 +1,7 @@
 const menu = document.getElementById("menu")
 menu.addEventListener("click", (event) => {
     let compacted = "compacted js-compact"
-    if (document.getElementById("mainmenu").classList.contains("compacted")){
+    if (document.getElementById("mainmenu").classList.contains("compacted")) {
         compacted = ""
     }
     let data = {
@@ -42,13 +42,36 @@ function updateCharm(text) {
 
 const logout = document.getElementById("logout-button")
 logout.addEventListener('click', () => {
-    let request = new XMLHttpRequest();
-    request.open("get", "/rest/login", false, "a", "false");
-    request.send();
-    window.location.replace("/");
-    document.execCommand("ClearAuthenticationCache")
-    document.execCommand('ClearAuthenticationCache', false);
-    window.location= ("http://log:out@localhost:82/")
+    let userAgentString = navigator.userAgent;
+    let chromeAgent = userAgentString.indexOf("Chrome") > -1;
+    let IExplorerAgent = userAgentString.indexOf("MSIE") > -1 || userAgentString.indexOf("rv:") > -1;
+    let firefoxAgent = userAgentString.indexOf("Firefox") > -1;
+    let safariAgent = userAgentString.indexOf("Safari") > -1;
+    if ((chromeAgent) && (safariAgent)) {
+        safariAgent = false;
+    }
+    let operaAgent = userAgentString.indexOf("OP") > -1;
+    if ((chromeAgent) && (operaAgent)) {
+        chromeAgent = false;
+    }
+    if (safariAgent) {
+        let request = new XMLHttpRequest();
+        request.open("get", "/rest/login", false, "a", "false");
+        request.send();
+        document.execCommand("ClearAuthenticationCache")
+        document.execCommand('ClearAuthenticationCache', true);
+        window.location.replace(window.location.href);
+    } else {
+        $.ajax({
+            type: "GET",
+            url: window.location.href,
+            dataType: 'json',
+            async: true,
+            username: "nobody",
+            password: "nothing",
+            data: '{ "comment" }'
+        })
+    }
 })
 
 function getLocaleFrom(chartData) {
