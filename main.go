@@ -10,7 +10,7 @@ import (
 const version = "2021.2.2.27"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
-const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable application_name=system_webservice"
+const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=system_webservice"
 const (
 	production = iota + 1
 	downtime
