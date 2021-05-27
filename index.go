@@ -133,7 +133,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.MonthDataDowntime = monthDataDowntime
 	data.MonthDataPoweroff = monthDataPoweroff
 	data.CalendarStart = time.Date(timeBack.Year(), timeBack.Month(), 1, 0, 0, 0, 0, loc).Format("2006-01-02")
-	data.CalendarEnd = now.EndOfMonth().In(loc).Format("2006-01-02")
+	data.CalendarEnd = now.EndOfMonth().Format("2006-01-02")
 	data.Locale = cachedUsersByEmail[email].Locale
 	data.ProductionLocale = getLocale(email, "production")
 	data.DowntimeLocale = getLocale(email, "downtime")
@@ -247,41 +247,44 @@ func downloadIndexData(db *gorm.DB, loc *time.Location, email string) ([][]strin
 	sort.Slice(poweroffData[:], func(i, j int) bool {
 		return poweroffData[i][0] < poweroffData[j][0]
 	})
-	layout := "2006-01-02"
-	initialDate, err := time.Parse(layout, productionData[0][0])
-	if err != nil {
-		logError("INDEX", "Problem parsing date "+err.Error()+" "+productionData[0][0])
-	}
-	var datesToAdd []string
-	for _, data := range productionData {
-		actualDate, err := time.Parse(layout, data[0])
+	if len(productionData) > 0 {
+		layout := "2006-01-02"
+		initialDate, err := time.Parse(layout, productionData[0][0])
 		if err != nil {
-			logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
+			logError("INDEX", "Problem parsing date "+err.Error()+" "+productionData[0][0])
 		}
-		if actualDate != initialDate {
-			for actualDate != initialDate {
-				datesToAdd = append(datesToAdd, initialDate.Format("2006-01-02"))
+		var datesToAdd []string
+		for _, data := range productionData {
+			actualDate, err := time.Parse(layout, data[0])
+			if err != nil {
+				logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
+			}
+			if actualDate != initialDate {
+				for actualDate != initialDate {
+					datesToAdd = append(datesToAdd, initialDate.Format("2006-01-02"))
+					initialDate = initialDate.Add(24 * time.Hour)
+				}
+				initialDate = initialDate.Add(24 * time.Hour)
+			} else {
 				initialDate = initialDate.Add(24 * time.Hour)
 			}
-			initialDate = initialDate.Add(24 * time.Hour)
-		} else {
-			initialDate = initialDate.Add(24 * time.Hour)
 		}
+		for _, dateToAdd := range datesToAdd {
+			productionData = append(productionData, []string{dateToAdd, "0.0"})
+			downtimeData = append(downtimeData, []string{dateToAdd, "0.0"})
+			poweroffData = append(poweroffData, []string{dateToAdd, "100.0"})
+		}
+		sort.Slice(productionData[:], func(i, j int) bool {
+			return productionData[i][0] < productionData[j][0]
+		})
+		sort.Slice(downtimeData[:], func(i, j int) bool {
+			return downtimeData[i][0] < downtimeData[j][0]
+		})
+		sort.Slice(poweroffData[:], func(i, j int) bool {
+			return poweroffData[i][0] < poweroffData[j][0]
+		})
 	}
-	for _, dateToAdd := range datesToAdd {
-		productionData = append(productionData, []string{dateToAdd, "0.0"})
-		downtimeData = append(downtimeData, []string{dateToAdd, "0.0"})
-		poweroffData = append(poweroffData, []string{dateToAdd, "100.0"})
-	}
-	sort.Slice(productionData[:], func(i, j int) bool {
-		return productionData[i][0] < productionData[j][0]
-	})
-	sort.Slice(downtimeData[:], func(i, j int) bool {
-		return downtimeData[i][0] < downtimeData[j][0]
-	})
-	sort.Slice(poweroffData[:], func(i, j int) bool {
-		return poweroffData[i][0] < poweroffData[j][0]
-	})
+
 	return productionData, downtimeData, poweroffData
 }
 

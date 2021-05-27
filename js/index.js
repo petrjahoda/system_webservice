@@ -424,6 +424,7 @@ function drawCalendar(data) {
     calendarChartDom.style.height = '250px'
     let actualWidth = parseInt(window.getComputedStyle(document.getElementById("inside")).width)
     let option;
+    console.log(data["CalendarStart"], data["CalendarEnd"])
     option = {
         textStyle: {
             fontFamily: 'ProximaNova'
