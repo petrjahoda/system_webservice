@@ -101,7 +101,7 @@ func downloadChartUserData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, wo
 			Color:       "#2274A5",
 			FromDate:    dateTimeStart,
 			ToDate:      dateTimeEnd,
-			Information: cachedUsersById[uint(record.UserID)].FirstName + cachedUsersById[uint(record.UserID)].SecondName,
+			Information: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName,
 			Note:        record.Note,
 		}
 		userData = append(userData, oneData)
