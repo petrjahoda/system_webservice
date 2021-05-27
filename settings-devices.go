@@ -242,7 +242,7 @@ func loadDevice(id string, writer http.ResponseWriter, email string) {
 		DeviceTypes:            deviceTypes,
 		DeviceEnabledSelection: deviceEnabledSelection,
 	}
-	if device.DeviceTypeID == 2 {
+	if device.DeviceTypeID == zapsiTouch {
 		data.PortsHidden = "hidden"
 	}
 	addDeviceTableHeaders(email, &data)

@@ -55,7 +55,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 		SelectionValue: "user",
 		Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "user-name"),
 	})
-	if cachedUsersByEmail[email].UserRoleID != 3 {
+	if cachedUsersByEmail[email].UserRoleID != user {
 		logInfo("SETTINGS", "Adding data menu for power user")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "alarms"),
@@ -103,7 +103,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "products"),
 		})
 	}
-	if cachedUsersByEmail[email].UserRoleID == 1 {
+	if cachedUsersByEmail[email].UserRoleID == administrator {
 		logInfo("SETTINGS", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "devices"),

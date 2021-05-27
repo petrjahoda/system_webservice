@@ -30,7 +30,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	var combinedOutputData []PortData
 	allWorkplacePorts := cachedWorkplacePorts[workplaceName]
 	for _, port := range allWorkplacePorts {
-		if port.StateID.Int32 == 1 {
+		if port.StateID.Int32 == production {
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("id asc").Find(&digitalData)
 			var portData PortData
@@ -65,7 +65,8 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			portData.DigitalData = append(portData.DigitalData, initialData)
 			combinedOutputData = append(combinedOutputData, portData)
 		}
-		if port.StateID.Int32 == 3 {
+		if port.StateID.Int32 == poweroff {
+			analogTimeDifference := 20.0
 			var analogData []database.DevicePortAnalogRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
@@ -78,7 +79,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			initialData.Value = math.MinInt16
 			portData.AnalogData = append(portData.AnalogData, initialData)
 			for _, data := range analogData {
-				if data.DateTime.Sub(date).Seconds() > 20 {
+				if data.DateTime.Sub(date).Seconds() > analogTimeDifference {
 					initialData.Time = date.Add(1 * time.Second).Unix()
 					initialData.Value = math.MinInt16
 					portData.AnalogData = append(portData.AnalogData, initialData)
@@ -105,11 +106,11 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	downtimeStateData.PortType = "state"
 	poweroffStateData.PortType = "state"
 	productionStateData.PortName = getLocale(email, "production")
-	productionStateData.PortColor = cachedStatesById[1].Color
+	productionStateData.PortColor = cachedStatesById[production].Color
 	downtimeStateData.PortName = getLocale(email, "downtime")
-	downtimeStateData.PortColor = cachedStatesById[2].Color
+	downtimeStateData.PortColor = cachedStatesById[downtime].Color
 	poweroffStateData.PortName = getLocale(email, "poweroff")
-	poweroffStateData.PortColor = cachedStatesById[3].Color
+	poweroffStateData.PortColor = cachedStatesById[poweroff].Color
 	startLoop := true
 	actualState := 0
 	for _, record := range allStateRecords {
@@ -119,13 +120,13 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			data.Value = 1.0
 			if record.StateID == 1 {
 				productionStateData.DigitalData = append(productionStateData.DigitalData, data)
-				actualState = 1
+				actualState = production
 			} else if record.StateID == 2 {
 				downtimeStateData.DigitalData = append(downtimeStateData.DigitalData, data)
-				actualState = 2
+				actualState = downtime
 			} else {
 				poweroffStateData.DigitalData = append(poweroffStateData.DigitalData, data)
-				actualState = 3
+				actualState = poweroff
 			}
 			startLoop = false
 			continue
@@ -133,33 +134,33 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 		var data Data
 		data.Time = record.DateTimeStart.Unix()
 		data.Value = 0.0
-		if actualState == 1 {
+		if actualState == production {
 			productionStateData.DigitalData = append(productionStateData.DigitalData, data)
-		} else if actualState == 2 {
+		} else if actualState == downtime {
 			downtimeStateData.DigitalData = append(downtimeStateData.DigitalData, data)
 		} else {
 			poweroffStateData.DigitalData = append(poweroffStateData.DigitalData, data)
 		}
 		data.Time = record.DateTimeStart.Unix()
 		data.Value = 1.0
-		if record.StateID == 1 {
+		if record.StateID == production {
 			productionStateData.DigitalData = append(productionStateData.DigitalData, data)
-			actualState = 1
-		} else if record.StateID == 2 {
+			actualState = production
+		} else if record.StateID == downtime {
 			downtimeStateData.DigitalData = append(downtimeStateData.DigitalData, data)
-			actualState = 2
+			actualState = downtime
 		} else {
 			poweroffStateData.DigitalData = append(poweroffStateData.DigitalData, data)
-			actualState = 3
+			actualState = poweroff
 		}
 	}
 
 	var data Data
 	data.Time = dateTo.Unix()
 	data.Value = 0.0
-	if actualState == 1 {
+	if actualState == production {
 		productionStateData.DigitalData = append(productionStateData.DigitalData, data)
-	} else if actualState == 2 {
+	} else if actualState == downtime {
 		downtimeStateData.DigitalData = append(downtimeStateData.DigitalData, data)
 	} else {
 		poweroffStateData.DigitalData = append(poweroffStateData.DigitalData, data)

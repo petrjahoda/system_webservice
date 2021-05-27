@@ -147,6 +147,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 }
 
 func processProductionData(productionData [][]string, loc *time.Location, downtimeData [][]string, poweroffData [][]string) ([]string, []string, []string, []string) {
+	oneMonthBackInHours := 720.0
 	var monthDataDays []string
 	var monthDataProduction []string
 	var monthDataDowntime []string
@@ -157,7 +158,7 @@ func processProductionData(productionData [][]string, loc *time.Location, downti
 		if err != nil {
 			logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
 		}
-		if time.Now().In(loc).Sub(date).Hours() < 720 {
+		if time.Now().In(loc).Sub(date).Hours() < oneMonthBackInHours {
 			monthDataDays = append(monthDataDays, data[0])
 			monthDataProduction = append(monthDataProduction, data[1])
 			monthDataDowntime = append(monthDataDowntime, downtimeData[index][1])
@@ -173,7 +174,7 @@ func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []st
 	for _, workplace := range cachedWorkplacesById {
 		tempConsumptionData := cachedConsumptionDataByWorkplaceName[workplace.Name]
 		for _, port := range cachedWorkplacePorts[workplace.Name] {
-			if port.StateID.Int32 == 3 {
+			if port.StateID.Int32 == downtime {
 				var devicePortAnalogRecords []database.DevicePortAnalogRecord
 				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", todayNoon).Find(&devicePortAnalogRecords)
 				tempConsumptionData[todayNoon.Format("2006-01-02")] = 0
@@ -207,8 +208,9 @@ func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []st
 	}
 	var temporaryData [][]string
 	for key, value := range cachedConsumptionData {
+		oneMonthBackInHours := 720.0
 		dateTimeParsed, _ := time.Parse("2006-01-02", key)
-		if time.Now().In(loc).Sub(dateTimeParsed).Hours() <= 720 {
+		if time.Now().In(loc).Sub(dateTimeParsed).Hours() <= oneMonthBackInHours {
 			consumption := strconv.FormatFloat(float64(value*230/1000), 'f', 1, 64)
 			temporaryData = append(temporaryData, []string{key, consumption})
 		}
@@ -305,7 +307,7 @@ func downloadYearData(db *gorm.DB, fromDate time.Time, toDate time.Time, loc *ti
 			if index < len(stateRecords)-1 {
 				nextDate = stateRecords[index+1].DateTimeStart
 			}
-			if record.StateID == 1 {
+			if record.StateID == production {
 				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
 					productionRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
 				} else {
@@ -319,7 +321,7 @@ func downloadYearData(db *gorm.DB, fromDate time.Time, toDate time.Time, loc *ti
 					productionRecords[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
 				}
 			}
-			if record.StateID == 2 {
+			if record.StateID == downtime {
 				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
 					downtimeRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
 				} else {

@@ -30,7 +30,8 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	var analogOutputData []PortData
 	allWorkplacePorts := cachedWorkplaceDevicePorts[workplaceName]
 	for _, port := range allWorkplacePorts {
-		if port.DevicePortTypeID == 2 {
+		if port.DevicePortTypeID == analog {
+			analogTimeDifference := 20.0
 			var analogData []database.DevicePortAnalogRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
 			var portData PortData
@@ -42,7 +43,7 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			initialData.Value = math.MinInt16
 			portData.AnalogData = append(portData.AnalogData, initialData)
 			for _, data := range analogData {
-				if data.DateTime.Sub(date).Seconds() > 20 {
+				if data.DateTime.Sub(date).Seconds() > analogTimeDifference {
 					initialData.Time = date.Add(1 * time.Second).Unix()
 					initialData.Value = math.MinInt16
 					portData.AnalogData = append(portData.AnalogData, initialData)
@@ -146,7 +147,7 @@ func downloadChartBreakdownData(db *gorm.DB, dateTo time.Time, dateFrom time.Tim
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       cachedStatesById[3].Color,
+			Color:       cachedStatesById[poweroff].Color,
 			FromDate:    dateTimeStart,
 			ToDate:      dateTimeEnd,
 			Information: cachedBreakdownsById[uint(record.BreakdownID)].Name,
@@ -171,7 +172,7 @@ func downloadChartDowntimeData(db *gorm.DB, dateTo time.Time, dateFrom time.Time
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       cachedStatesById[2].Color,
+			Color:       cachedStatesById[downtime].Color,
 			FromDate:    dateTimeStart,
 			ToDate:      dateTimeEnd,
 			Information: cachedDowntimesById[uint(record.DowntimeID)].Name,
@@ -197,7 +198,7 @@ func downloadChartOrderData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, w
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       cachedStatesById[1].Color,
+			Color:       cachedStatesById[production].Color,
 			FromDate:    dateTimeStart,
 			ToDate:      dateTimeEnd,
 			Information: cachedOrdersById[uint(record.OrderID)].Name + ", " + cachedOperationsById[uint(record.OperationID)].Name + ", " + cachedProductsById[uint(productId)].Name,

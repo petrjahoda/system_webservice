@@ -402,9 +402,9 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	workplaceSections := loadWorkplaceSections(workplace)
 	workplaceModes := loadWorkplaceModes(workplace)
 	var digitalPorts []database.DevicePort
-	db.Where("device_port_type_id = 1").Find(&digitalPorts)
+	db.Where("device_port_type_id = ?", digital).Find(&digitalPorts)
 	var analogPorts []database.DevicePort
-	db.Where("device_port_type_id = 2").Find(&analogPorts)
+	db.Where("device_port_type_id = ?", analog).Find(&analogPorts)
 	data := WorkplaceDetailsDataOutput{
 		WorkplaceName:             workplace.Name,
 		WorkplaceNamePrepend:      getLocale(email, "workplace-name"),
@@ -428,7 +428,7 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 		WorkplaceModes:            workplaceModes,
 	}
 	var workplaceProductionPort database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 1").Find(&workplaceProductionPort)
+	db.Where("workplace_id = ?", workplace.ID).Where("state_id = ?", production).Find(&workplaceProductionPort)
 	var productionDowntimes []WorkplacePortSelection
 	for _, port := range digitalPorts {
 		if int(port.ID) == workplaceProductionPort.DevicePortID {
@@ -442,7 +442,7 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	}
 	data.ProductionDowntimes = productionDowntimes
 	var workplacePowerOffPort database.WorkplacePort
-	db.Where("workplace_id = ?", workplace.ID).Where("state_id = 3").Find(&workplacePowerOffPort)
+	db.Where("workplace_id = ?", workplace.ID).Where("state_id = ?", poweroff).Find(&workplacePowerOffPort)
 	var powerOnPowerOffs []WorkplacePortSelection
 	for _, port := range analogPorts {
 		if int(port.ID) == workplacePowerOffPort.DevicePortID {
@@ -724,7 +724,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		var workplacePort database.WorkplacePort
 		db.Where("device_port_id = ?", productionDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
 		if workplacePort.ID > 0 {
-			workplacePort.StateID = sql.NullInt32{Int32: 1, Valid: true}
+			workplacePort.StateID = sql.NullInt32{Int32: production, Valid: true}
 			workplacePort.DevicePortID, _ = strconv.Atoi(productionDowntimeId)
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
@@ -735,7 +735,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		} else {
 			productionDowntimeIdAsInt, _ := strconv.Atoi(productionDowntimeId)
 			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), productionDowntimeIdAsInt).Find(&workplacePort)
-			workplacePort.StateID = sql.NullInt32{Int32: 1, Valid: true}
+			workplacePort.StateID = sql.NullInt32{Int32: production, Valid: true}
 			workplacePort.DevicePortID = productionDowntimeIdAsInt
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
@@ -757,7 +757,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		var workplacePort database.WorkplacePort
 		db.Where("device_port_id = ?", poweroffDowntimeId).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
 		if workplacePort.ID > 0 {
-			workplacePort.StateID = sql.NullInt32{Int32: 3, Valid: true}
+			workplacePort.StateID = sql.NullInt32{Int32: poweroff, Valid: true}
 			workplacePort.DevicePortID, _ = strconv.Atoi(poweroffDowntimeId)
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
@@ -768,7 +768,7 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		} else {
 			poweroffDowntimeIdAsInt, _ := strconv.Atoi(poweroffDowntimeId)
 			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), poweroffDowntimeIdAsInt).Find(&workplacePort)
-			workplacePort.StateID = sql.NullInt32{Int32: 3, Valid: true}
+			workplacePort.StateID = sql.NullInt32{Int32: poweroff, Valid: true}
 			workplacePort.DevicePortID = poweroffDowntimeIdAsInt
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)

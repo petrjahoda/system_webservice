@@ -348,7 +348,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 				stateRecord := cachedStateRecords[int(workplace.ID)]
 				state := cachedStatesById[uint(stateRecord.StateID)]
 				switch stateRecord.StateID {
-				case 1:
+				case production:
 					pageWorkplace.WorkplaceColor = "background-color: " + state.Color
 					pageWorkplace.WorkplaceProductivityColor = "bg-darkGreen"
 					pageWorkplace.WorkplaceState = "mif-play"
@@ -385,7 +385,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 						pageWorkplace.BreakdownDuration = ""
 					}
 					pageWorkplace.TodayDate = time.Now().Format("02.01.2006")
-				case 2:
+				case downtime:
 					pageWorkplace.WorkplaceColor = "background-color: " + state.Color
 					pageWorkplace.WorkplaceProductivityColor = "bg-darkOrange"
 					pageWorkplace.WorkplaceState = "mif-pause"

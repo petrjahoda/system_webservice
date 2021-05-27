@@ -1,9 +1,9 @@
 # System Webservice
-1. Charts
-   - better tooltips
-2. Performance tuning
-   - remove magic numbers
-3. Statistics
+1. Amazon cloud
+   - zapsi demodata difference between production and downtime
+   - update system with more product, downtimes, …
+   - update demodata, updating terminal data
+2. Statistics
    - company
    - user
    - alarms

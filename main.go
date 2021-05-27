@@ -11,6 +11,30 @@ const version = "2021.2.2.25"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=pj79.. dbname=system host=localhost port=5432 sslmode=disable application_name=system_webservice"
+const (
+	production = iota + 1
+	downtime
+	poweroff
+)
+const (
+	digital = iota + 1
+	analog
+)
+
+const (
+	administrator = iota + 1
+	poweruser
+	user
+)
+
+const (
+	zapsi = iota + 1
+	zapsiTouch
+	s7plc
+	datamax
+	fileBased
+	networkBased
+)
 
 type program struct{}
 

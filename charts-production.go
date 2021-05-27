@@ -29,7 +29,7 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 	var digitalOutputData []PortData
 	allWorkplacePorts := cachedWorkplacePorts[workplaceName]
 	for _, port := range allWorkplacePorts {
-		if port.StateID.Int32 == 1 {
+		if port.StateID.Int32 == production {
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("id asc").Find(&digitalData)
 			var portData PortData

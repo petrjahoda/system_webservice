@@ -83,25 +83,6 @@ var workplaceDevicePortsSync sync.RWMutex
 var workShiftsSync sync.RWMutex
 var consumptionDataSync sync.RWMutex
 
-type userSettings struct {
-	compacted               string
-	menuState               string
-	sectionStates           []sectionState
-	dataSelection           string
-	settingsSelection       string
-	selectedWorkplaces      []string
-	chartTypeSelection      string
-	chartWorkplaceSelection string
-	chartDateFromSelection  string
-	chartDateToSelection    string
-	chartShowFastData       string
-	chartShowTerminalData   string
-}
-type sectionState struct {
-	section string
-	state   string
-}
-
 func cacheData() {
 	logInfo("CACHING", "Caching started")
 	timer := time.Now()
@@ -139,7 +120,7 @@ func cacheConsumptionData(db *gorm.DB) {
 	consumptionDataSync.Lock()
 	for _, workplace := range cachedWorkplacesById {
 		for _, port := range cachedWorkplacePorts[workplace.Name] {
-			if port.StateID.Int32 == 3 {
+			if port.StateID.Int32 == poweroff {
 				var devicePortAnalogRecords []database.DevicePortAnalogRecord
 				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", time.Now().In(loc).AddDate(0, -1, 0)).Find(&devicePortAnalogRecords)
 				tempConsumptionData := make(map[string]float32)

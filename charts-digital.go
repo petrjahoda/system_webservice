@@ -29,7 +29,7 @@ func processDigitalData(writer http.ResponseWriter, workplaceName string, dateFr
 	var digitalOutputData []PortData
 	allWorkplacePorts := cachedWorkplaceDevicePorts[workplaceName]
 	for _, port := range allWorkplacePorts {
-		if port.DevicePortTypeID == 1 {
+		if port.DevicePortTypeID == digital {
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&digitalData)
 			var portData PortData
