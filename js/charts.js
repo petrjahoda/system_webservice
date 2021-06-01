@@ -1,3 +1,4 @@
+
 let chartIsLoading = false
 const workplaceSelection = document.getElementById("workplace-selection")
 workplaceSelection.addEventListener("change", () => {
@@ -15,6 +16,10 @@ dataSelection.addEventListener("change", () => {
 
 let chartDom = document.getElementById('chart');
 let chartHeight = document.documentElement.clientHeight * 0.9
+let chartWidth = document.documentElement.clientWidth
+if (!document.getElementById("mainmenu").classList.contains("compacted")) {
+    chartWidth = document.documentElement.clientWidth*0.86
+}
 if (chartHeight < 800) {
     chartHeight = 800;
 }
@@ -23,8 +28,7 @@ let endDateAsValue = new Date()
 let borderStart = 50
 let borderEnd = chartDom.scrollWidth - 100
 let borderChange = borderEnd - borderStart
-
-let myChart = echarts.init(chartDom, null, {height: chartHeight});
+let myChart = echarts.init(chartDom, null, {height: chartHeight,width:chartWidth, renderer: 'svg'});
 if (document.getElementById('to-date').value === "") {
     let now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"golang.org/x/crypto/bcrypt"
@@ -92,13 +91,9 @@ func updateProgramVersion() {
 func basicAuth(h httprouter.Handle) httprouter.Handle {
 	return func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		email, password, hasAuth := request.BasicAuth()
-		fmt.Println(email)
-		fmt.Println(password)
-		fmt.Println(hasAuth)
 		usersSync.Lock()
 		user, userFound := cachedUsersByEmail[email]
 		usersSync.Unlock()
-		fmt.Println(user.Password)
 		userMatchesPassword := comparePasswords(user.Password, []byte(password))
 		if hasAuth && userFound && userMatchesPassword {
 			h(writer, request, params)
@@ -111,8 +106,6 @@ func basicAuth(h httprouter.Handle) httprouter.Handle {
 
 func comparePasswords(hashedPwd string, plainPwd []byte) bool {
 	byteHash := []byte(hashedPwd)
-	fmt.Println(byteHash)
-	fmt.Println(string(plainPwd))
 	err := bcrypt.CompareHashAndPassword(byteHash, plainPwd)
 	if err != nil {
 		logError("SYSTEM", "Passwords not matching")

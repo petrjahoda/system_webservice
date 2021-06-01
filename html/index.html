@@ -30,7 +30,7 @@
                 <span class="mif-menu"></span>
             </button>
         </div>
-        <ul class="navview-menu">
+        <ul class="navview-menu" id="navview-menu">
             <li class="item-separator"></li>
             <li class="active">
                 <a href="index">
@@ -68,6 +68,7 @@
                     <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
                 </a>
             </li>
+
         </ul>
         <div class="w-100 text-center text-small data-box p-2 border-top" style="position: absolute; bottom: 0">
             <div style="mix-blend-mode: multiply;">
@@ -126,10 +127,10 @@
                 <div class="cell-2">
                     <div id="productivity-overview"></div>
                 </div>
-                <div class="cell-8" id="inside">
-                    <div id="calendar-heatmap"></div>
-                    <div id="days-chart"></div>
-                    <div id="consumption-chart"></div>
+                <div class="cell-8" id="inside" >
+                    <div id="calendar-heatmap" style="display: flex;justify-content: center;"></div>
+                    <div id="days-chart" style="display: flex;justify-content: center;"></div>
+                    <div id="consumption-chart" style="display: flex;justify-content: center;"></div>
                 </div>
                 <div class="cell-2">
                     <div id="terminal-downtimes"></div>

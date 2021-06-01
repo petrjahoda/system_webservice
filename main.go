@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const version = "2021.2.2.27"
+const version = "2021.2.3.1"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=system_webservice"

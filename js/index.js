@@ -8,7 +8,10 @@ const downloadTimer = setInterval(function () {
     timeleft -= 1;
 }, 1000);
 
-
+let indexChartWidth = window.innerWidth*0.62
+if (!document.getElementById("mainmenu").classList.contains("compacted")) {
+    indexChartWidth = window.innerWidth*0.50
+}
 let productivityChartDom = document.getElementById('productivity-overview');
 let calendarChartDom = document.getElementById('calendar-heatmap');
 let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
@@ -19,13 +22,13 @@ consumptionChartDom.style.marginTop = "30px"
 let daysDom = document.getElementById('days-chart');
 let refreshButton = document.getElementById("data-refresh-button");
 
-let productivityChart = echarts.init(productivityChartDom);
-let calendarChart = echarts.init(calendarChartDom);
-let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom);
-let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom);
-let terminalAlarmChart = echarts.init(terminalAlarmChartDom);
-let consumptionChart = echarts.init(consumptionChartDom);
-let daysChart = echarts.init(daysDom)
+let productivityChart = echarts.init(productivityChartDom, null, {renderer: 'svg'});
+let calendarChart = echarts.init(calendarChartDom, null, {width:indexChartWidth,renderer: 'svg'});
+let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom, null, {renderer: 'svg'});
+let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom, null, {renderer: 'svg'});
+let terminalAlarmChart = echarts.init(terminalAlarmChartDom, null, {renderer: 'svg'});
+let consumptionChart = echarts.init(consumptionChartDom, null, {width:indexChartWidth,renderer: 'svg'});
+let daysChart = echarts.init(daysDom, null, {width:indexChartWidth,renderer: 'svg'})
 
 window.addEventListener('resize', () => {
     daysChart.resize()
@@ -76,15 +79,14 @@ function loadIndexData() {
             drawTerminalBreakdownChart(result);
             drawTerminalAlarmChart(result);
             document.getElementById("loader").hidden = true
-            setInterval(function () {
-                productivityChart.resize()
-                calendarChart.resize();
-                daysChart.resize()
-                consumptionChart.resize()
-                terminalDowntimeChart.resize()
-                terminalBreakdownChart.resize()
-                terminalAlarmChart.resize()
-            }, 1);
+
+            productivityChart.resize()
+            calendarChart.resize();
+            daysChart.resize()
+            consumptionChart.resize()
+            terminalDowntimeChart.resize()
+            terminalBreakdownChart.resize()
+            terminalAlarmChart.resize()
 
         });
     }).catch((error) => {
@@ -121,8 +123,8 @@ function drawProductivityChart(data) {
         grid: {
             top: 30,
             bottom: 0,
-            left: 5,
-            right: 1,
+            left: 10,
+            right: 20,
         },
         xAxis: {
             scale: true,
@@ -201,7 +203,7 @@ function drawTerminalDowntimeChart(data) {
         grid: {
             top: 30,
             bottom: 0,
-            left: 1,
+            left: 0,
             right: 20,
         },
         xAxis: {
@@ -284,7 +286,7 @@ function drawTerminalBreakdownChart(data) {
         grid: {
             top: 30,
             bottom: 0,
-            left: 1,
+            left: 0,
             right: 20,
         },
         xAxis: {
@@ -367,7 +369,7 @@ function drawTerminalAlarmChart(data) {
         grid: {
             top: 30,
             bottom: 0,
-            left: 1,
+            left: 0,
             right: 20,
         },
         xAxis: {
@@ -419,7 +421,10 @@ function drawCalendar(data) {
     let locale = getLocaleFrom(data);
     moment.locale(locale);
     calendarChartDom.style.height = '250px'
-    let actualWidth = parseInt(window.getComputedStyle(document.getElementById("inside")).width)
+    let actualWidth = (window.innerWidth - document.getElementById("navview-menu").offsetWidth)*0.61
+    if (!document.getElementById("mainmenu").classList.contains("compacted")) {
+        actualWidth = (window.innerWidth - document.getElementById("navview-menu").offsetWidth)*0.54
+    }
     let option;
     option = {
         textStyle: {

@@ -1,0 +1,119 @@
+<div class="navview-pane" style="z-index: 999">
+    <div class="d-flex flex-align-center">
+        <button class="pull-button m-0" style="height: 52px" id="menu">
+            <span class="mif-menu"></span>
+        </button>
+    </div>
+    <ul class="navview-menu">
+        <li class="item-separator"></li>
+        <li>
+            <a href="index">
+                <span class="icon"><span class="mif-home"></span></span>
+                <span class="caption" style="text-transform: uppercase">{{.MenuOverview}}</span>
+            </a>
+        </li>
+        <li>
+            <a href="workplaces">
+                <span class="icon"><span class="mif-dashboard"></span></span>
+                <span class="caption" style="text-transform: uppercase">{{.MenuWorkplaces}}</span>
+            </a>
+        </li>
+        <li>
+            <a href="charts">
+                <span class="icon"><span class="mif-chart-dots"></span></span>
+                <span class="caption" style="text-transform: uppercase">{{.MenuCharts}}</span>
+            </a>
+        </li>
+        <li>
+            <a href="statistics">
+                <span class="icon"><span class="mif-chart-bars"></span></span>
+                <span class="caption" style="text-transform: uppercase">{{.MenuStatistics}}</span>
+            </a>
+        </li>
+        <li class="active">
+            <a href="data">
+                <span class="icon"><span class="mif-table"></span></span>
+                <span class="caption" style="text-transform: uppercase">{{.MenuData}}</span>
+            </a>
+        </li>
+        <li>
+            <a href="settings">
+                <span class="icon"><span class="mif-cogs"></span></span>
+                <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
+            </a>
+        </li>
+    </ul>
+    <div class="w-100 text-center text-small data-box p-2 border-top" style="position: absolute; bottom: 0">
+        <div style="mix-blend-mode: multiply;">
+            <img data-role="gravatar" data-email="{{.UserEmail}}" data-default="identicon" alt="gravatar">
+        </div>
+        <br>
+        <br>
+        <br>
+        <div>
+            <h6 class="m-0">{{.UserName}} @ {{.Company}}</h6>
+        </div>
+        <br>
+        <hr>
+        <br>
+        <div>&copy; 2021 <a href="mailto:petr.jahoda@me.com" class="text-muted fg-black no-decor">Petr Jahoda&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+        <div>Created with <a href="https://metroui.org.ua" class="text-muted fg-black no-decor">Metro 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+        </div>
+        <div>Version {{.Version}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+    </div>
+</div>
+<div class="navview-content">
+    <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
+        <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
+        <div class="app-bar-container mx-auto" style="margin: 0">
+            <div style="min-width:200px;margin-top: 3px">
+                <select id="data-selection" data-filter="false" data-role="select">
+                    {{range .SelectionMenu}}
+                    <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div style="margin-top: 3px;margin-left: 3px">
+                <input id="from-date" type="datetime-local"
+                       style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateFrom}}">
+            </div>
+            <div style="margin-top: 3px;margin-left: 3px">
+                <input id="to-date" type="datetime-local"
+                       style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateTo}}">
+            </div>
+            <div style="min-width:100px;margin-left: 3px">
+                <button id="data-ok-button" class="button primary"
+                        style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-loop2"></span>
+                </button>
+            </div>
+        </div>
+        <div id="loader" hidden style="position: absolute;top:18px;right: 185px"><span
+                class="mif-loop2 ani-spin"></span></div>
+        <button class="button square m-1 mif-menu" id="table-button"
+                style="position: absolute;top:5px;right: 135px">
+        </button>
+        <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 93px">
+            <span class="badge bg-red fg-white">4</span>
+        </button>
+        <button class="button square m-1 mif-info" id="info-button"
+                style="position: absolute;top:5px;right: 51px">
+        </button>
+        <button class="button square m-1 mif-switch" id="logout-button"
+                style="position: absolute;top:5px;right: 9px">
+        </button>
+    </div>
+    <div id="content-wrapper" class="content-inner h-100"
+         style="padding-top: 60px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+        <div class="row" style="margin: 6px 1px 7px 2px;">
+            <select data-role="select" multiple data-clear-button="true"
+                    data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                {{range .Workplaces}}
+                <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
+                {{end}}
+            </select>
+        </div>
+        <div id="data-table-container" style="display: block">
+        </div>
+    </div>
+</div>

@@ -1,0 +1,53 @@
+{{range .WorkplaceSections}}
+<div data-role="panel" data-title-caption="{{.SectionName}}" data-collapsible="true"
+     data-title-icon="<span class='mif-dashboard'></span>"
+     data-on-collapse="dataCollapse"
+     data-on-expand="dataExpand"
+     style="{{.PanelCompacted}}">
+    <div class="row centered">
+        {{range .Workplaces}}
+        <div class="card shadow-2 " style="width: 19.0%;margin: 0.5%;cursor: default">
+            <div class="card-header text-center" style="{{.WorkplaceColor}};padding-bottom:0;padding-top:5px">
+                <div class="text-medium text-bold"
+                     style="white-space: nowrap; overflow: hidden;text-overflow: ellipsis">
+                    {{.WorkplaceName}}: {{.WorkplaceStateName}}
+                </div>
+                <div style="font-size: 10px" class="va-middle">
+                    ({{.WorkplaceStateDuration}})
+                </div>
+            </div>
+            <div class="card-content text-left"
+                 style="margin-top: 10px;margin-left: 15px;font-size: 14px;white-space: nowrap; overflow: hidden;text-overflow: ellipsis;">
+                {{.Information}} <span class="text-small text-light va-middle" style="font-size: 10px">{{.OrderDuration}}</span>
+            </div>
+            <div class="card-content text-left"
+                 style="margin-left: 15px;font-size: 14px;white-space: nowrap; overflow: hidden;text-overflow: ellipsis;">
+                {{.UserInformation}}
+            </div>
+
+            <div class="card-content text-left"
+                 style="margin-left: 15px;font-size: 14px;white-space: nowrap; overflow: hidden;text-overflow: ellipsis;">
+                {{.BreakdownInformation}} <span class="text-small text-light va-middle"
+                                                style="font-size: 10px">{{.BreakdownDuration}}</span>
+            </div>
+            <div class="card-content text-left"
+                 style="margin-bottom: 10px;margin-left: 15px;font-size: 14px"> {{.AlarmInformation}} <span
+                    class="text-small text-light va-middle"
+                    style="font-size: 10px">{{.AlarmDuration}}</span>
+            </div>
+
+            <div class="card-footer" style="margin-bottom: -18px">
+                <div class="place-left" style="margin-right: 7px;margin-top: -18px">{{.TodayDate}}</div>
+                <div data-role="progress" data-value="{{.WorkplaceProductivityToday}}"
+                     style="margin-top: -20px"></div>
+                <div class="text-bold place-right" style="margin-left: 7px;margin-top: -18px">
+                    {{.WorkplaceProductivityToday}}%
+                </div>
+            </div>
+        </div>
+        {{end}}
+    </div>
+</div>
+<br>
+{{end}}
+<div hidden id="hidden-information">{{.Result}}</div>
