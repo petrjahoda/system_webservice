@@ -1,9 +1,5 @@
 # System Webservice
-1. Amazon cloud
-   - zapsi demodata difference between production and downtime
-   - update system with more product, downtimes, …
-   - update demodata, updating terminal data
-2. Statistics
+1 . Statistics
    - company
    - user
    - alarms
@@ -16,5 +12,8 @@
    - states
    - users
    - system data
+2. Logging user in every functions
+3. Logging to database, user latest visit on a webpage or something like this
+4. Code refactor
    
 
