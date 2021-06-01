@@ -26,7 +26,15 @@ if (chartHeight < 800) {
 let startDateAsValue = new Date()
 let endDateAsValue = new Date()
 let borderStart = 50
-let borderEnd = chartDom.scrollWidth - 100
+let borderEnd = chartDom.scrollWidth - 80
+console.log(chartDom.scrollWidth)
+console.log(chartDom.offsetWidth)
+console.log(chartDom.clientWidth)
+console.log(document.getElementById("chart-container").clientWidth)
+console.log(document.getElementById("chart-container").scrollWidth)
+console.log(document.getElementById("chart-container").offsetWidth)
+console.log(borderStart)
+console.log(borderEnd)
 let borderChange = borderEnd - borderStart
 let myChart = echarts.init(chartDom, null, {height: chartHeight,width:chartWidth, renderer: 'svg'});
 if (document.getElementById('to-date').value === "") {
