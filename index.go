@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/jinzhu/now"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
@@ -222,6 +223,7 @@ func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []st
 	for _, consumption := range temporaryData {
 		consumptionData = append(consumptionData, consumption[1])
 	}
+	fmt.Println(consumptionData)
 	return consumptionData
 }
 

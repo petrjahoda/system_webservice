@@ -620,7 +620,7 @@ function drawConsumptionChart(data) {
             }
         },
         series: [{
-            data: data["ConsumptionData"],
+            data: data["ConsumptionData"].slice(-data["MonthDataDays"].length),
             type: 'bar',
             symbol: 'none',
             emphasis: emphasisStyle,
