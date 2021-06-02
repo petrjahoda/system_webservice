@@ -258,6 +258,7 @@ function drawCombinedChart(chartData) {
             fontFamily: 'ProximaNova'
         },
         tooltip: {
+
             trigger: 'axis',
             axisPointer: {
                 snap: true,

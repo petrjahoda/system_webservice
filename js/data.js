@@ -1,10 +1,10 @@
 if (document.getElementById('to-date').value === "") {
-    let now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('to-date').value = now.toISOString().slice(0, 16);
-    now.setMonth(now.getMonth() - 1);
-    document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 }
+let now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById('to-date').value = now.toISOString().slice(0, 16);
+now.setMonth(now.getMonth() - 1);
+document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 
 
 const tableButton = document.getElementById("table-button")

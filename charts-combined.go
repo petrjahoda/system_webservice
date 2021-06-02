@@ -98,7 +98,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	var initialStateRecord database.StateRecord
 	db.Select("id, date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateFrom).Last(&initialStateRecord)
 	var allStateRecords []database.StateRecord
-	db.Select("date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateTo).Where("id >= ?", initialStateRecord.ID).Find(&allStateRecords)
+	db.Select("date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateTo).Where("id >= ?", initialStateRecord.ID).Order("date_time_start").Find(&allStateRecords)
 	var productionStateData PortData
 	var downtimeStateData PortData
 	var poweroffStateData PortData
@@ -179,7 +179,6 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	responseData.AlarmData = alarmData
 	userData := downloadChartUserData(db, dateTo, dateFrom, workplaceName)
 	responseData.UserData = userData
-
 	responseData.OrdersLocale = getLocale(email, "orders")
 	responseData.DowntimesLocale = getLocale(email, "downtimes")
 	responseData.BreakdownsLocale = getLocale(email, "breakdowns")

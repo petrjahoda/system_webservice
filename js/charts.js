@@ -27,23 +27,15 @@ let startDateAsValue = new Date()
 let endDateAsValue = new Date()
 let borderStart = 50
 let borderEnd = chartDom.scrollWidth - 80
-console.log(chartDom.scrollWidth)
-console.log(chartDom.offsetWidth)
-console.log(chartDom.clientWidth)
-console.log(document.getElementById("chart-container").clientWidth)
-console.log(document.getElementById("chart-container").scrollWidth)
-console.log(document.getElementById("chart-container").offsetWidth)
-console.log(borderStart)
-console.log(borderEnd)
 let borderChange = borderEnd - borderStart
 let myChart = echarts.init(chartDom, null, {height: chartHeight,width:chartWidth, renderer: 'svg'});
 if (document.getElementById('to-date').value === "") {
-    let now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('to-date').value = now.toISOString().slice(0, 16);
-    now.setHours(now.getHours() - 24);
-    document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 }
+let now = new Date();
+now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+document.getElementById('to-date').value = now.toISOString().slice(0, 16);
+now.setHours(now.getHours() - 24);
+document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 const flashButton = document.getElementById("flash-button")
 flashButton.addEventListener("click", () => {
     if (flashButton.classList.contains("mif-flash-on")) {
