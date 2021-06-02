@@ -32,7 +32,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	for _, port := range allWorkplacePorts {
 		if port.StateID.Int32 == production {
 			var digitalData []database.DevicePortDigitalRecord
-			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("id asc").Find(&digitalData)
+			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("date_time").Order("id").Find(&digitalData)
 			var portData PortData
 			portData.PortType = "digital"
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
@@ -68,7 +68,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 		if port.StateID.Int32 == poweroff {
 			analogTimeDifference := 20.0
 			var analogData []database.DevicePortAnalogRecord
-			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("id asc").Find(&analogData)
+			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("date_time").Order("id").Find(&analogData)
 			var portData PortData
 			portData.PortType = "analog"
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
@@ -98,7 +98,7 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	var initialStateRecord database.StateRecord
 	db.Select("id, date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateFrom).Last(&initialStateRecord)
 	var allStateRecords []database.StateRecord
-	db.Select("date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateTo).Where("id >= ?", initialStateRecord.ID).Order("date_time_start").Find(&allStateRecords)
+	db.Select("date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateTo).Where("id >= ?", initialStateRecord.ID).Order("date_time_start").Order("id").Find(&allStateRecords)
 	var productionStateData PortData
 	var downtimeStateData PortData
 	var poweroffStateData PortData
