@@ -29,14 +29,10 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	var userRecords []database.UserRecord
 	if workplaceIds == "workplace_id in (')" {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&downtimeRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Find(&userRecords)
+		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&userRecords)
 	} else {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&downtimeRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Find(&userRecords)
-	}
-	var userRecordsByRecordId = map[int]database.UserRecord{}
-	for _, record := range userRecords {
-		userRecordsByRecordId[record.OrderRecordID] = record
+		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
 	}
 	var data TableOutput
 	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
@@ -46,7 +42,7 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	loc, err := time.LoadLocation(location)
 	addDowntimeTableHeaders(email, &data)
 	for _, record := range downtimeRecords {
-		addDowntimeTableRow(record, userRecordsByRecordId, &data, loc)
+		addDowntimeTableRow(record, userRecords, &data, loc)
 	}
 	tmpl, err := template.ParseFiles("./html/data-content.html")
 	if err != nil {
@@ -62,7 +58,7 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	}
 }
 
-func addDowntimeTableRow(record database.DowntimeRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableOutput, loc *time.Location) {
+func addDowntimeTableRow(record database.DowntimeRecord, userRecords []database.UserRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
@@ -75,8 +71,27 @@ func addDowntimeTableRow(record database.DowntimeRecord, userRecordsByRecordId m
 		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	}
-	actualUserId := userRecordsByRecordId[int(record.ID)].UserID
+	actualUserId := 0
+	for _, userRecord := range userRecords {
+		if userRecord.WorkplaceID == record.WorkplaceID {
+			if record.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeStart.Before(record.DateTimeEnd.Time) {
+				actualUserId = userRecord.UserID
+				break
+			} else if record.DateTimeStart.Before(userRecord.DateTimeEnd.Time) && userRecord.DateTimeEnd.Time.Before(record.DateTimeEnd.Time) {
+				actualUserId = userRecord.UserID
+				break
+			} else if record.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeEnd.Time.Before(record.DateTimeEnd.Time) {
+				actualUserId = userRecord.UserID
+				break
+			} else if userRecord.DateTimeStart.Before(record.DateTimeStart) && record.DateTimeEnd.Time.Before(userRecord.DateTimeEnd.Time) {
+				actualUserId = userRecord.UserID
+				break
+			}
+		}
+	}
+
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
+
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	downtimeName := TableCell{CellName: cachedDowntimesById[uint(record.DowntimeID)].Name}
 	tableRow.TableCell = append(tableRow.TableCell, downtimeName)
