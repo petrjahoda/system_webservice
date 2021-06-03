@@ -20,6 +20,10 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 - proper assigned user for downtimes data table
 
+### Changed
+
+- port color handling, no color, when port color = #000000
+
 ## [2021.2.3.2] - 2021-06-02
 
 ### Fixed

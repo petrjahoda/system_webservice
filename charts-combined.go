@@ -36,7 +36,10 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			var portData PortData
 			portData.PortType = "digital"
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
-			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
+			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			if portColor == "#000000" {
+				portData.PortColor = ""
+			}
 			if len(digitalData) > 0 {
 				var initialData Data
 				initialData.Time = dateFrom.Unix()
@@ -72,7 +75,10 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			var portData PortData
 			portData.PortType = "analog"
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
-			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
+			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			if portColor == "#000000" {
+				portData.PortColor = ""
+			}
 			date := dateFrom
 			var initialData Data
 			initialData.Time = dateFrom.Unix()

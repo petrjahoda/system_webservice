@@ -36,7 +36,10 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("date_time").Order("id").Find(&analogData)
 			var portData PortData
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name + " (" + port.Unit + ")"
-			portData.PortColor = cachedDevicePortsColorsById[int(port.ID)]
+			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			if portColor == "#000000" {
+				portData.PortColor = ""
+			}
 			date := dateFrom
 			var initialData Data
 			initialData.Time = dateFrom.Unix()
