@@ -33,7 +33,8 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("date_time").Order("id").Find(&digitalData)
 			var portData PortData
-			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name
+			workplaceDevicePort := cachedDevicePortsById[uint(port.DevicePortID)]
+			portData.PortName = "ID" + strconv.Itoa(int(workplaceDevicePort.ID)) + ": " + workplaceDevicePort.Name + " (" + workplaceDevicePort.Unit + ")"
 			portColor := cachedDevicePortsColorsById[int(port.ID)]
 			if portColor == "#000000" {
 				portData.PortColor = ""
