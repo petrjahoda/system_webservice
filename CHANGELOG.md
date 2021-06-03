@@ -19,6 +19,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Fixed
 
 - proper assigned user for downtimes data table
+- proper refreshing index and workplaces page
 
 ### Changed
 

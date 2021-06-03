@@ -1,10 +1,11 @@
-let timeleft = 60;
+let timer = 60
+let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
-        clearInterval(downloadTimer);
+        document.getElementById("progress-bar").value = 0
         updateWorkplaces();
     }
-    document.getElementById("progress-bar").value = 60 - timeleft;
+    document.getElementById("progress-bar").value = timer - timeleft;
     timeleft -= 1;
 }, 1000);
 
@@ -25,8 +26,8 @@ function updateWorkplaces() {
             } else {
                 document.getElementById("content-wrapper").innerHTML = data
                 updateCharm(document.getElementById("hidden-information").innerText)
-                timeleft = 60
-                document.getElementById("progress-bar").value = 60 - timeleft;
+                timeleft = timer
+                document.getElementById("progress-bar").value = timer - timeleft;
                 document.getElementById("loader").hidden = true
             }
         });

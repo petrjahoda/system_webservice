@@ -1,10 +1,29 @@
-let timeleft = 60;
+let timer = 60
+let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
-        clearInterval(downloadTimer);
-        loadIndexData();
+        const workplacesElement = document.getElementsByClassName("tag short-tag");
+        let workplaces = ""
+        for (let index = 0; index < workplacesElement.length; index++) {
+            workplaces += workplacesElement[index].children[0].innerHTML + ";"
+        }
+        workplaces = workplaces.slice(0, -1)
+        let data = {
+            key: "index-selected-workplaces",
+            value: workplaces,
+        };
+        console.log(workplaces)
+        fetch("/update_user_web_settings_from_web", {
+            method: "POST",
+            body: JSON.stringify(data)
+        }).then(() => {
+            loadIndexData();
+            timeleft = timer
+        }).catch((error) => {
+            updateCharm("ERR: " + error)
+        });
     }
-    document.getElementById("progress-bar").value = 60 - timeleft;
+    document.getElementById("progress-bar").value = timer - timeleft;
     timeleft -= 1;
 }, 1000);
 
@@ -56,7 +75,7 @@ refreshButton.addEventListener('click', () => {
         body: JSON.stringify(data)
     }).then(() => {
         loadIndexData();
-        timeleft = 60
+        timeleft = timer
     }).catch((error) => {
         updateCharm("ERR: " + error)
     });
