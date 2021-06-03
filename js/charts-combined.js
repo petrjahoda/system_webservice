@@ -16,7 +16,7 @@ function drawCombinedChart(chartData) {
                 for (const record of element["DigitalData"]) {
                     data.push([new Date(record["Time"] * 1000), record["Value"]]);
                 }
-                if (element["DigitalData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
+                if (element["DigitalData"].length > (8640*2) && flashButton.classList.contains("mif-flash-on")) {
                     digitalSampling = "lttb"
                 }
                 seriesList.push({

@@ -13,7 +13,7 @@ function drawDigitalChart(chartData) {
     let sampling = "none"
     let position = 0
     for (const digitalData of chartData["ChartData"]) {
-        if (digitalData["DigitalData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
+        if (digitalData["DigitalData"].length > (8640*2) && flashButton.classList.contains("mif-flash-on")) {
             sampling = "lttb"
         }
         let data = []
