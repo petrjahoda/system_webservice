@@ -511,6 +511,9 @@ function drawCalendar(data) {
 }
 
 function drawDaysChart(data) {
+    console.log(data["ConsumptionData"])
+    console.log(data["MonthDataDays"])
+    console.log(data["ConsumptionData"].slice(-data["MonthDataDays"].length))
     daysDom.style.height = "250px"
     let option;
     option = {

@@ -7,9 +7,11 @@ import (
 	"os"
 )
 
-const version = "2021.2.3.3"
+const version = "2021.2.3.7"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
+
+//const config = "user=postgres password=pj79.. dbname=system host=ec2-18-222-139-93.us-east-2.compute.amazonaws.com port=5432 sslmode=disable application_name=system_webservice"
 const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=system_webservice"
 const (
 	production = iota + 1
