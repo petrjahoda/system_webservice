@@ -17,7 +17,8 @@ dataSelection.addEventListener("change", () => {
 let chartDom = document.getElementById('chart');
 let chartHeight = document.documentElement.clientHeight * 0.9
 let chartWidth = document.documentElement.clientWidth
-if (!document.getElementById("mainmenu").classList.contains("compacted")) {
+console.log(document.getElementById("mainmenu"))
+if (!document.getElementById("mainmenu").classList.contains("compacted") && document.getElementById("mainmenu").offsetWidth>1452) {
     chartWidth = document.documentElement.clientWidth*0.86
 }
 if (chartHeight < 800) {

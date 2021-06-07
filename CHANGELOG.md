@@ -23,6 +23,7 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Fixed
 
 - proper assigned user for downtimes data table II.
+- proper width changing for charts (and elsewhere)
 
 ## [2021.2.3.3] - 2021-06-03
 
