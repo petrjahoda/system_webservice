@@ -1,3 +1,10 @@
+let charms = document.getElementById("right-charms")
+if (sessionStorage.getItem("charm") === "open") {
+    charms.classList.add("open")
+} else {
+    charms.classList.remove("open")
+}
+
 const menu = document.getElementById("menu")
 menu.addEventListener("click", (event) => {
     let compacted = "compacted js-compact"
@@ -17,13 +24,6 @@ menu.addEventListener("click", (event) => {
         console.log(error)
     });
 })
-
-let charms = document.getElementById("right-charms")
-if (sessionStorage.getItem("charm") === "open") {
-    charms.classList.add("open")
-} else {
-    charms.classList.remove("open")
-}
 
 let infoButton = document.getElementById("info-button")
 infoButton.addEventListener('click', () => {

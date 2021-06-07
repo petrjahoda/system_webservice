@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="icon"  href="../icon/favicon.ico">
+    <link rel="icon" href="../icon/favicon.ico">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="120x120">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="152x152">
     <link rel="apple-touch-icon" href="../icon/apple-touch-icon.png" sizes="180x180">
@@ -16,6 +16,7 @@
     <script src="../js/menu.js" defer></script>
     <script src="../js/metro.min.js" defer></script>
     <script src="../js/statistics.js" defer></script>
+    <script src="../js/locales.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Version}}</title>
 </head>
@@ -90,10 +91,29 @@
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
             <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
             <div class="app-bar-container mx-auto" style="margin: 0">
+                <div style="min-width:200px;margin-top: 3px">
+                    <select id="statistics-selection" data-filter="false" data-role="select">
+                        {{range .SelectionMenu}}
+                        <option value="{{.SelectionValue}}" {{.Selection}}>{{.SelectionName}}</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div style="margin-top: 3px;margin-left: 3px">
+                    <input id="from-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateFrom}}">
+                </div>
+                <div style="margin-top: 3px;margin-left: 3px">
+                    <input id="to-date" type="datetime-local"
+                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateTo}}">
+                </div>
+                <div style="min-width:100px;margin-left: 3px">
+                    <button id="statistics-ok-button" class="button primary"
+                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-loop2"></span>
+                    </button>
+                </div>
             </div>
             <div id="loader" hidden style="position: absolute;top:18px;right: 143px"><span
-                    class="mif-loop2 ani-spin"></span>
-            </div>
+                    class="mif-loop2 ani-spin"></span></div>
             <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 93px">
                 <span class="badge bg-red fg-white">4</span>
             </button>
@@ -104,27 +124,18 @@
                     style="position: absolute;top:5px;right: 9px">
             </button>
         </div>
-        <div id="content-wrapper" class="content-inner h-100" style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <p class="pl-3">
-                <br>
-                I.<br>
-                - company statistics<br>
-                - user statistics<br>
-                - orders statistics<br>
-                - downtimes statistics<br>
-                - states statistics<br>
-                <br>
-                II.<br>
-                - alarms statistics<br>
-                - breakdowns statistics<br>
-                - faults statistics<br>
-                - users statistics<br>
-                <br>
-                III.<br>
-                - packages statistics<br>
-                - parts statistics<br>
-                - system statistics<br>
-            </p>
+        <div id="content-wrapper" class="content-inner h-100"
+             style="padding-top: 60px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
+            <div class="row" style="margin: 6px 1px 7px 2px;">
+                <select data-role="select" multiple data-clear-button="true"
+                        data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                    {{range .Workplaces}}
+                    <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div id="statistics-table-container" style="display: block">
+            </div>
         </div>
     </div>
 </div>

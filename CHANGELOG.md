@@ -16,6 +16,10 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 ## [2021.2.3.7] - 2021-06-07
 
+### Added
+
+- basic statistics menu, working with remembering selected
+
 ### Fixed
 
 - proper assigned user for downtimes data table II.

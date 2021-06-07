@@ -11,8 +11,9 @@ const version = "2021.2.3.7"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 
-//const config = "user=postgres password=pj79.. dbname=system host=ec2-18-222-139-93.us-east-2.compute.amazonaws.com port=5432 sslmode=disable application_name=system_webservice"
-const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=system_webservice"
+const config = "user=postgres password=pj79.. dbname=system host=ec2-3-17-5-15.us-east-2.compute.amazonaws.com port=5432 sslmode=disable application_name=system_webservice"
+
+//const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=system_webservice"
 const (
 	production = iota + 1
 	downtime
@@ -91,6 +92,7 @@ func (p *program) run() {
 	router.POST("/update_workplaces", updateWorkplaces)
 	router.POST("/load_index_data", loadIndexData)
 	router.POST("/load_table_data", loadTableData)
+	router.POST("/load_statistics_data", loadStatisticsData)
 	router.POST("/load_chart_data", loadChartData)
 	router.POST("/load_settings_data", loadSettingsData)
 	router.POST("/load_settings_detail", loadSettingsDetail)
