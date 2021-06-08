@@ -14,6 +14,12 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.3.8] - 2021-06-08
+
+### Fixed
+
+- proper consumption data recalculating
+
 ## [2021.2.3.7] - 2021-06-07
 
 ### Added

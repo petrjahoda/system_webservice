@@ -58,6 +58,17 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.DateFrom = cachedUserWebSettings[email]["statistics-selected-from"]
 	data.DateTo = cachedUserWebSettings[email]["statistics-selected-to"]
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+		SelectionName:  getLocale(email, "user-name"),
+		SelectionValue: "username",
+		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "username"),
+	})
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+		SelectionName:  getLocale(email, "company"),
+		SelectionValue: "company",
+		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "company"),
+	})
+	// TODO: ADD COMPANY TO LOCALES
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "alarms"),
 		SelectionValue: "alarms",
 		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "alarms"),

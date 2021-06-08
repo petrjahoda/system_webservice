@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/jinzhu/now"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
@@ -175,7 +174,7 @@ func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []st
 	for _, workplace := range cachedWorkplacesById {
 		tempConsumptionData := cachedConsumptionDataByWorkplaceName[workplace.Name]
 		for _, port := range cachedWorkplacePorts[workplace.Name] {
-			if port.StateID.Int32 == downtime {
+			if port.StateID.Int32 == poweroff {
 				var devicePortAnalogRecords []database.DevicePortAnalogRecord
 				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", todayNoon).Find(&devicePortAnalogRecords)
 				tempConsumptionData[todayNoon.Format("2006-01-02")] = 0
@@ -223,7 +222,6 @@ func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []st
 	for _, consumption := range temporaryData {
 		consumptionData = append(consumptionData, consumption[1])
 	}
-	fmt.Println(consumptionData)
 	return consumptionData
 }
 
