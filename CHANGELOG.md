@@ -20,6 +20,9 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 
 - proper consumption data recalculating
 
+### Changed
+- better/faster calculating production data and consumption data
+
 ## [2021.2.3.7] - 2021-06-07
 
 ### Added

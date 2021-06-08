@@ -98,13 +98,15 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	}
 	data := IndexData{}
 	loc, err := time.LoadLocation(location)
-	workplaceNames, workplacePercents := downloadProductionData(db, loc, email)
+	cacheProductionData(db, time.Date(latestCachedWorkplaceCalendarData.Year(), latestCachedWorkplaceCalendarData.Month(), latestCachedWorkplaceCalendarData.Day(), 0, 0, 0, 0, loc))
+	cacheConsumptionData(db, time.Date(latestCachedWorkplaceConsumption.Year(), latestCachedWorkplaceConsumption.Month(), latestCachedWorkplaceConsumption.Day(), 0, 0, 0, 0, loc))
+	workplaceNames, workplacePercents := downloadProductionData(loc, email)
 	terminalDowntimeNames, terminalDowntimeValues := downloadTerminalDowntimeData(db, email)
 	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db, email)
 	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db, email)
-	productionData, downtimeData, poweroffData := downloadIndexData(db, loc, email)
-	monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff := processProductionData(productionData, loc, downtimeData, poweroffData)
-	consumptionData := downloadConsumptionData(db, loc, email)
+	calendarData := downloadCalendarData(email, loc)
+	monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff := downloadIndexChartData(email, loc)
+	consumptionData := downloadConsumptionData(email)
 	timeBack := time.Now().In(loc).AddDate(0, -11, 0)
 	data.WorkplaceNames = workplaceNames
 	data.WorkplacePercents = workplacePercents
@@ -126,7 +128,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.AlarmsTitle = getLocale(email, "alarms")
 	data.CalendarDayLabel = strings.Split(getLocale(email, "day-names"), ",")
 	data.CalendarMonthLabel = strings.Split(getLocale(email, "month-names"), ",")
-	data.CalendarData = productionData
+	data.CalendarData = calendarData
 	data.ConsumptionData = consumptionData
 	data.MonthDataDays = monthDataDays
 	data.MonthDataProduction = monthDataProduction
@@ -146,153 +148,11 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	logInfo("INDEX", "Index data sent in "+time.Since(timer).String())
 }
 
-func processProductionData(productionData [][]string, loc *time.Location, downtimeData [][]string, poweroffData [][]string) ([]string, []string, []string, []string) {
-	oneMonthBackInHours := 720.0
+func downloadIndexChartData(email string, loc *time.Location) ([]string, []string, []string, []string) {
 	var monthDataDays []string
 	var monthDataProduction []string
 	var monthDataDowntime []string
 	var monthDataPoweroff []string
-	for index, data := range productionData {
-		layout := "2006-01-02"
-		date, err := time.Parse(layout, data[0])
-		if err != nil {
-			logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
-		}
-		if time.Now().In(loc).Sub(date).Hours() < oneMonthBackInHours {
-			monthDataDays = append(monthDataDays, data[0])
-			monthDataProduction = append(monthDataProduction, data[1])
-			monthDataDowntime = append(monthDataDowntime, downtimeData[index][1])
-			monthDataPoweroff = append(monthDataPoweroff, poweroffData[index][1])
-		}
-	}
-	return monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff
-}
-
-func downloadConsumptionData(db *gorm.DB, loc *time.Location, email string) []string {
-	consumptionDataSync.Lock()
-	todayNoon := time.Date(consumptionDataLastFullDateTime.UTC().Year(), consumptionDataLastFullDateTime.UTC().Month(), consumptionDataLastFullDateTime.UTC().Day(), 0, 0, 0, 0, loc).In(loc)
-	for _, workplace := range cachedWorkplacesById {
-		tempConsumptionData := cachedConsumptionDataByWorkplaceName[workplace.Name]
-		for _, port := range cachedWorkplacePorts[workplace.Name] {
-			if port.StateID.Int32 == poweroff {
-				var devicePortAnalogRecords []database.DevicePortAnalogRecord
-				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", todayNoon).Find(&devicePortAnalogRecords)
-				tempConsumptionData[todayNoon.Format("2006-01-02")] = 0
-				for _, record := range devicePortAnalogRecords {
-					tempConsumptionData[record.DateTime.Format("2006-01-02")] += record.Data
-				}
-				cachedConsumptionDataByWorkplaceName[workplace.Name] = tempConsumptionData
-			}
-		}
-	}
-	consumptionDataLastFullDateTime = time.Now().In(loc)
-	consumptionDataSync.Unlock()
-	cachedConsumptionData := make(map[string]float32)
-	initialDate := time.Now().In(loc).AddDate(0, -1, 0)
-	for initialDate.Format("2006-01-02") != time.Now().In(loc).Format("2006-01-02") {
-		cachedConsumptionData[initialDate.Format("2006-01-02")] = 0.0
-		initialDate = initialDate.Add(24 * time.Hour)
-	}
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
-			for date, consumption := range cachedConsumptionDataByWorkplaceName[workplace] {
-				cachedConsumptionData[date] += consumption
-			}
-		}
-	} else {
-		for _, data := range cachedConsumptionDataByWorkplaceName {
-			for date, consumption := range data {
-				cachedConsumptionData[date] += consumption
-			}
-		}
-	}
-	var temporaryData [][]string
-	for key, value := range cachedConsumptionData {
-		oneMonthBackInHours := 720.0
-		dateTimeParsed, _ := time.Parse("2006-01-02", key)
-		if time.Now().In(loc).Sub(dateTimeParsed).Hours() <= oneMonthBackInHours {
-			consumption := strconv.FormatFloat(float64(value*230/1000), 'f', 1, 64)
-			temporaryData = append(temporaryData, []string{key, consumption})
-		}
-	}
-	sort.Slice(temporaryData[:], func(i, j int) bool {
-		return temporaryData[i][0] < temporaryData[j][0]
-	})
-	var consumptionData []string
-	for _, consumption := range temporaryData {
-		consumptionData = append(consumptionData, consumption[1])
-	}
-	return consumptionData
-}
-
-func downloadIndexData(db *gorm.DB, loc *time.Location, email string) ([][]string, [][]string, [][]string) {
-	productionRecords, downtimeRecords, poweroffRecords := downloadYearData(db, time.Now().In(loc).AddDate(-1, 0, 0), time.Now().In(loc), loc, email)
-	var productionData [][]string
-	var downtimeData [][]string
-	var poweroffData [][]string
-	for key, value := range productionRecords {
-		productionPercentage := strconv.FormatFloat(value.Seconds()*100/(value.Seconds()+downtimeRecords[key].Seconds()+poweroffRecords[key].Seconds()), 'f', 1, 64)
-		downtimePercentage := strconv.FormatFloat(downtimeRecords[key].Seconds()*100/(value.Seconds()+downtimeRecords[key].Seconds()+poweroffRecords[key].Seconds()), 'f', 1, 64)
-		poweroffPercentage := strconv.FormatFloat(poweroffRecords[key].Seconds()*100/(value.Seconds()+downtimeRecords[key].Seconds()+poweroffRecords[key].Seconds()), 'f', 1, 64)
-		productionData = append(productionData, []string{key, productionPercentage})
-		downtimeData = append(downtimeData, []string{key, downtimePercentage})
-		poweroffData = append(poweroffData, []string{key, poweroffPercentage})
-	}
-	sort.Slice(productionData[:], func(i, j int) bool {
-		return productionData[i][0] < productionData[j][0]
-	})
-	sort.Slice(downtimeData[:], func(i, j int) bool {
-		return downtimeData[i][0] < downtimeData[j][0]
-	})
-	sort.Slice(poweroffData[:], func(i, j int) bool {
-		return poweroffData[i][0] < poweroffData[j][0]
-	})
-	if len(productionData) > 0 {
-		layout := "2006-01-02"
-		initialDate, err := time.Parse(layout, productionData[0][0])
-		if err != nil {
-			logError("INDEX", "Problem parsing date "+err.Error()+" "+productionData[0][0])
-		}
-		var datesToAdd []string
-		for _, data := range productionData {
-			actualDate, err := time.Parse(layout, data[0])
-			if err != nil {
-				logError("INDEX", "Problem parsing date "+err.Error()+" "+data[0])
-			}
-			if actualDate != initialDate {
-				for actualDate != initialDate {
-					datesToAdd = append(datesToAdd, initialDate.Format("2006-01-02"))
-					initialDate = initialDate.Add(24 * time.Hour)
-				}
-				initialDate = initialDate.Add(24 * time.Hour)
-			} else {
-				initialDate = initialDate.Add(24 * time.Hour)
-			}
-		}
-		for _, dateToAdd := range datesToAdd {
-			productionData = append(productionData, []string{dateToAdd, "0.0"})
-			downtimeData = append(downtimeData, []string{dateToAdd, "0.0"})
-			poweroffData = append(poweroffData, []string{dateToAdd, "100.0"})
-		}
-		sort.Slice(productionData[:], func(i, j int) bool {
-			return productionData[i][0] < productionData[j][0]
-		})
-		sort.Slice(downtimeData[:], func(i, j int) bool {
-			return downtimeData[i][0] < downtimeData[j][0]
-		})
-		sort.Slice(poweroffData[:], func(i, j int) bool {
-			return poweroffData[i][0] < poweroffData[j][0]
-		})
-	}
-
-	return productionData, downtimeData, poweroffData
-}
-
-func downloadYearData(db *gorm.DB, fromDate time.Time, toDate time.Time, loc *time.Location, email string) (map[string]time.Duration, map[string]time.Duration, map[string]time.Duration) {
-	productionRecords := make(map[string]time.Duration)
-	downtimeRecords := make(map[string]time.Duration)
-	poweroffRecords := make(map[string]time.Duration)
-	var stateRecords []database.StateRecord
 	var workplaces []database.Workplace
 	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
 		for _, workplace := range cachedWorkplacesByName {
@@ -303,120 +163,125 @@ func downloadYearData(db *gorm.DB, fromDate time.Time, toDate time.Time, loc *ti
 			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
 		}
 	}
+	var cachedProductionData = map[string]time.Duration{}
+	var cachedDowntimeData = map[string]time.Duration{}
+	var cachedPoweroffData = map[string]time.Duration{}
 	for _, workplace := range workplaces {
-		db.Select("state_id, date_time_start").Where("date_time_start >= ?", fromDate).Where("date_time_start <= ?", toDate).Where("workplace_id = ?", workplace.ID).Order("id asc").Find(&stateRecords)
-		for index, record := range stateRecords {
-			nextDate := time.Now().In(loc)
-			if index < len(stateRecords)-1 {
-				nextDate = stateRecords[index+1].DateTimeStart
-			}
-			if record.StateID == production {
-				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
-					productionRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
-				} else {
-					endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-					for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
-						productionRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
-						record.DateTimeStart = endOfRecordDay.In(loc)
-						endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-					}
-					endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
-					productionRecords[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
-				}
-			}
-			if record.StateID == downtime {
-				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
-					downtimeRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
-				} else {
-					endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-					for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
-						downtimeRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
-						record.DateTimeStart = endOfRecordDay.In(loc)
-						endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-					}
-					endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
-					downtimeRecords[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
-				}
-			}
+		workplacesRecords.Lock()
+		productionData := cachedWorkplacesProductionRecords[workplace.Name]
+		workplacesRecords.Unlock()
+		for date, duration := range productionData {
+			cachedProductionData[date] = cachedProductionData[date] + duration
+		}
+		workplacesRecords.Lock()
+		downtimeData := cachedWorkplacesDowntimeRecords[workplace.Name]
+		workplacesRecords.Unlock()
+		for date, duration := range downtimeData {
+			cachedDowntimeData[date] = cachedDowntimeData[date] + duration
+		}
+		workplacesRecords.Lock()
+		poweroffData := cachedWorkplacesPoweroffRecords[workplace.Name]
+		workplacesRecords.Unlock()
+		for date, duration := range poweroffData {
+			cachedPoweroffData[date] = cachedPoweroffData[date] + duration
 		}
 	}
-	today := time.Now().In(loc).Format("2006-01-02")
-	for date, productionDuration := range productionRecords {
-		downtimeDuration := downtimeRecords[date]
-		if date == today {
-			todaysDuration := time.Now().In(loc).Sub(time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc))
-			poweroffRecords[date] = time.Duration(len(workplaces))*todaysDuration - downtimeDuration - productionDuration
-			continue
+	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
+	for i := 30; i >= 0; i-- {
+		if i == 0 {
+			totalTodayDuration := time.Now().In(loc).Sub(todayNoon).Seconds()
+			dayWorkplaceDuration := time.Duration(len(workplaces)*int(totalTodayDuration)) * time.Second
+			day := time.Now().Add(time.Duration(-24*i) * time.Hour)
+			monthDataDays = append(monthDataDays, day.Format("2006-01-02"))
+			productionPercentage := (cachedProductionData[day.Format("2006-01-02")].Seconds() / dayWorkplaceDuration.Seconds()) * 100
+			productionPercentageAsString := strconv.FormatFloat(productionPercentage, 'f', 1, 64)
+			monthDataProduction = append(monthDataProduction, productionPercentageAsString)
+			downtimePercentage := (cachedDowntimeData[day.Format("2006-01-02")].Seconds() / dayWorkplaceDuration.Seconds()) * 100
+			downtimePercentageAsString := strconv.FormatFloat(downtimePercentage, 'f', 1, 64)
+			monthDataDowntime = append(monthDataDowntime, downtimePercentageAsString)
+			poweroffPercentage := strconv.FormatFloat(100.0-productionPercentage-downtimePercentage, 'f', 1, 64)
+			monthDataPoweroff = append(monthDataPoweroff, poweroffPercentage)
+		} else {
+			day := time.Now().Add(time.Duration(-24*i) * time.Hour)
+			totalTodayDuration := time.Duration(len(workplaces)*86400) * time.Second
+			monthDataDays = append(monthDataDays, day.Format("2006-01-02"))
+			productionPercentage := (cachedProductionData[day.Format("2006-01-02")].Seconds() / totalTodayDuration.Seconds()) * 100
+			productionPercentageAsString := strconv.FormatFloat(productionPercentage, 'f', 1, 64)
+			monthDataProduction = append(monthDataProduction, productionPercentageAsString)
+			downtimePercentage := (cachedDowntimeData[day.Format("2006-01-02")].Seconds() / totalTodayDuration.Seconds()) * 100
+			downtimePercentageAsString := strconv.FormatFloat(downtimePercentage, 'f', 1, 64)
+			monthDataDowntime = append(monthDataDowntime, downtimePercentageAsString)
+			poweroffPercentage := strconv.FormatFloat(100.0-productionPercentage-downtimePercentage, 'f', 1, 64)
+			monthDataPoweroff = append(monthDataPoweroff, poweroffPercentage)
 		}
-		poweroffRecords[date] = time.Duration(len(workplaces)*24)*time.Hour - downtimeDuration - productionDuration
 	}
-
-	return productionRecords, downtimeRecords, poweroffRecords
+	return monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff
 }
 
-func downloadData(db *gorm.DB, fromDate time.Time, toDate time.Time, workplaceId uint, loc *time.Location, email string, stateId int) map[string]time.Duration {
-	stateRecordsAsMap := make(map[string]time.Duration)
-	var stateRecords []database.StateRecord
-	if workplaceId == 0 {
-		var workplaces []database.Workplace
-		if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
-			for _, workplace := range cachedWorkplacesByName {
-				workplaces = append(workplaces, workplace)
-			}
-		} else {
-			for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
-				workplaces = append(workplaces, cachedWorkplacesByName[workplace])
-			}
+func downloadCalendarData(email string, loc *time.Location) [][]string {
+	var workplaces []database.Workplace
+	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
+		for _, workplace := range cachedWorkplacesByName {
+			workplaces = append(workplaces, workplace)
 		}
-		for _, workplace := range workplaces {
-			db.Select("state_id, date_time_start").Where("date_time_start >= ?", fromDate).Where("date_time_start <= ?", toDate).Where("workplace_id = ?", workplace.ID).Order("id asc").Find(&stateRecords)
-			for index, record := range stateRecords {
-				nextDate := time.Now().In(loc)
-				if index < len(stateRecords)-1 {
-					nextDate = stateRecords[index+1].DateTimeStart
-				}
-				if record.StateID == stateId {
-					if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
-						stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
-					} else {
-						endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-						for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
-							stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
-							record.DateTimeStart = endOfRecordDay.In(loc)
-							endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-						}
-						endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
-						stateRecordsAsMap[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
-					}
-				}
-			}
-		}
-
 	} else {
-		db.Select("state_id, date_time_start").Where("date_time_start >= ?", fromDate).Where("date_time_start <= ?", toDate).Where("workplace_id = ?", workplaceId).Order("id asc").Find(&stateRecords)
-		for index, record := range stateRecords {
-			nextDate := time.Now().In(loc)
-			if index < len(stateRecords)-1 {
-				nextDate = stateRecords[index+1].DateTimeStart
-			}
-			if record.StateID == stateId {
-				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
-					stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
-				} else {
-
-					endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-					for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
-						stateRecordsAsMap[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
-						record.DateTimeStart = endOfRecordDay.In(loc)
-						endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
-					}
-					endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
-					stateRecordsAsMap[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
-				}
-			}
+		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
+			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
 		}
 	}
-	return stateRecordsAsMap
+	var calendarData [][]string
+	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
+	totalTodayDuration := time.Now().In(loc).Sub(todayNoon).Seconds()
+	var cachedCalendarData = map[string]time.Duration{}
+	for _, workplace := range workplaces {
+		workplacesRecords.Lock()
+		data := cachedWorkplacesProductionRecords[workplace.Name]
+		workplacesRecords.Unlock()
+		for date, duration := range data {
+			cachedCalendarData[date] = cachedCalendarData[date] + duration
+		}
+	}
+	for date, duration := range cachedCalendarData {
+		if date == todayNoon.Format("2006-01-02") {
+			dayWorkplaceDuration := time.Duration(len(workplaces)*int(totalTodayDuration)) * time.Second
+			percentage := strconv.FormatFloat((duration.Seconds()/dayWorkplaceDuration.Seconds())*100, 'f', 1, 64)
+			calendarData = append(calendarData, []string{date, percentage})
+		} else {
+			dayWorkplaceDuration := time.Duration(len(workplaces)*86400) * time.Second
+			percentage := strconv.FormatFloat((duration.Seconds()/dayWorkplaceDuration.Seconds())*100, 'f', 1, 64)
+			calendarData = append(calendarData, []string{date, percentage})
+		}
+	}
+	return calendarData
+}
+
+func downloadConsumptionData(email string) []string {
+	var workplaces []database.Workplace
+	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
+		for _, workplace := range cachedWorkplacesByName {
+			workplaces = append(workplaces, workplace)
+		}
+	} else {
+		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
+			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
+		}
+	}
+	var cachedConsumptionData = map[string]float32{}
+	for _, workplace := range workplaces {
+		consumptionDataSync.Lock()
+		data := cachedConsumptionDataByWorkplaceName[workplace.Name]
+		consumptionDataSync.Unlock()
+		for date, value := range data {
+			cachedConsumptionData[date] = cachedConsumptionData[date] + value
+		}
+	}
+
+	var consumptionData []string
+	for i := 30; i >= 0; i-- {
+		day := time.Now().Add(time.Duration(-24*i) * time.Hour)
+		consumptionData = append(consumptionData, strconv.FormatFloat(float64(cachedConsumptionData[day.Format("2006-01-02")]), 'f', 1, 64))
+	}
+	return consumptionData
 }
 
 func downloadTerminalAlarmData(db *gorm.DB, email string) ([]string, []float64) {
@@ -516,10 +381,7 @@ func downloadTerminalDowntimeData(db *gorm.DB, email string) ([]string, []float6
 	return terminalDowntimeNames, terminalDowntimeValues
 }
 
-func downloadProductionData(db *gorm.DB, loc *time.Location, email string) ([]string, []float64) {
-	var workplaceNames []string
-	var workplacePercents []float64
-	var indexDataWorkplaces []IndexDataWorkplace
+func downloadProductionData(loc *time.Location, email string) ([]string, []float64) {
 	var workplaces []database.Workplace
 	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
 		for _, workplace := range cachedWorkplacesByName {
@@ -530,19 +392,21 @@ func downloadProductionData(db *gorm.DB, loc *time.Location, email string) ([]st
 			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
 		}
 	}
+	var workplaceNames []string
+	var workplacePercents []float64
+	var indexDataWorkplaces []IndexDataWorkplace
+	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
+	totalTodayDuration := time.Now().In(loc).Sub(todayNoon)
 	for _, workplace := range workplaces {
-		data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc, email, 1)
-		var totalDuration time.Duration
-		for _, duration := range data {
-			totalDuration = duration
-		}
-		startOfToday := time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc)
-		totalTodayDuration := time.Now().In(loc).Sub(startOfToday)
+		workplacesRecords.Lock()
+		data := cachedWorkplacesProductionRecords[workplace.Name]
+		workplacesRecords.Unlock()
 		var indexDataWorkplace IndexDataWorkplace
 		indexDataWorkplace.Name = workplace.Name
-		indexDataWorkplace.Value = (totalDuration.Seconds() / totalTodayDuration.Seconds()) * 100
+		indexDataWorkplace.Value = (data[todayNoon.Format("2006-01-02")].Seconds() / totalTodayDuration.Seconds()) * 100
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
 	}
+
 	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
 		return indexDataWorkplaces[i].Value < indexDataWorkplaces[j].Value
 	})

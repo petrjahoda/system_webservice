@@ -58,7 +58,7 @@ type WorkplacesData struct {
 	Result            string
 }
 
-func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
@@ -125,19 +125,14 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 		})
 
 		var pageWorkplaces []Workplace
+		loc, _ := time.LoadLocation(location)
+		todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
+		cacheProductionData(db, todayNoon)
 		for _, workplace := range tempWorkplaces {
 			if uint(workplace.WorkplaceSectionID) == workplaceSection.ID {
 				var pageWorkplace Workplace
 				pageWorkplace.WorkplaceName = workplace.Name
-				loc, _ := time.LoadLocation(location)
-				data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc, email, 1)
-
-				var totalDuration time.Duration
-				for _, duration := range data {
-					totalDuration = duration
-				}
-				startOfToday := time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc)
-				totalTodayDuration := time.Now().In(loc).Sub(startOfToday)
+				totalTodayDuration := time.Now().In(loc).Sub(todayNoon)
 				stateRecord := cachedStateRecords[int(workplace.ID)]
 				state := cachedStatesById[uint(stateRecord.StateID)]
 				switch stateRecord.StateID {
@@ -147,7 +142,10 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					pageWorkplace.WorkplaceState = "mif-play"
 					pageWorkplace.WorkplaceStateName = getLocale(email, "production")
 					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
-					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
+					workplacesRecords.Lock()
+					productionDurationToday := cachedWorkplacesProductionRecords[workplace.Name][todayNoon.Format("2006-01-02")].Seconds()
+					workplacesRecords.Unlock()
+					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
 					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
@@ -185,7 +183,10 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					downtimeRecordId := cachedDowntimeRecords[int(workplace.ID)].DowntimeID
 					pageWorkplace.WorkplaceStateName = cachedDowntimesById[uint(downtimeRecordId)].Name
 					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
-					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
+					workplacesRecords.Lock()
+					productionDurationToday := cachedWorkplacesProductionRecords[workplace.Name][todayNoon.Format("2006-01-02")].Seconds()
+					workplacesRecords.Unlock()
+					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
 					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
@@ -222,7 +223,10 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, params 
 					pageWorkplace.WorkplaceStateName = getLocale(email, "poweroff")
 					pageWorkplace.WorkplaceProductivityColor = "bg-darkRed"
 					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
-					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
+					workplacesRecords.Lock()
+					productionDurationToday := cachedWorkplacesProductionRecords[workplace.Name][todayNoon.Format("2006-01-02")].Seconds()
+					workplacesRecords.Unlock()
+					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
 					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
@@ -337,14 +341,9 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 				var pageWorkplace Workplace
 				pageWorkplace.WorkplaceName = workplace.Name
 				loc, _ := time.LoadLocation(location)
-				data := downloadData(db, time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, time.Now().Location()), time.Now().In(loc), workplace.ID, loc, email, 1)
-
-				var totalDuration time.Duration
-				for _, duration := range data {
-					totalDuration = duration
-				}
-				startOfToday := time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc)
-				totalTodayDuration := time.Now().In(loc).Sub(startOfToday)
+				todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
+				cacheProductionData(db, todayNoon)
+				totalTodayDuration := time.Now().In(loc).Sub(todayNoon)
 				stateRecord := cachedStateRecords[int(workplace.ID)]
 				state := cachedStatesById[uint(stateRecord.StateID)]
 				switch stateRecord.StateID {
@@ -354,7 +353,10 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					pageWorkplace.WorkplaceState = "mif-play"
 					pageWorkplace.WorkplaceStateName = getLocale(email, "production")
 					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
-					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
+					workplacesRecords.Lock()
+					productionDurationToday := cachedWorkplacesProductionRecords[workplace.Name][todayNoon.Format("2006-01-02")].Seconds()
+					workplacesRecords.Unlock()
+					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
 					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
@@ -392,7 +394,10 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					downtimeRecordId := cachedDowntimeRecords[int(workplace.ID)].DowntimeID
 					pageWorkplace.WorkplaceStateName = cachedDowntimesById[uint(downtimeRecordId)].Name
 					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
-					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
+					workplacesRecords.Lock()
+					productionDurationToday := cachedWorkplacesProductionRecords[workplace.Name][todayNoon.Format("2006-01-02")].Seconds()
+					workplacesRecords.Unlock()
+					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
 					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
@@ -429,7 +434,10 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 					pageWorkplace.WorkplaceStateName = getLocale(email, "poweroff")
 					pageWorkplace.WorkplaceProductivityColor = "bg-darkRed"
 					pageWorkplace.WorkplaceStateDuration = time.Since(stateRecord.DateTimeStart).Round(time.Second).String()
-					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((totalDuration.Seconds()/totalTodayDuration.Seconds())*100, 'f', 1, 64)
+					workplacesRecords.Lock()
+					productionDurationToday := cachedWorkplacesProductionRecords[workplace.Name][todayNoon.Format("2006-01-02")].Seconds()
+					workplacesRecords.Unlock()
+					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					pageWorkplace.Information = getLocale(email, "order-name") + ": -"
 					pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID

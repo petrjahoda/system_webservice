@@ -1,27 +1,10 @@
-let timer = 60
+let timer = 30
 let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
-        const workplacesElement = document.getElementsByClassName("tag short-tag");
-        let workplaces = ""
-        for (let index = 0; index < workplacesElement.length; index++) {
-            workplaces += workplacesElement[index].children[0].innerHTML + ";"
-        }
-        workplaces = workplaces.slice(0, -1)
-        let data = {
-            key: "index-selected-workplaces",
-            value: workplaces,
-        };
-        console.log(workplaces)
-        fetch("/update_user_web_settings_from_web", {
-            method: "POST",
-            body: JSON.stringify(data)
-        }).then(() => {
-            loadIndexData();
-            timeleft = timer
-        }).catch((error) => {
-            updateCharm("ERR: " + error)
-        });
+        loadIndexData();
+        timeleft = timer
+        document.getElementById("progress-bar").value = timer - timeleft;
     }
     document.getElementById("progress-bar").value = timer - timeleft;
     timeleft -= 1;
@@ -98,7 +81,6 @@ function loadIndexData() {
             drawTerminalBreakdownChart(result);
             drawTerminalAlarmChart(result);
             document.getElementById("loader").hidden = true
-
             productivityChart.resize()
             calendarChart.resize();
             daysChart.resize()

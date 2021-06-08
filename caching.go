@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -32,6 +33,11 @@ var cachedUserTypesByName = map[string]database.UserType{}
 var cachedWorkplacesByName = map[string]database.Workplace{}
 var cachedWorkplaceModesByName = map[string]database.WorkplaceMode{}
 var cachedWorkplaceSectionsByName = map[string]database.WorkplaceSection{}
+var cachedWorkplacesProductionRecords = map[string]map[string]time.Duration{}
+var cachedWorkplacesDowntimeRecords = map[string]map[string]time.Duration{}
+var cachedWorkplacesPoweroffRecords = map[string]map[string]time.Duration{}
+var latestCachedWorkplaceCalendarData = time.Now()
+var latestCachedWorkplaceConsumption = time.Now()
 
 var cachedDevicePortsColorsById = map[int]string{}
 var cachedAlarmsById = map[uint]database.Alarm{}
@@ -61,7 +67,7 @@ var cachedWorkplaceSectionsById = map[uint]database.WorkplaceSection{}
 var cachedWorkShiftsById = map[uint]database.Workshift{}
 var cachedWorkplaceWorkShiftsById = map[uint]database.WorkplaceWorkshift{}
 var cachedConsumptionDataByWorkplaceName = map[string]map[string]float32{}
-var consumptionDataLastFullDateTime time.Time
+var workplacesRecords sync.Mutex
 var alarmsSync sync.RWMutex
 var breakdownsSync sync.RWMutex
 var companyNameSync sync.RWMutex
@@ -93,9 +99,11 @@ func cacheData() {
 		logError("CACHING", "Problem opening database: "+err.Error())
 		return
 	}
+
+	cacheSystemSettings(db)
+	cacheProductionData(db, time.Now().AddDate(-1, 0, 0))
 	cacheUsers(db)
 	cacheDevices(db)
-	cacheSystemSettings(db)
 	cacheLocales(db)
 	cacheOrders(db)
 	cacheOperations(db)
@@ -111,27 +119,126 @@ func cacheData() {
 	cacheStates(db)
 	cacheWorkplaceDevicePorts(db)
 	cacheWorkplacePorts(db)
-	cacheConsumptionData(db)
+	loc, _ := time.LoadLocation(location)
+	cacheConsumptionData(db, time.Date(time.Now().Add(-720*time.Hour).Year(), time.Now().Add(-720*time.Hour).Month(), time.Now().Add(-720*time.Hour).Day(), 0, 0, 0, 0, loc))
 	logInfo("CACHING", "Initial caching done in "+time.Since(timer).String())
 }
 
-func cacheConsumptionData(db *gorm.DB) {
+func cacheProductionData(db *gorm.DB, fromDate time.Time) {
 	loc, _ := time.LoadLocation(location)
+	logInfo("CACHING", "Caching workplace production/downtime/poweroff from: "+fromDate.In(loc).String()+"  back until: "+time.Now().In(loc).String())
+	var workplaces []database.Workplace
+	db.Find(&workplaces)
+	for _, workplace := range workplaces {
+		if cachedWorkplacesProductionRecords[workplace.Name] == nil {
+			cachedWorkplacesProductionRecords[workplace.Name] = make(map[string]time.Duration)
+		}
+		if cachedWorkplacesDowntimeRecords[workplace.Name] == nil {
+			cachedWorkplacesDowntimeRecords[workplace.Name] = make(map[string]time.Duration)
+		}
+		if cachedWorkplacesPoweroffRecords[workplace.Name] == nil {
+			cachedWorkplacesPoweroffRecords[workplace.Name] = make(map[string]time.Duration)
+		}
+		productionRecords := cachedWorkplacesProductionRecords[workplace.Name]
+		downtimeRecords := cachedWorkplacesDowntimeRecords[workplace.Name]
+		poweroffRecords := cachedWorkplacesPoweroffRecords[workplace.Name]
+		tempDate := fromDate
+		for tempDate.Before(time.Now()) {
+			productionRecords[tempDate.Format("2006-01-02")] = 0
+			downtimeRecords[tempDate.Format("2006-01-02")] = 0
+			poweroffRecords[tempDate.Format("2006-01-02")] = 0
+			tempDate = tempDate.Add(24 * time.Hour)
+		}
+		var stateRecords []database.StateRecord
+		latestCachedWorkplaceCalendarData = time.Now().In(loc)
+		db.Select("state_id, date_time_start").Where("date_time_start >= ?", fromDate).Where("date_time_start <= ?", time.Now().In(loc)).Where("workplace_id = ?", workplace.ID).Order("date_time_start asc").Order("id asc").Find(&stateRecords)
+		for index, record := range stateRecords {
+			nextDate := time.Now().In(loc)
+			if index < len(stateRecords)-1 {
+				nextDate = stateRecords[index+1].DateTimeStart
+			}
+			if record.StateID == production {
+				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
+					productionRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
+				} else {
+					endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+					for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
+						productionRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
+						record.DateTimeStart = endOfRecordDay.In(loc)
+						endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+					}
+					endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
+					productionRecords[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
+				}
+			}
+			if record.StateID == downtime {
+				if record.DateTimeStart.In(loc).Day() == nextDate.In(loc).Day() {
+					downtimeRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(record.DateTimeStart.In(loc))
+				} else {
+					endOfRecordDay := time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+					for record.DateTimeStart.In(loc).Before(nextDate.In(loc)) {
+						downtimeRecords[record.DateTimeStart.In(loc).Format("2006-01-02")] += endOfRecordDay.In(loc).Sub(record.DateTimeStart.In(loc))
+						record.DateTimeStart = endOfRecordDay.In(loc)
+						endOfRecordDay = time.Date(record.DateTimeStart.In(loc).Year(), record.DateTimeStart.In(loc).Month(), record.DateTimeStart.In(loc).Day()+1, 0, 0, 0, 0, loc)
+					}
+					endOfRecordDay = endOfRecordDay.In(loc).Add(-24 * time.Hour)
+					downtimeRecords[nextDate.In(loc).Format("2006-01-02")] += nextDate.In(loc).Sub(endOfRecordDay.In(loc))
+				}
+			}
+		}
+		today := time.Now().In(loc).Format("2006-01-02")
+		for date, productionDuration := range productionRecords {
+			downtimeDuration := downtimeRecords[date]
+			if date == today {
+				todaysDuration := time.Now().In(loc).Sub(time.Date(time.Now().In(loc).Year(), time.Now().In(loc).Month(), time.Now().In(loc).Day(), 0, 0, 0, 0, loc))
+				poweroffRecords[date] = time.Duration(len(workplaces))*todaysDuration - downtimeDuration - productionDuration
+				continue
+			}
+			poweroffRecords[date] = time.Duration(len(workplaces)*24)*time.Hour - downtimeDuration - productionDuration
+		}
+		workplacesRecords.Lock()
+		cachedWorkplacesProductionRecords[workplace.Name] = productionRecords
+		cachedWorkplacesDowntimeRecords[workplace.Name] = downtimeRecords
+		cachedWorkplacesPoweroffRecords[workplace.Name] = poweroffRecords
+		workplacesRecords.Unlock()
+	}
+	logInfo("CACHING", "Cached production/downtime/poweroff data with length of  "+strconv.Itoa(len(cachedWorkplacesProductionRecords))+" workplaces")
+}
+
+func cacheConsumptionData(db *gorm.DB, date time.Time) {
+	loc, _ := time.LoadLocation(location)
+	latestCachedWorkplaceConsumption = time.Now().In(loc)
 	consumptionDataSync.Lock()
-	for _, workplace := range cachedWorkplacesById {
+	var workplaces []database.Workplace
+	db.Find(&workplaces)
+	for _, workplace := range workplaces {
+		if cachedConsumptionDataByWorkplaceName[workplace.Name] == nil {
+			cachedConsumptionDataByWorkplaceName[workplace.Name] = make(map[string]float32)
+		}
+		tempConsumptionData := cachedConsumptionDataByWorkplaceName[workplace.Name]
+		tempDate := date
+		for tempDate.Before(time.Now()) {
+			tempConsumptionData[tempDate.Format("2006-01-02")] = 0
+			tempDate = tempDate.Add(24 * time.Hour)
+		}
+		tempDate = date
 		for _, port := range cachedWorkplacePorts[workplace.Name] {
 			if port.StateID.Int32 == poweroff {
-				var devicePortAnalogRecords []database.DevicePortAnalogRecord
-				db.Where("device_port_id = ?", port.DevicePortID).Where("date_time >= ?", time.Now().In(loc).AddDate(0, -1, 0)).Find(&devicePortAnalogRecords)
-				tempConsumptionData := make(map[string]float32)
-				for _, record := range devicePortAnalogRecords {
-					tempConsumptionData[record.DateTime.In(loc).Format("2006-01-02")] += record.Data
+				for tempDate.Before(time.Now()) {
+					toDate := tempDate.Add(24 * time.Hour)
+					var result sql.NullFloat64
+					db.Raw("select sum(Data)/count(id) from device_port_analog_records where device_port_id=? and date_time >= ? and date_time <= ?", port.DevicePortID, tempDate.In(loc), toDate.In(loc)).Scan(&result)
+					if result.Valid {
+						tempConsumptionData[tempDate.In(loc).Format("2006-01-02")] = float32(result.Float64)
+					} else {
+						tempConsumptionData[tempDate.In(loc).Format("2006-01-02")] = 0.0
+					}
+					tempDate = tempDate.Add(24 * time.Hour)
 				}
 				cachedConsumptionDataByWorkplaceName[workplace.Name] = tempConsumptionData
 			}
 		}
 	}
-	consumptionDataLastFullDateTime = time.Now().In(loc)
 	consumptionDataSync.Unlock()
 	logInfo("CACHING", "Cached consumption data for "+strconv.Itoa(len(cachedConsumptionDataByWorkplaceName))+" workplaces")
 }

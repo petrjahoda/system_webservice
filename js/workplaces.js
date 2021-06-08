@@ -1,4 +1,4 @@
-let timer = 60
+let timer = 30
 let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
