@@ -2,9 +2,7 @@ let timer = 30
 let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
-        loadIndexData();
-        timeleft = timer
-        document.getElementById("progress-bar").value = timer - timeleft;
+        location.reload()
     }
     document.getElementById("progress-bar").value = timer - timeleft;
     timeleft -= 1;
@@ -57,8 +55,7 @@ refreshButton.addEventListener('click', () => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-        loadIndexData();
-        timeleft = timer
+        location.reload()
     }).catch((error) => {
         updateCharm("ERR: " + error)
     });

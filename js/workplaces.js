@@ -2,8 +2,7 @@ let timer = 30
 let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
-        document.getElementById("progress-bar").value = 0
-        updateWorkplaces();
+        location.reload()
     }
     document.getElementById("progress-bar").value = timer - timeleft;
     timeleft -= 1;
@@ -11,31 +10,8 @@ const downloadTimer = setInterval(function () {
 
 const refreshButton = document.getElementById("data-refresh-button")
 refreshButton.addEventListener('click', () => {
-    updateWorkplaces();
+    location.reload()
 })
-
-function updateWorkplaces() {
-    document.getElementById("loader").hidden = false
-    fetch("/update_workplaces", {
-        method: "POST",
-    }).then((response) => {
-        response.text().then(function (data) {
-            if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
-            } else {
-                document.getElementById("content-wrapper").innerHTML = data
-                updateCharm(document.getElementById("hidden-information").innerText)
-                timeleft = timer
-                document.getElementById("progress-bar").value = timer - timeleft;
-                document.getElementById("loader").hidden = true
-            }
-        });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
-        document.getElementById("loader").hidden = true
-    });
-}
 
 function dataCollapse(element) {
     console.log(element.dataset.titleCaption + " collapsed")
