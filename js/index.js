@@ -1,8 +1,27 @@
-let timer = 30
+let timer = 60
 let timeleft = timer;
 const downloadTimer = setInterval(function () {
     if (timeleft <= 0) {
-        location.reload()
+        const workplacesElement = document.getElementsByClassName("tag short-tag");
+        let workplaces = ""
+        for (let index = 0; index < workplacesElement.length; index++) {
+            workplaces += workplacesElement[index].children[0].innerHTML + ";"
+        }
+        workplaces = workplaces.slice(0, -1)
+        let data = {
+            key: "index-selected-workplaces",
+            value: workplaces,
+        };
+        console.log(workplaces)
+        fetch("/update_user_web_settings_from_web", {
+            method: "POST",
+            body: JSON.stringify(data)
+        }).then(() => {
+            loadIndexData();
+            timeleft = timer
+        }).catch((error) => {
+            updateCharm("ERR: " + error)
+        });
     }
     document.getElementById("progress-bar").value = timer - timeleft;
     timeleft -= 1;
@@ -55,7 +74,8 @@ refreshButton.addEventListener('click', () => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-        location.reload()
+        loadIndexData();
+        timeleft = timer
     }).catch((error) => {
         updateCharm("ERR: " + error)
     });
@@ -78,6 +98,7 @@ function loadIndexData() {
             drawTerminalBreakdownChart(result);
             drawTerminalAlarmChart(result);
             document.getElementById("loader").hidden = true
+
             productivityChart.resize()
             calendarChart.resize();
             daysChart.resize()
@@ -614,7 +635,7 @@ function drawConsumptionChart(data) {
             },
             formatter: function (params) {
                 console.log(params)
-                return "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + params[0]["color"] + '"></span>' + params[0]["value"].replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,') + " kWh"
+                return "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + params[0]["color"] + '"></span>' + params[0]["value"] + " kWh"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];

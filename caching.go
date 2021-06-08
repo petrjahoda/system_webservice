@@ -227,7 +227,7 @@ func cacheConsumptionData(db *gorm.DB, date time.Time) {
 				for tempDate.Before(time.Now()) {
 					toDate := tempDate.Add(24 * time.Hour)
 					var result sql.NullFloat64
-					db.Raw("select sum(Data)/count(id) from device_port_analog_records where device_port_id=? and date_time >= ? and date_time <= ?", port.DevicePortID, tempDate.In(loc), toDate.In(loc)).Scan(&result)
+					db.Raw("select ((sum(Data)/count(id))*230*(count(id)/360))/1000 from device_port_analog_records where device_port_id=? and date_time >= ? and date_time <= ?", port.DevicePortID, tempDate.In(loc), toDate.In(loc)).Scan(&result)
 					if result.Valid {
 						tempConsumptionData[tempDate.In(loc).Format("2006-01-02")] = float32(result.Float64)
 					} else {
