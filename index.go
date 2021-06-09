@@ -26,7 +26,6 @@ type IndexPageData struct {
 	MenuStatistics        string
 	MenuData              string
 	MenuSettings          string
-	Compacted             string
 	UserEmail             string
 	UserName              string
 	Workplaces            []IndexWorkplaceSelection
@@ -80,9 +79,27 @@ type IndexDataWorkplace struct {
 	Value float64
 }
 
+type IndexPageInput struct {
+	Email string
+}
+
 func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
+	if len(email) == 0 {
+		var data IndexPageInput
+		err := json.NewDecoder(request.Body).Decode(&data)
+		if err != nil {
+			logError("SETTINGS", "Problem parsing email: "+err.Error())
+			var responseData TableOutput
+			responseData.Result = "ERR: Problem parsing email, " + err.Error()
+			writer.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(writer).Encode(responseData)
+			logInfo("SETTINGS", "Loading downtime ended with error")
+			return
+		}
+		email = data.Email
+	}
 	logInfo("INDEX", "Loading index data for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
@@ -97,7 +114,9 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 		return
 	}
 	data := IndexData{}
+	companyNameSync.Lock()
 	loc, err := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	cacheProductionData(db, time.Date(latestCachedWorkplaceCalendarData.Year(), latestCachedWorkplaceCalendarData.Month(), latestCachedWorkplaceCalendarData.Day(), 0, 0, 0, 0, loc))
 	cacheConsumptionData(db, time.Date(latestCachedWorkplaceConsumption.Year(), latestCachedWorkplaceConsumption.Month(), latestCachedWorkplaceConsumption.Day(), 0, 0, 0, 0, loc))
 	workplaceNames, workplacePercents := downloadProductionData(loc, email)
@@ -424,14 +443,15 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	logInfo("INDEX", "Sending home page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data IndexPageData
 	data.Version = version
+	companyNameSync.Lock()
 	data.Company = cachedCompanyName
+	companyNameSync.Unlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
 	data.MenuStatistics = getLocale(email, "menu-statistics")
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
-	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	var dataWorkplaces []IndexWorkplaceSelection

@@ -36,7 +36,9 @@ func loadBreakdownTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
+	companyNameSync.Lock()
 	loc, err := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	addBreakdownTableHeaders(email, &data)
 	for _, record := range breakdownRecords {
 		addBreakdownTableRow(record, &data, loc)

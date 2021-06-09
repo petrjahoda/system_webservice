@@ -8,15 +8,12 @@ function loadSettings() {
     }).then((response) => {
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 document.getElementById("settings-container").innerHTML = data
-                updateCharm(document.getElementById("hidden-information").innerText)
             }
         });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
+    }).catch(() => {
     });
 }
 
@@ -34,16 +31,12 @@ function loadDetails(selectedItem, type) {
     }).then((response) => {
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 document.getElementById("settings-container-detail").innerHTML = data
-                updateCharm(document.getElementById("hidden-detail-information").innerText)
             }
         });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
-
+    }).catch(() => {
     });
 }
 
@@ -59,8 +52,7 @@ function loadWorkplacePortDetails(selectedPort) {
     }).then((response) => {
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 document.getElementById("workplace-port-container").innerHTML = data
                 setTimeout(function () {
@@ -69,12 +61,9 @@ function loadWorkplacePortDetails(selectedPort) {
                 if (document.getElementById("workplace-port-created-at").value === "0001-01-01T00:00:00") {
                     document.getElementById("workplace-port-delete-button").hidden = true
                 }
-                updateCharm(document.getElementById("hidden-detail-port-information").innerText)
             }
-
         });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
+    }).catch(() => {
     });
 }
 
@@ -90,17 +79,14 @@ function loadDevicePortDetails(selectedPort) {
     }).then((response) => {
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 document.getElementById("port-container").innerHTML = data
                 setTimeout(function () {
                     document.getElementById("port-container").scrollIntoView();
                 }, 100);
-                updateCharm(document.getElementById("hidden-detail-port-information").innerText)
             }
         });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
+    }).catch(() => {
     });
 }

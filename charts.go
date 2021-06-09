@@ -32,7 +32,6 @@ type ChartsPageData struct {
 	MenuSettings          string
 	SelectionMenu         []ChartSelection
 	Workplaces            []ChartWorkplaceSelection
-	Compacted             string
 	DataFilterPlaceholder string
 	DateLocale            string
 	UserEmail             string
@@ -99,10 +98,14 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	logInfo("CHARTS", "Sending data page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data ChartsPageData
 	data.Version = version
+	localesSync.Lock()
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
+	localesSync.Unlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	companyNameSync.Lock()
 	data.Company = cachedCompanyName
+	companyNameSync.Unlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -110,7 +113,6 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
-	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "combined-chart"),
 		SelectionValue: "combined-chart",
@@ -177,7 +179,9 @@ func loadChartData(writer http.ResponseWriter, request *http.Request, params htt
 		return
 	}
 	logInfo("CHARTS", "Loading chart data for "+data.Data+" for "+data.Workplace)
+	companyNameSync.Lock()
 	loc, err := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	if err != nil {
 		logError("CHARTS", "Problem loading timezone, setting Europe/Prague")
 		loc, _ = time.LoadLocation("Europe/Prague")

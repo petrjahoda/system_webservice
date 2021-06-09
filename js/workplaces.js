@@ -1,12 +1,12 @@
 let timer = 60
-let timeleft = timer;
+let timeLeft = timer;
 const downloadTimer = setInterval(function () {
-    if (timeleft <= 0) {
+    if (timeLeft <= 0) {
         document.getElementById("progress-bar").value = 0
         updateWorkplaces();
     }
-    document.getElementById("progress-bar").value = timer - timeleft;
-    timeleft -= 1;
+    document.getElementById("progress-bar").value = timer - timeLeft;
+    timeLeft -= 1;
 }, 1000);
 
 const refreshButton = document.getElementById("data-refresh-button")
@@ -16,29 +16,30 @@ refreshButton.addEventListener('click', () => {
 
 function updateWorkplaces() {
     document.getElementById("loader").hidden = false
+    let data = {
+        email: document.getElementById("user-info").title
+    };
     fetch("/update_workplaces", {
         method: "POST",
+        body: JSON.stringify(data)
+
     }).then((response) => {
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 document.getElementById("content-wrapper").innerHTML = data
-                updateCharm(document.getElementById("hidden-information").innerText)
-                timeleft = timer
-                document.getElementById("progress-bar").value = timer - timeleft;
+                timeLeft = timer
+                document.getElementById("progress-bar").value = timer - timeLeft;
                 document.getElementById("loader").hidden = true
             }
         });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
+    }).catch(() => {
         document.getElementById("loader").hidden = true
     });
 }
 
 function dataCollapse(element) {
-    console.log(element.dataset.titleCaption + " collapsed")
     let data = {
         key: element.dataset.titleCaption,
         value: "display:none"
@@ -47,13 +48,11 @@ function dataCollapse(element) {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-    }).catch((error) => {
-        console.log(error)
+    }).catch(() => {
     });
 }
 
 function dataExpand(element) {
-    console.log(element.dataset.titleCaption + " expanded")
     let data = {
         key: element.dataset.titleCaption,
         value: "display:block"
@@ -62,7 +61,6 @@ function dataExpand(element) {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-    }).catch((error) => {
-        console.log(error)
+    }).catch(() => {
     });
 }

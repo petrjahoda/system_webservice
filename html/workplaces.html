@@ -17,17 +17,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta charset="UTF-8">
-    <title>{{.Version}}</title>
+    <title>{{.Company}}: {{.Version}}</title>
 </head>
 <body class="m4-cloak h-vh-100" style="min-width: 1360px;">
-<div id="mainmenu" data-role="navview" data-toggle="#paneToggle" data-expand="xxl" data-compact="sm"
-     class="{{.Compacted}}">
+<div id="mainmenu" data-role="navview" data-expand="fs" data-compact="fs" class="compacted">
     <div class="navview-pane" style="z-index: 999">
-        <div class="d-flex flex-align-center">
-            <button class="pull-button m-0" style="height: 52px" id="menu">
-                <span class="mif-menu"></span>
-            </button>
-        </div>
+        <div class="d-flex flex-align-center" style="height: 52px"></div>
         <ul class="navview-menu">
             <li class="item-separator"></li>
             <li>
@@ -66,30 +61,18 @@
                     <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
                 </a>
             </li>
+            <li>
+                <div style="position: relative;">
+                    <span class="icon" style="margin: auto" id="info-button"><span class="mif-info"></span></span>
+                </div>
+            </li>
         </ul>
-        <div class="w-100 text-center text-small data-box p-2 border-top" style="position: absolute; bottom: 0">
-            <div style="mix-blend-mode: multiply;">
-                <img data-role="gravatar" data-email="{{.UserEmail}}" data-default="identicon" alt="gravatar">
-            </div>
-            <br>
-            <br>
-            <br>
-            <div>
-                <h6 class="m-0">{{.UserName}} @ {{.Company}}</h6>
-            </div>
-            <br>
-            <hr>
-            <br>
-            <div>&copy; 2021 <a href="mailto:petr.jahoda@me.com" class="text-muted fg-black no-decor">Petr Jahoda&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
-            </div>
-            <div>Created with <a href="https://metroui.org.ua" class="text-muted fg-black no-decor">Metro 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
-            </div>
-            <div>Version {{.Version}}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
-        </div>
     </div>
     <div class="navview-content">
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
-            <a href="#" class="app-bar-item d-block d-none-sm" id="paneToggle"><span class="mif-menu"></span></a>
+            <div id="user-info" title="{{.UserEmail}}" style="position: absolute;top:18px;left: 10px;font-size: 14px;cursor: default">
+                {{.UserName}} @ {{.Company}}
+            </div>
             <div class="app-bar-container mx-auto" style=";margin: 0">
                 <div style="min-width:200px;margin-top: 3px;margin-left: 24px;">
                     <progress value="0" max="60" id="progress-bar" style="margin-left: 24px;"></progress>
@@ -100,13 +83,10 @@
                     </button>
                 </div>
             </div>
-            <div id="loader" hidden style="position: absolute;top:18px;right: 143px"><span
+            <div id="loader" hidden style="position: absolute;top:18px;right: 101px"><span
                     class="mif-loop2 ani-spin"></span></div>
-            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 93px">
+            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px">
                 <span class="badge bg-red fg-white">4</span>
-            </button>
-            <button class="button square m-1 mif-info" id="info-button"
-                    style="position: absolute;top:5px;right: 51px">
             </button>
             <button class="button square m-1 mif-switch" id="logout-button"
                     style="position: absolute;top:5px;right: 9px">
@@ -122,7 +102,7 @@
                  style="{{.PanelCompacted}}">
                 <div class="row centered">
                     {{range .Workplaces}}
-                    <div class="card shadow-2 " style="width: 19.0%;margin: 0.5%;cursor: default">
+                    <div class="card shadow-2 card-hover" style="width: 19.0%;margin: 0.5%;cursor: default">
                         <div class="card-header text-center"
                              style="{{.WorkplaceColor}};padding-bottom:0;padding-top:5px">
                             <div class="text-medium text-bold"
@@ -171,8 +151,11 @@
     </div>
 </div>
 <div data-role="charms" data-position="bottom" id="right-charms" class="charms bottom-side" data-opacity=".65"
-     style="height: 100px;padding-left: 60px;overflow: scroll;">
-    {{.Result}}
+     style="height: 75px;text-align:center;overflow: scroll;">
+    <div>&copy; 2021 <a href="mailto:petr.jahoda@me.com" class="text-muted fg-black no-decor">Petr Jahoda&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+    </div>
+    <div>Created with <a href="https://metroui.org.ua" class="text-muted fg-black no-decor">Metro 4&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</a>
+    </div>
 </div>
 </body>
 </html>

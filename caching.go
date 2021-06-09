@@ -13,6 +13,7 @@ import (
 var cachedCompanyName string
 var location string
 var cachedLocales = map[string]string{}
+
 var cachedUserWebSettings = map[string]map[string]string{}
 var cachedBreakdownTypesByName = map[string]database.BreakdownType{}
 var cachedDevicesByName = map[string]database.Device{}
@@ -38,7 +39,6 @@ var cachedWorkplacesDowntimeRecords = map[string]map[string]time.Duration{}
 var cachedWorkplacesPoweroffRecords = map[string]map[string]time.Duration{}
 var latestCachedWorkplaceCalendarData = time.Now()
 var latestCachedWorkplaceConsumption = time.Now()
-
 var cachedDevicePortsColorsById = map[int]string{}
 var cachedAlarmsById = map[uint]database.Alarm{}
 var cachedBreakdownsById = map[uint]database.Breakdown{}
@@ -67,27 +67,28 @@ var cachedWorkplaceSectionsById = map[uint]database.WorkplaceSection{}
 var cachedWorkShiftsById = map[uint]database.Workshift{}
 var cachedWorkplaceWorkShiftsById = map[uint]database.WorkplaceWorkshift{}
 var cachedConsumptionDataByWorkplaceName = map[string]map[string]float32{}
+
 var workplacesRecords sync.Mutex
-var alarmsSync sync.RWMutex
-var breakdownsSync sync.RWMutex
-var companyNameSync sync.RWMutex
-var devicesSync sync.RWMutex
-var devicePortColors sync.RWMutex
-var downtimesSync sync.RWMutex
-var faultsSync sync.RWMutex
-var localesSync sync.RWMutex
-var operationsSync sync.RWMutex
-var ordersSync sync.RWMutex
-var packagesSync sync.RWMutex
-var partsSync sync.RWMutex
-var productsSync sync.RWMutex
-var statesSync sync.RWMutex
-var usersSync sync.RWMutex
-var userSettingsSync sync.RWMutex
-var workplacesSync sync.RWMutex
-var workplaceDevicePortsSync sync.RWMutex
-var workShiftsSync sync.RWMutex
-var consumptionDataSync sync.RWMutex
+var alarmsSync sync.Mutex
+var breakdownsSync sync.Mutex
+var companyNameSync sync.Mutex
+var devicesSync sync.Mutex
+var devicePortColors sync.Mutex
+var downtimesSync sync.Mutex
+var faultsSync sync.Mutex
+var localesSync sync.Mutex
+var operationsSync sync.Mutex
+var ordersSync sync.Mutex
+var packagesSync sync.Mutex
+var partsSync sync.Mutex
+var productsSync sync.Mutex
+var statesSync sync.Mutex
+var usersSync sync.Mutex
+var userSettingsSync sync.Mutex
+var workplacesSync sync.Mutex
+var workplaceDevicePortsSync sync.Mutex
+var workShiftsSync sync.Mutex
+var consumptionDataSync sync.Mutex
 
 func cacheData() {
 	logInfo("CACHING", "Caching started")
@@ -119,13 +120,17 @@ func cacheData() {
 	cacheStates(db)
 	cacheWorkplaceDevicePorts(db)
 	cacheWorkplacePorts(db)
+	companyNameSync.Lock()
 	loc, _ := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	cacheConsumptionData(db, time.Date(time.Now().Add(-720*time.Hour).Year(), time.Now().Add(-720*time.Hour).Month(), time.Now().Add(-720*time.Hour).Day(), 0, 0, 0, 0, loc))
 	logInfo("CACHING", "Initial caching done in "+time.Since(timer).String())
 }
 
 func cacheProductionData(db *gorm.DB, fromDate time.Time) {
+	companyNameSync.Lock()
 	loc, _ := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	logInfo("CACHING", "Caching workplace production/downtime/poweroff from: "+fromDate.In(loc).String()+"  back until: "+time.Now().In(loc).String())
 	var workplaces []database.Workplace
 	db.Find(&workplaces)
@@ -206,7 +211,9 @@ func cacheProductionData(db *gorm.DB, fromDate time.Time) {
 }
 
 func cacheConsumptionData(db *gorm.DB, date time.Time) {
+	companyNameSync.Lock()
 	loc, _ := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	latestCachedWorkplaceConsumption = time.Now().In(loc)
 	consumptionDataSync.Lock()
 	var workplaces []database.Workplace

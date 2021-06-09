@@ -16,11 +16,6 @@ dataSelection.addEventListener("change", () => {
 
 let chartDom = document.getElementById('chart');
 let chartHeight = document.documentElement.clientHeight * 0.9
-let chartWidth = document.documentElement.clientWidth
-console.log(document.getElementById("mainmenu"))
-if (!document.getElementById("mainmenu").classList.contains("compacted") && document.getElementById("mainmenu").offsetWidth>1452) {
-    chartWidth = document.documentElement.clientWidth*0.86
-}
 if (chartHeight < 800) {
     chartHeight = 800;
 }
@@ -29,7 +24,7 @@ let endDateAsValue = new Date()
 let borderStart = 50
 let borderEnd = chartDom.scrollWidth - 80
 let borderChange = borderEnd - borderStart
-let myChart = echarts.init(chartDom, null, {height: chartHeight,width:chartWidth, renderer: 'svg'});
+let myChart = echarts.init(chartDom, null, {height: chartHeight,renderer: 'svg'});
 if (document.getElementById('to-date').value === "") {
 }
 let now = new Date();
@@ -86,12 +81,6 @@ function loadChart() {
         body: JSON.stringify(data)
     }).then((response) => {
         const download = performance.now();
-        let difference = download - start
-        if (difference < 1000) {
-            updateCharm("INF: Chart data downloaded from database in " + difference + "ms")
-        } else {
-            updateCharm("INF: Chart data downloaded from database in " + difference / 1000 + "s")
-        }
         response.text().then(function (data) {
             chartIsLoading = false
             let result = JSON.parse(data);
@@ -120,17 +109,9 @@ function loadChart() {
                 }
                 document.getElementById("loader").hidden = true
             }
-            const draw = performance.now();
-            let difference = draw - download
-            if (difference < 1000) {
-                updateCharm("INF: Chart data drew in " + difference + "ms")
-            } else {
-                updateCharm("INF: Chart data drew in " + difference / 1000 + "s")
-            }
 
         });
     }).catch((error) => {
-        updateCharm("ERR: " + error)
         document.getElementById("loader").hidden = true
         document.getElementById("loader").style.transform = "none"
     });
@@ -170,5 +151,4 @@ myChart.on('datazoom', function () {
     let zoom = myChart.getOption().dataZoom[0];
     startDateAsValue = zoom.startValue * 1000
     endDateAsValue = zoom.endValue * 1000
-    console.log(myChart)
 });

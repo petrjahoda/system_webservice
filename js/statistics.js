@@ -17,7 +17,6 @@ dataOkButton.addEventListener("click", () => {
 })
 
 function loadData() {
-    console.log("1")
     document.getElementById("loader").hidden = false
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
@@ -34,11 +33,9 @@ function loadData() {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
-        console.log("2")
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 // document.getElementById("data-table-container").innerHTML = data
                 // if (document.getElementById("data-table").classList.contains("compact")) {
@@ -48,12 +45,10 @@ function loadData() {
                 //     tableButton.classList.remove("mif-lines")
                 //     tableButton.classList.add("mif-menu")
                 // }
-                // updateCharm(document.getElementById("hidden-data-information").innerText)
             }
             document.getElementById("loader").hidden = true
         });
-    }).catch((error) => {
-        console.log(error)
+    }).catch(() => {
         document.getElementById("loader").hidden = true
     });
 }

@@ -14,6 +14,16 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.3.9] - 2021-06-09
+
+### Changed
+
+- left menu only compacted
+- info charm showing only information about developer
+- proper handling resizing charts
+- icons moved around
+- proper loading workplaces and index data
+
 ## [2021.2.3.8] - 2021-06-08
 
 ### Fixed

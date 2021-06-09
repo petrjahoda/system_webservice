@@ -5,26 +5,6 @@ if (sessionStorage.getItem("charm") === "open") {
     charms.classList.remove("open")
 }
 
-const menu = document.getElementById("menu")
-menu.addEventListener("click", (event) => {
-    let compacted = "compacted js-compact"
-    if (document.getElementById("mainmenu").classList.contains("compacted")) {
-        compacted = ""
-    }
-    let data = {
-        key: "menu",
-        value: compacted
-    };
-    fetch("/update_user_web_settings_from_web", {
-        method: "POST",
-        body: JSON.stringify(data)
-    }).then(() => {
-        location.reload()
-    }).catch((error) => {
-        console.log(error)
-    });
-})
-
 let infoButton = document.getElementById("info-button")
 infoButton.addEventListener('click', () => {
     if (sessionStorage.getItem("charm") === "open") {
@@ -35,10 +15,6 @@ infoButton.addEventListener('click', () => {
         sessionStorage.setItem("charm", "open")
     }
 })
-
-function updateCharm(text) {
-    charms.innerHTML = text + "<br>" + charms.innerHTML
-}
 
 const logout = document.getElementById("logout-button")
 logout.addEventListener('click', () => {

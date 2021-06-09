@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -53,16 +52,33 @@ type WorkplacesData struct {
 	MenuData          string
 	MenuSettings      string
 	WorkplaceSections []WorkplaceSection
-	Compacted         string
 	UserEmail         string
 	UserName          string
 	Result            string
 }
 
+type WorkplacesPageInput struct {
+	Email string
+}
+
 func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	fmt.Println(email)
+	if len(email) == 0 {
+		var data WorkplacesPageInput
+		err := json.NewDecoder(request.Body).Decode(&data)
+		if err != nil {
+			logError("SETTINGS", "Problem parsing email: "+err.Error())
+			var responseData WorkplacesData
+			responseData.Result = "ERR: Problem parsing email, " + err.Error()
+			writer.Header().Set("Content-Type", "application/json")
+			_ = json.NewEncoder(writer).Encode(responseData)
+			logInfo("SETTINGS", "Loading downtime ended with error")
+			return
+		}
+		email = data.Email
+	}
+
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
@@ -111,7 +127,9 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 	for _, stateRecord := range stateRecords {
 		cachedStateRecords[stateRecord.WorkplaceID] = stateRecord
 	}
+	companyNameSync.Lock()
 	loc, _ := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
 	cacheProductionData(db, todayNoon)
 	var workplaceSections []database.WorkplaceSection
@@ -326,7 +344,9 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	var workplaceSections []database.WorkplaceSection
 	db.Find(&workplaceSections)
 	var sections []WorkplaceSection
+	companyNameSync.Lock()
 	loc, _ := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
 	cacheProductionData(db, todayNoon)
 	for _, workplaceSection := range workplaceSections {
@@ -470,7 +490,9 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	}
 	var data WorkplacesData
 	data.Version = version
+	companyNameSync.Lock()
 	data.Company = cachedCompanyName
+	companyNameSync.Unlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -478,7 +500,6 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.WorkplaceSections = sections
-	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.Result = "INF: Page processed in " + time.Since(timer).String()

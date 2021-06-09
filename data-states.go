@@ -37,7 +37,9 @@ func loadStatesTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
 	addStateTableHeaders(email, &data)
+	companyNameSync.Lock()
 	loc, err := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	for _, record := range orderRecords {
 		addStateTableRow(record, loc, &data)
 	}

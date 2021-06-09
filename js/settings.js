@@ -1,5 +1,5 @@
 const settingsSelection = document.getElementById("data-selection")
-settingsSelection.addEventListener("change", (event) => {
+settingsSelection.addEventListener("change", () => {
     loadSettings();
     document.getElementById("settings-container-detail").innerHTML = ""
 })
@@ -29,7 +29,7 @@ container.addEventListener("click", (event) => {
         loadSettings();
         loadDetails(null, "third");
     }
-    if (event.target.id === "data-save-button" || event.target.id === "data-save-button-mif")  {
+    if (event.target.id === "data-save-button" || event.target.id === "data-save-button-mif") {
         let selection = document.getElementById("data-selection").value
         switch (selection) {
             case "user" : {

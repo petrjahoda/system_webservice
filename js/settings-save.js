@@ -100,13 +100,11 @@ function saveWorkshift() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -143,13 +141,11 @@ function saveAlarm() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -186,13 +182,11 @@ function saveDevice() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -225,13 +219,11 @@ function saveSystemSettings() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -268,13 +260,11 @@ function saveUserSettings() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -305,13 +295,11 @@ function saveUserType() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -355,13 +343,11 @@ function saveUser() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -393,13 +379,11 @@ function savePackageType() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -433,13 +417,11 @@ function savePackage() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -470,13 +452,11 @@ function saveFaultType() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -509,13 +489,11 @@ function saveFault() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -546,13 +524,11 @@ function saveDowntimeType() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -586,13 +562,11 @@ function saveDowntime() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -623,13 +597,11 @@ function saveBreakdownType() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -663,13 +635,11 @@ function saveBreakdown() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -701,13 +671,11 @@ function saveState() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -739,13 +707,11 @@ function savePart() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -779,13 +745,11 @@ function saveProduct() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -825,13 +789,11 @@ function saveOrder() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -864,13 +826,11 @@ function saveOperation() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -905,13 +865,11 @@ function saveWorkplacePortDetails() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("workplace-port-container").innerHTML = ""
                             loadDetails(sessionStorage.getItem("selected_id"), "first");
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("workplace-port-container").innerHTML = ""
                         loadDetails(sessionStorage.getItem("selected_id"), "first");
                     });
@@ -950,13 +908,11 @@ function saveDevicePortDetails() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("port-container").innerHTML = ""
                             loadDetails(sessionStorage.getItem("selected_id"), "first");
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("port-container").innerHTML = ""
                         loadDetails(sessionStorage.getItem("selected_id"), "first");
                     });
@@ -1004,13 +960,11 @@ function saveWorkplace() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -1041,13 +995,11 @@ function saveWorkplaceSection() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });
@@ -1080,13 +1032,11 @@ function saveWorkplaceMode() {
                         body: JSON.stringify(data)
                     }).then((response) => {
                         response.text().then(function (data) {
-                            let result = JSON.parse(data);
-                            updateCharm(result["Result"])
+                            JSON.parse(data);
                             document.getElementById("settings-container-detail").innerHTML = ""
                             loadSettings();
                         });
-                    }).catch((error) => {
-                        updateCharm("ERR: " + error)
+                    }).catch(() => {
                         document.getElementById("settings-container-detail").innerHTML = ""
                         loadSettings();
                     });

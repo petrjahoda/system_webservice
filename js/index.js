@@ -1,7 +1,7 @@
 let timer = 60
-let timeleft = timer;
+let timeLeft = timer;
 const downloadTimer = setInterval(function () {
-    if (timeleft <= 0) {
+    if (timeLeft <= 0) {
         const workplacesElement = document.getElementsByClassName("tag short-tag");
         let workplaces = ""
         for (let index = 0; index < workplacesElement.length; index++) {
@@ -18,19 +18,14 @@ const downloadTimer = setInterval(function () {
             body: JSON.stringify(data)
         }).then(() => {
             loadIndexData();
-            timeleft = timer
-        }).catch((error) => {
-            updateCharm("ERR: " + error)
+            timeLeft = timer
+        }).catch(() => {
         });
     }
-    document.getElementById("progress-bar").value = timer - timeleft;
-    timeleft -= 1;
+    document.getElementById("progress-bar").value = timer - timeLeft;
+    timeLeft -= 1;
 }, 1000);
 
-let indexChartWidth = window.innerWidth*0.62
-if (!document.getElementById("mainmenu").classList.contains("compacted")) {
-    indexChartWidth = window.innerWidth*0.50
-}
 let productivityChartDom = document.getElementById('productivity-overview');
 let calendarChartDom = document.getElementById('calendar-heatmap');
 let terminalDowntimeChartDom = document.getElementById('terminal-downtimes');
@@ -42,12 +37,12 @@ let daysDom = document.getElementById('days-chart');
 let refreshButton = document.getElementById("data-refresh-button");
 
 let productivityChart = echarts.init(productivityChartDom, null, {renderer: 'svg'});
-let calendarChart = echarts.init(calendarChartDom, null, {width:indexChartWidth,renderer: 'svg'});
+let calendarChart = echarts.init(calendarChartDom, null, {renderer: 'svg'});
 let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom, null, {renderer: 'svg'});
 let terminalBreakdownChart = echarts.init(terminalBreakdownChartDom, null, {renderer: 'svg'});
 let terminalAlarmChart = echarts.init(terminalAlarmChartDom, null, {renderer: 'svg'});
-let consumptionChart = echarts.init(consumptionChartDom, null, {width:indexChartWidth,renderer: 'svg'});
-let daysChart = echarts.init(daysDom, null, {width:indexChartWidth,renderer: 'svg'})
+let consumptionChart = echarts.init(consumptionChartDom, null, {renderer: 'svg'});
+let daysChart = echarts.init(daysDom, null, {renderer: 'svg'})
 
 window.addEventListener('resize', () => {
     daysChart.resize()
@@ -75,21 +70,24 @@ refreshButton.addEventListener('click', () => {
         body: JSON.stringify(data)
     }).then(() => {
         loadIndexData();
-        timeleft = timer
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
+        timeLeft = timer
+    }).catch(() => {
     });
 })
 
 function loadIndexData() {
     console.log("LOADING INDEX DATA")
     document.getElementById("loader").hidden = false
+    let data = {
+        email: document.getElementById("user-info").title
+    };
     fetch("/load_index_data", {
         method: "POST",
+        body: JSON.stringify(data)
+
     }).then((response) => {
         response.text().then(function (data) {
             let result = JSON.parse(data);
-            updateCharm(result["Result"])
             drawProductivityChart(result);
             drawCalendar(result);
             drawDaysChart(result);
@@ -98,7 +96,6 @@ function loadIndexData() {
             drawTerminalBreakdownChart(result);
             drawTerminalAlarmChart(result);
             document.getElementById("loader").hidden = true
-
             productivityChart.resize()
             calendarChart.resize();
             daysChart.resize()
@@ -106,10 +103,8 @@ function loadIndexData() {
             terminalDowntimeChart.resize()
             terminalBreakdownChart.resize()
             terminalAlarmChart.resize()
-
         });
-    }).catch((error) => {
-        updateCharm("ERR: " + error)
+    }).catch(() => {
         document.getElementById("loader").hidden = true
     });
 }
@@ -170,7 +165,6 @@ function drawProductivityChart(data) {
             axisLabel: {show: false},
             axisTick: {show: false},
             splitLine: {show: false},
-
             data: data["WorkplaceNames"]
         },
         series: [
@@ -440,9 +434,9 @@ function drawCalendar(data) {
     let locale = getLocaleFrom(data);
     moment.locale(locale);
     calendarChartDom.style.height = '250px'
-    let actualWidth = (window.innerWidth - document.getElementById("navview-menu").offsetWidth)*0.61
+    let actualWidth = (window.innerWidth - document.getElementById("navview-menu").offsetWidth) * 0.61
     if (!document.getElementById("mainmenu").classList.contains("compacted")) {
-        actualWidth = (window.innerWidth - document.getElementById("navview-menu").offsetWidth)*0.54
+        actualWidth = (window.innerWidth - document.getElementById("navview-menu").offsetWidth) * 0.54
     }
     let option;
     option = {
@@ -603,7 +597,7 @@ function drawConsumptionChart(data) {
             borderColor: '#EE6666',
         }
     };
-    option = {
+    let option = {
         title: {
             text: data["ConsumptionMonthTitle"],
             x: 'center'
@@ -634,7 +628,6 @@ function drawConsumptionChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                console.log(params)
                 return "<b>" + moment(new Date(params[0]["axisValue"])).format('LL') + "</b><br>" + '<span style="display:inline-block;margin-right:5px;width:9px;height:9px;background-color:' + params[0]["color"] + '"></span>' + params[0]["value"] + " kWh"
             },
             position: function (point, params, dom, rect, size) {
@@ -651,4 +644,5 @@ function drawConsumptionChart(data) {
     };
     option && consumptionChart.setOption(option);
 }
+
 loadIndexData();

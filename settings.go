@@ -25,7 +25,6 @@ type SettingsPageOutput struct {
 	MenuStatistics string
 	MenuData       string
 	MenuSettings   string
-	Compacted      string
 	SelectionMenu  []TableSelection
 	DateLocale     string
 	UserEmail      string
@@ -39,7 +38,9 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	logInfo("SETTINGS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data SettingsPageOutput
 	data.Version = version
+	companyNameSync.Lock()
 	data.Company = cachedCompanyName
+	companyNameSync.Unlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.MenuOverview = getLocale(email, "menu-overview")
@@ -48,8 +49,9 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	data.MenuStatistics = getLocale(email, "menu-statistics")
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
-	data.Compacted = cachedUserWebSettings[email]["menu"]
+	localesSync.Lock()
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
+	localesSync.Unlock()
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "user-name"),
 		SelectionValue: "user",

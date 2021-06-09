@@ -278,7 +278,6 @@ function drawDigitalChart(chartData) {
             type: 'value',
             show: false,
         });
-        console.log(chartData["AlarmData"] !== null)
         if (chartData["AlarmData"] !== null) {
             let alarmData = []
             let color = ""

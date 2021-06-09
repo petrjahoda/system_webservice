@@ -27,7 +27,6 @@ type StatisticsPageData struct {
 	DataFilterPlaceholder string
 	DateFrom              string
 	DateTo                string
-	Compacted             string
 	UserEmail             string
 	UserName              string
 }
@@ -45,14 +44,15 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	email, _, _ := request.BasicAuth()
 	var data StatisticsPageData
 	data.Version = version
+	companyNameSync.Lock()
 	data.Company = cachedCompanyName
+	companyNameSync.Unlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
 	data.MenuStatistics = getLocale(email, "menu-statistics")
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
-	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.DateFrom = cachedUserWebSettings[email]["statistics-selected-from"]
@@ -157,8 +157,9 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 		return
 	}
 	logInfo("DATA", "Loading statistics for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
-	logInfo("DATA", location)
+	companyNameSync.Lock()
 	loc, err := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	if err != nil {
 		logError("DATA", "Problem loading timezone, setting Europe/Prague")
 		loc, _ = time.LoadLocation("Europe/Prague")

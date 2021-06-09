@@ -1,5 +1,3 @@
-if (document.getElementById('to-date').value === "") {
-}
 let now = new Date();
 now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
 document.getElementById('to-date').value = now.toISOString().slice(0, 16);
@@ -33,8 +31,7 @@ tableButton.addEventListener("click", () => {
         method: "POST",
         body: JSON.stringify(data)
     }).then(() => {
-    }).catch((error) => {
-        console.log(error)
+    }).catch(() => {
     });
 })
 
@@ -67,8 +64,7 @@ function loadData() {
     }).then((response) => {
         response.text().then(function (data) {
             if (data.includes("ERR: ")) {
-                let result = JSON.parse(data);
-                updateCharm(result["Result"])
+                JSON.parse(data);
             } else {
                 document.getElementById("data-table-container").innerHTML = data
                 if (document.getElementById("data-table").classList.contains("compact")) {
@@ -78,12 +74,10 @@ function loadData() {
                     tableButton.classList.remove("mif-lines")
                     tableButton.classList.add("mif-menu")
                 }
-                updateCharm(document.getElementById("hidden-data-information").innerText)
             }
             document.getElementById("loader").hidden = true
         });
-    }).catch((error) => {
-        console.log(error)
+    }).catch(() => {
         document.getElementById("loader").hidden = true
     });
 }

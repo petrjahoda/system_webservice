@@ -33,7 +33,6 @@ type DataPageOutput struct {
 	MenuSettings          string
 	SelectionMenu         []TableSelection
 	Workplaces            []TableWorkplaceSelection
-	Compacted             string
 	DataFilterPlaceholder string
 	DateLocale            string
 	UserEmail             string
@@ -60,12 +59,16 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	logInfo("DATA", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data DataPageOutput
 	data.Version = version
+	localesSync.Lock()
 	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
+	localesSync.Unlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.DateFrom = cachedUserWebSettings[email]["data-selected-from"]
 	data.DateTo = cachedUserWebSettings[email]["data-selected-to"]
+	companyNameSync.Lock()
 	data.Company = cachedCompanyName
+	companyNameSync.Unlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -73,7 +76,6 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
-	data.Compacted = cachedUserWebSettings[email]["menu"]
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "alarms"),
 		SelectionValue: "alarms",
@@ -187,8 +189,9 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 		return
 	}
 	logInfo("DATA", "Loading data for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
-	logInfo("DATA", location)
+	companyNameSync.Lock()
 	loc, err := time.LoadLocation(location)
+	companyNameSync.Unlock()
 	if err != nil {
 		logError("DATA", "Problem loading timezone, setting Europe/Prague")
 		loc, _ = time.LoadLocation("Europe/Prague")
