@@ -68,27 +68,27 @@ var cachedWorkShiftsById = map[uint]database.Workshift{}
 var cachedWorkplaceWorkShiftsById = map[uint]database.WorkplaceWorkshift{}
 var cachedConsumptionDataByWorkplaceName = map[string]map[string]float32{}
 
-var workplacesRecords sync.Mutex
-var alarmsSync sync.Mutex
-var breakdownsSync sync.Mutex
-var companyNameSync sync.Mutex
-var devicesSync sync.Mutex
-var devicePortColors sync.Mutex
-var downtimesSync sync.Mutex
-var faultsSync sync.Mutex
-var localesSync sync.Mutex
-var operationsSync sync.Mutex
-var ordersSync sync.Mutex
-var packagesSync sync.Mutex
-var partsSync sync.Mutex
-var productsSync sync.Mutex
-var statesSync sync.Mutex
-var usersSync sync.Mutex
-var userSettingsSync sync.Mutex
-var workplacesSync sync.Mutex
-var workplaceDevicePortsSync sync.Mutex
-var workShiftsSync sync.Mutex
-var consumptionDataSync sync.Mutex
+var workplacesRecords sync.RWMutex
+var alarmsSync sync.RWMutex
+var breakdownsSync sync.RWMutex
+var companyNameSync sync.RWMutex
+var devicesSync sync.RWMutex
+var devicePortColors sync.RWMutex
+var downtimesSync sync.RWMutex
+var faultsSync sync.RWMutex
+var localesSync sync.RWMutex
+var operationsSync sync.RWMutex
+var ordersSync sync.RWMutex
+var packagesSync sync.RWMutex
+var partsSync sync.RWMutex
+var productsSync sync.RWMutex
+var statesSync sync.RWMutex
+var usersSync sync.RWMutex
+var userSettingsSync sync.RWMutex
+var workplacesSync sync.RWMutex
+var workplaceDevicePortsSync sync.RWMutex
+var workShiftsSync sync.RWMutex
+var consumptionDataSync sync.RWMutex
 
 func cacheData() {
 	logInfo("CACHING", "Caching started")

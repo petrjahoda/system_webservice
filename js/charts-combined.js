@@ -36,6 +36,7 @@ function drawCombinedChart(chartData) {
                     },
                     xAxisIndex: 1,
                     yAxisIndex: 1,
+                    cursor: 'default'
                 });
                 break;
             case "analog":
@@ -269,7 +270,7 @@ function drawCombinedChart(chartData) {
             },
             formatter: function (params) {
                 let dateChange = endDateAsValue - startDateAsValue
-                let pointerValue = (startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000
+                let pointerValue = (startDateAsValue + (positionInChart/document.getElementById("chart").offsetWidth)*dateChange) / 1000
                 let result = ""
                 for (const param of params) {
                     if (pointerValue > +param["value"][3] && pointerValue < +param["value"][4]) {
@@ -287,49 +288,47 @@ function drawCombinedChart(chartData) {
 
         },
         grid: [{
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '5%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '9%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '13%',
             height: '52%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '70%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '74%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '78%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '82%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
             top: '86%',
             height: '3%'
         }],
         legend: {},
         toolbox: {
-            right: 100,
+            right: 0,
             show: true,
             feature: {
                 dataZoom: {

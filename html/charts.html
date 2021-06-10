@@ -32,43 +32,43 @@
         <ul class="navview-menu">
             <li class="item-separator"></li>
             <li>
-                <a href="index">
+                <a href="index" style="cursor: default">
                     <span class="icon"><span class="mif-home"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuOverview}}</span>
                 </a>
             </li>
             <li>
-                <a href="workplaces">
+                <a href="workplaces" style="cursor: default">
                     <span class="icon"><span class="mif-dashboard"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuWorkplaces}}</span>
                 </a>
             </li>
             <li class="active">
-                <a href="charts">
+                <a href="charts" style="cursor: default">
                     <span class="icon"><span class="mif-chart-dots"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuCharts}}</span>
                 </a>
             </li>
             <li>
-                <a href="statistics">
+                <a href="statistics" style="cursor: default">
                     <span class="icon"><span class="mif-chart-bars"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuStatistics}}</span>
                 </a>
             </li>
             <li>
-                <a href="data">
+                <a href="data" style="cursor: default">
                     <span class="icon"><span class="mif-table"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuData}}</span>
                 </a>
             </li>
             <li>
-                <a href="settings">
+                <a href="settings" style="cursor: default">
                     <span class="icon"><span class="mif-cogs"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
                 </a>
             </li>
             <li>
-                <div style="position: relative;">
+                <div style="position: relative;cursor: default">
                     <span class="icon" style="margin: auto" id="info-button"><span class="mif-info"></span></span>
                 </div>
             </li>
@@ -76,7 +76,8 @@
     </div>
     <div class="navview-content">
         <div id="appbar" data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
-            <div id="user-info" title="{{.UserEmail}}" style="position: absolute;top:18px;left: 10px;font-size: 14px;cursor: default">
+            <div id="user-info" title="{{.UserEmail}}"
+                 style="position: absolute;top:18px;left: 10px;font-size: 14px;cursor: default">
                 {{.UserName}} @ {{.Company}}
             </div>
             <div class="app-bar-container mx-auto" style="margin: 0">
@@ -96,15 +97,16 @@
                 </div>
                 <div style="margin-top: 3px;margin-left: 3px">
                     <input id="from-date" type="datetime-local"
-                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateFrom}}">
+                           value="{{.DateFrom}}">
                 </div>
                 <div style="margin-top: 3px;margin-left: 3px">
                     <input id="to-date" type="datetime-local"
-                           style="text-align: center;border: 1px solid #d9d9d9;height: 36px" value="{{.DateTo}}">
+                           value="{{.DateTo}}">
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-ok-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-checkmark"></span>
+                            style="min-width: 100px;max-width: 100px;height: 35px;cursor: default"><span
+                            class="mif-checkmark"></span>
                     </button>
                 </div>
             </div>
@@ -112,21 +114,21 @@
                     class="mif-loop2 ani-spin"></span>
             </div>
             <button class="button square m-1 {{.FlashClass}}" id="flash-button"
-                    style="position: absolute;top:5px;right: 135px">
+                    style="position: absolute;top:5px;right: 135px;cursor: default">
             </button>
             <button class="button square m-1 {{.TerminalClass}}" id="phonelink-button"
-                    style="position: absolute;top:5px;right: 93px"></button>
-            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px">
+                    style="position: absolute;top:5px;right: 93px;cursor: default"></button>
+            <button class="button square m-1 mif-bell" id="alarm-button"
+                    style="position: absolute;top:5px;right: 51px;cursor: default">
                 <span class="badge bg-red fg-white">4</span>
             </button>
             <button class="button square m-1 mif-switch" id="logout-button"
-                    style="position: absolute;top:5px;right: 9px">
+                    style="position: absolute;top:5px;right: 9px;cursor: default">
             </button>
         </div>
-        <div id="content-wrapper" class="content-inner h-100"
-             style="padding-top: 52px;padding-left: 10px;padding-right: 10px;overflow-y: auto;">
-            <div id="chart-container" style="display: block;">
-                <div id="chart" style="margin-top: 50px"></div>
+        <div id="content-wrapper" class="content-inner h-100" style="overflow-y: auto;">
+            <div id="chart-container" style="display: block;cursor: default;">
+                <div id="chart" style="margin-top:100px;margin-left: 50px;margin-right: 50px;"></div>
             </div>
         </div>
     </div>

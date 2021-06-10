@@ -26,44 +26,44 @@
         <ul class="navview-menu">
             <li class="item-separator"></li>
             <li>
-                <a href="index">
+                <a href="index" style="cursor: default">
                     <span class="icon"><span class="mif-home"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuOverview}}</span>
                 </a>
             </li>
             <li class="active">
-                <a href="workplaces">
+                <a href="workplaces" style="cursor: default">
                     <span class="icon"><span class="mif-dashboard"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuWorkplaces}}</span>
                 </a>
             </li>
             <li>
-                <a href="charts">
+                <a href="charts" style="cursor: default">
                     <span class="icon"><span class="mif-chart-dots"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuCharts}}</span>
                 </a>
             </li>
             <li>
-                <a href="statistics">
+                <a href="statistics" style="cursor: default">
                     <span class="icon"><span class="mif-chart-bars"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuStatistics}}</span>
                 </a>
             </li>
             <li>
-                <a href="data">
+                <a href="data" style="cursor: default">
                     <span class="icon"><span class="mif-table"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuData}}</span>
                 </a>
             </li>
             <li>
-                <a href="settings">
+                <a href="settings" style="cursor: default">
                     <span class="icon"><span class="mif-cogs"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuSettings}}</span>
                 </a>
             </li>
             <li>
                 <div style="position: relative;">
-                    <span class="icon" style="margin: auto" id="info-button"><span class="mif-info"></span></span>
+                    <span class="icon" style="margin: auto;cursor: default" id="info-button"><span class="mif-info"></span></span>
                 </div>
             </li>
         </ul>
@@ -79,17 +79,17 @@
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-refresh-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px"><span class="mif-loop2"></span>
+                            style="min-width: 100px;max-width: 100px;height: 35px;cursor: default"><span class="mif-loop2"></span>
                     </button>
                 </div>
             </div>
             <div id="loader" hidden style="position: absolute;top:18px;right: 101px"><span
                     class="mif-loop2 ani-spin"></span></div>
-            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px">
+            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px;cursor: default">
                 <span class="badge bg-red fg-white">4</span>
             </button>
             <button class="button square m-1 mif-switch" id="logout-button"
-                    style="position: absolute;top:5px;right: 9px">
+                    style="position: absolute;top:5px;right: 9px;cursor: default">
             </button>
         </div>
         <div id="content-wrapper" class="content-inner h-100"

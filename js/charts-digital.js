@@ -25,8 +25,8 @@ function drawDigitalChart(chartData) {
             }
         }
         gridData.push({
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: (position*7)+10+"%",
             height: "3%"
         });
@@ -79,8 +79,8 @@ function drawDigitalChart(chartData) {
     }
     let initialTerminalPosition = (position*7)+11
     gridData.push({
-        left: 50,
-        right: 100,
+        left: 0,
+        right: 0,
         top: initialTerminalPosition+"%",
         height: "3%"
     });
@@ -125,8 +125,8 @@ function drawDigitalChart(chartData) {
             });
         }
         gridData.push({
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: initialTerminalPosition+4+"%",
             height: "3%"
         });
@@ -171,8 +171,8 @@ function drawDigitalChart(chartData) {
 
         }
         gridData.push({
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: initialTerminalPosition+8+"%",
             height: "3%"
         });
@@ -216,8 +216,8 @@ function drawDigitalChart(chartData) {
             });
         }
         gridData.push({
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: initialTerminalPosition+12+"%",
             height: "3%"
         });
@@ -261,8 +261,8 @@ function drawDigitalChart(chartData) {
             });
         }
         gridData.push({
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: initialTerminalPosition+16+"%",
             height: "3%"
         });
@@ -326,7 +326,7 @@ function drawDigitalChart(chartData) {
             },
             formatter: function (params) {
                 let dateChange = endDateAsValue - startDateAsValue
-                let pointerValue = (startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000
+                let pointerValue = (startDateAsValue + (positionInChart/document.getElementById("chart").offsetWidth)*dateChange) / 1000
                 let result = ""
                 for (const param of params) {
                     if (pointerValue > +param["value"][3] && pointerValue < +param["value"][4]) {
@@ -346,7 +346,7 @@ function drawDigitalChart(chartData) {
         grid: gridData,
         legend: {},
         toolbox: {
-            right: 100,
+            right: 0,
             show: true,
             feature: {
                 dataZoom: {

@@ -15,16 +15,10 @@ dataSelection.addEventListener("change", () => {
 })
 
 let chartDom = document.getElementById('chart');
-let chartHeight = document.documentElement.clientHeight * 0.9
-if (chartHeight < 800) {
-    chartHeight = 800;
-}
+document.getElementById('chart').style.height = document.documentElement.clientHeight * 0.9 + 'px'
 let startDateAsValue = new Date()
 let endDateAsValue = new Date()
-let borderStart = 50
-let borderEnd = chartDom.scrollWidth - 80
-let borderChange = borderEnd - borderStart
-let myChart = echarts.init(chartDom, null, {height: chartHeight,renderer: 'svg'});
+let myChart = echarts.init(chartDom, null, {renderer: 'svg'});
 if (document.getElementById('to-date').value === "") {
 }
 let now = new Date();
@@ -57,6 +51,7 @@ phoneLinkButton.addEventListener("click", () => {
 const dataOkButton = document.getElementById("data-ok-button")
 
 function loadChart() {
+    chartDom.hidden = true
     chartIsLoading = true
     document.getElementById("loader").hidden = false
     let flashData = "mif-flash-off"
@@ -80,7 +75,6 @@ function loadChart() {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
-        const download = performance.now();
         response.text().then(function (data) {
             chartIsLoading = false
             let result = JSON.parse(data);
@@ -107,6 +101,10 @@ function loadChart() {
                 if (result["ChartData"] !== null) {
                     drawCombinedChart(result)
                 }
+                setInterval(function () {
+                    myChart.resize()
+                    chartDom.hidden = false
+                }, 1);
                 document.getElementById("loader").hidden = true
             }
 
@@ -142,13 +140,16 @@ myChart.on('dataZoom', function (evt) {
             endValue: option.dataZoom[0].endValue
         });
     }
+
+
 });
 
-window.addEventListener('resize', () => {
-    myChart.resize()
-})
 myChart.on('datazoom', function () {
     let zoom = myChart.getOption().dataZoom[0];
     startDateAsValue = zoom.startValue * 1000
     endDateAsValue = zoom.endValue * 1000
 });
+
+window.addEventListener('resize', () => {
+    myChart.resize()
+})

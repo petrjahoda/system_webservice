@@ -196,7 +196,7 @@ function drawProductionChart(chartData) {
             },
             formatter: function (params) {
                 let dateChange = endDateAsValue - startDateAsValue
-                let pointerValue = (startDateAsValue + ((positionInChart - borderStart) * (dateChange / borderChange))) / 1000
+                let pointerValue = (startDateAsValue + (positionInChart/document.getElementById("chart").offsetWidth)*dateChange) / 1000
                 let result = ""
                 for (const param of params) {
                     if (pointerValue > +param["value"][3] && pointerValue < +param["value"][4]) {
@@ -213,38 +213,38 @@ function drawProductionChart(chartData) {
         },
         grid: [{
             top: '5%',
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             height: '60%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '70%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '74%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '78%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '82%',
             height: '3%'
         }, {
-            left: 50,
-            right: 100,
+            left: 0,
+            right: 0,
             top: '86%',
             height: '3%'
         }],
         legend: {},
         toolbox: {
-            right: 100,
+            right: 0,
             show: true,
             feature: {
                 dataZoom: {
