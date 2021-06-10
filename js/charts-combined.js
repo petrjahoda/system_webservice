@@ -29,7 +29,7 @@ function drawCombinedChart(chartData) {
                     data: data,
                     sampling: digitalSampling,
                     lineStyle: {
-                        width: 1,
+                        width: 0,
                     },
                     emphasis: {
                         focus: 'series'
