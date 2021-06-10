@@ -285,7 +285,6 @@ function drawCombinedChart(chartData) {
                 }
                 return "<b>" + '<span style="border-bottom: 1px solid;width: 100%;display: block;">' + moment(pointerValue).format('Do MMMM YYYY, h:mm:ss') + "</span></b><br>" + result
             },
-
         },
         grid: [{
             left: 0,

@@ -96,3 +96,11 @@ function getLocaleFrom(chartData) {
     }
     return locale;
 }
+
+function sleep(milliseconds) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve({})
+        }, milliseconds);
+    })
+}

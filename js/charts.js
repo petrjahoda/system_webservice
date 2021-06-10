@@ -18,7 +18,7 @@ let chartDom = document.getElementById('chart');
 document.getElementById('chart').style.height = document.documentElement.clientHeight * 0.9 + 'px'
 let startDateAsValue = new Date()
 let endDateAsValue = new Date()
-let myChart = echarts.init(chartDom, null, {renderer: 'svg'});
+let myChart = echarts.init(chartDom);
 if (document.getElementById('to-date').value === "") {
 }
 let now = new Date();
@@ -75,7 +75,7 @@ function loadChart() {
         method: "POST",
         body: JSON.stringify(data)
     }).then((response) => {
-        response.text().then(function (data) {
+        response.text().then(async function (data) {
             chartIsLoading = false
             let result = JSON.parse(data);
             if (result["Type"] === "analog-data") {
@@ -101,12 +101,11 @@ function loadChart() {
                 if (result["ChartData"] !== null) {
                     drawCombinedChart(result)
                 }
-                setInterval(function () {
-                    myChart.resize()
-                    chartDom.hidden = false
-                }, 1);
-                document.getElementById("loader").hidden = true
             }
+            await sleep(100)
+            chartDom.hidden = false
+            myChart.resize()
+            document.getElementById("loader").hidden = true
 
         });
     }).catch((error) => {
@@ -140,7 +139,6 @@ myChart.on('dataZoom', function (evt) {
             endValue: option.dataZoom[0].endValue
         });
     }
-
 
 });
 
