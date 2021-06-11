@@ -14,6 +14,12 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.3.11] - 2021-06-11
+
+### Changed
+
+- emphasis for charts set to null
+
 ## [2021.2.3.10] - 2021-06-10
 
 ### Changed

@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-const version = "2021.2.3.10"
+const version = "2021.2.3.11"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 

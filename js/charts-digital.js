@@ -69,9 +69,7 @@ function drawDigitalChart(chartData) {
             lineStyle: {
                 width: 1,
             },
-            emphasis: {
-                focus: 'series'
-            },
+            emphasis: null,
             xAxisIndex: position,
             yAxisIndex: position,
         });
@@ -119,9 +117,7 @@ function drawDigitalChart(chartData) {
                 },
                 xAxisIndex: position,
                 yAxisIndex: position,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         gridData.push({
@@ -164,9 +160,7 @@ function drawDigitalChart(chartData) {
                 },
                 xAxisIndex: position+1,
                 yAxisIndex: position+1,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
 
         }
@@ -210,9 +204,7 @@ function drawDigitalChart(chartData) {
                 },
                 xAxisIndex: position+2,
                 yAxisIndex: position+2,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         gridData.push({
@@ -255,9 +247,7 @@ function drawDigitalChart(chartData) {
                 },
                 xAxisIndex: position+3,
                 yAxisIndex: position+3,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         gridData.push({
@@ -300,9 +290,7 @@ function drawDigitalChart(chartData) {
                 },
                 xAxisIndex: position+4,
                 yAxisIndex: position+4,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
     }

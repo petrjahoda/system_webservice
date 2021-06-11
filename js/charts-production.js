@@ -33,9 +33,7 @@ function drawProductionChart(chartData) {
             lineStyle: {
                 width: 1,
             },
-            emphasis: {
-                focus: 'series'
-            },
+            emphasis: null,
         });
     }
     if (!phoneLinkButton.classList.contains("mif-phonelink-off")) {
@@ -61,9 +59,7 @@ function drawProductionChart(chartData) {
                 },
                 xAxisIndex: 1,
                 yAxisIndex: 1,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["OrderData"] !== null) {
@@ -88,9 +84,7 @@ function drawProductionChart(chartData) {
                 },
                 xAxisIndex: 2,
                 yAxisIndex: 2,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["DowntimeData"] !== null) {
@@ -115,9 +109,7 @@ function drawProductionChart(chartData) {
                 },
                 xAxisIndex: 3,
                 yAxisIndex: 3,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["BreakdownData"] !== null) {
@@ -142,9 +134,7 @@ function drawProductionChart(chartData) {
                 },
                 xAxisIndex: 4,
                 yAxisIndex: 4,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["AlarmData"] !== null) {
@@ -169,9 +159,7 @@ function drawProductionChart(chartData) {
                 },
                 xAxisIndex: 5,
                 yAxisIndex: 5,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
     }

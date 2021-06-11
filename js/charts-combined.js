@@ -29,14 +29,11 @@ function drawCombinedChart(chartData) {
                     data: data,
                     sampling: digitalSampling,
                     lineStyle: {
-                        width: 0,
+                        width: 1,
                     },
-                    emphasis: {
-                        focus: 'series'
-                    },
+                    emphasis: null,
                     xAxisIndex: 1,
                     yAxisIndex: 1,
-                    cursor: 'default'
                 });
                 break;
             case "analog":
@@ -60,9 +57,7 @@ function drawCombinedChart(chartData) {
                     lineStyle: {
                         width: 1,
                     },
-                    emphasis: {
-                        focus: 'series'
-                    },
+                    emphasis: null,
                     xAxisIndex: 2,
                     yAxisIndex: 2,
                 });
@@ -98,9 +93,7 @@ function drawCombinedChart(chartData) {
                         lineStyle: {
                             width: 0,
                         },
-                        emphasis: {
-                            focus: 'series'
-                        },
+                        emphasis: null,
                         xAxisIndex: 0,
                         yAxisIndex: 0,
                     });
@@ -131,9 +124,7 @@ function drawCombinedChart(chartData) {
                 },
                 xAxisIndex: 3,
                 yAxisIndex: 3,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
 
@@ -160,9 +151,7 @@ function drawCombinedChart(chartData) {
                 },
                 xAxisIndex: 4,
                 yAxisIndex: 4,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["DowntimeData"] !== null) {
@@ -187,9 +176,7 @@ function drawCombinedChart(chartData) {
                 },
                 xAxisIndex: 5,
                 yAxisIndex: 5,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["BreakdownData"] !== null) {
@@ -214,9 +201,7 @@ function drawCombinedChart(chartData) {
                 },
                 xAxisIndex: 6,
                 yAxisIndex: 6,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
         if (chartData["AlarmData"] !== null) {
@@ -241,9 +226,7 @@ function drawCombinedChart(chartData) {
                 },
                 xAxisIndex: 7,
                 yAxisIndex: 7,
-                emphasis: {
-                    focus: 'series'
-                },
+                emphasis: null,
             });
         }
     }
