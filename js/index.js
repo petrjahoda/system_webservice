@@ -212,7 +212,7 @@ function drawTerminalDowntimeChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + data["TerminalDowntimeDurationsAsString"][params[0]["dataIndex"]] + "</b>"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -295,7 +295,7 @@ function drawTerminalBreakdownChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + data["TerminalBreakdownDurationsAsString"][params[0]["dataIndex"]] + "</b>"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -378,7 +378,7 @@ function drawTerminalAlarmChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + data["TerminalAlarmDurationsAsString"][params[0]["dataIndex"]] + "</b>"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];

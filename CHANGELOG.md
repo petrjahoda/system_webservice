@@ -24,6 +24,12 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - proper loading index page
 - software textlogo on every page
 
+### Changed
+- Software name in the name of tab
+- Buttons in top menu moved 2px down
+- Name @ Company changes to 10px
+- Durations in index left charts downloaded from backend
+
 
 ## [2021.2.3.11] - 2021-06-11
 

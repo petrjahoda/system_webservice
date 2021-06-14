@@ -39,45 +39,49 @@ type IndexWorkplaceSelection struct {
 }
 
 type IndexData struct {
-	WorkplaceNames             []string
-	WorkplacePercents          []float64
-	TerminalProductionColor    string
-	TerminalDowntimeNames      []string
-	TerminalDowntimeDurations  []float64
-	TerminalDowntimeColor      string
-	TerminalBreakdownNames     []string
-	TerminalBreakdownDurations []float64
-	TerminalBreakdownColor     string
-	TerminalAlarmNames         []string
-	TerminalAlarmDurations     []float64
-	TerminalAlarmColor         string
-	ProductivityTodayTitle     string
-	ProductivityYearTitle      string
-	OverviewMonthTitle         string
-	ConsumptionMonthTitle      string
-	DowntimesTitle             string
-	BreakdownsTitle            string
-	AlarmsTitle                string
-	CalendarDayLabel           []string
-	CalendarMonthLabel         []string
-	CalendarData               [][]string
-	ConsumptionData            []string
-	MonthDataDays              []string
-	MonthDataProduction        []string
-	MonthDataDowntime          []string
-	MonthDataPoweroff          []string
-	CalendarStart              string
-	CalendarEnd                string
-	Locale                     string
-	ProductionLocale           string
-	DowntimeLocale             string
-	PoweroffLocale             string
-	Result                     string
+	WorkplaceNames                     []string
+	WorkplacePercents                  []float64
+	TerminalProductionColor            string
+	TerminalDowntimeNames              []string
+	TerminalDowntimeDurations          []float64
+	TerminalDowntimeDurationsAsString  []string
+	TerminalDowntimeColor              string
+	TerminalBreakdownNames             []string
+	TerminalBreakdownDurations         []float64
+	TerminalBreakdownDurationsAsString []string
+	TerminalBreakdownColor             string
+	TerminalAlarmNames                 []string
+	TerminalAlarmDurations             []float64
+	TerminalAlarmDurationsAsString     []string
+	TerminalAlarmColor                 string
+	ProductivityTodayTitle             string
+	ProductivityYearTitle              string
+	OverviewMonthTitle                 string
+	ConsumptionMonthTitle              string
+	DowntimesTitle                     string
+	BreakdownsTitle                    string
+	AlarmsTitle                        string
+	CalendarDayLabel                   []string
+	CalendarMonthLabel                 []string
+	CalendarData                       [][]string
+	ConsumptionData                    []string
+	MonthDataDays                      []string
+	MonthDataProduction                []string
+	MonthDataDowntime                  []string
+	MonthDataPoweroff                  []string
+	CalendarStart                      string
+	CalendarEnd                        string
+	Locale                             string
+	ProductionLocale                   string
+	DowntimeLocale                     string
+	PoweroffLocale                     string
+	Result                             string
 }
 
 type IndexDataWorkplace struct {
-	Name  string
-	Value float64
+	Name     string
+	Value    float64
+	Duration string
 }
 
 type IndexPageInput struct {
@@ -121,9 +125,9 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	cacheProductionData(db, time.Date(latestCachedWorkplaceCalendarData.Year(), latestCachedWorkplaceCalendarData.Month(), latestCachedWorkplaceCalendarData.Day(), 0, 0, 0, 0, loc))
 	cacheConsumptionData(db, time.Date(latestCachedWorkplaceConsumption.Year(), latestCachedWorkplaceConsumption.Month(), latestCachedWorkplaceConsumption.Day(), 0, 0, 0, 0, loc))
 	workplaceNames, workplacePercents := downloadProductionData(loc, email)
-	terminalDowntimeNames, terminalDowntimeValues := downloadTerminalDowntimeData(db, email)
-	terminalBreakdownNames, terminalBreakdownValues := downloadTerminalBreakdownData(db, email)
-	terminalAlarmNames, terminalAlarmValues := downloadTerminalAlarmData(db, email)
+	terminalDowntimeNames, terminalDowntimeValues, terminalDowntimeDurations := downloadTerminalDowntimeData(db, email, loc)
+	terminalBreakdownNames, terminalBreakdownValues, terminalBreakdownDurations := downloadTerminalBreakdownData(db, email, loc)
+	terminalAlarmNames, terminalAlarmValues, terminalAlarmDurations := downloadTerminalAlarmData(db, email, loc)
 	calendarData := downloadCalendarData(email, loc)
 	monthDataDays, monthDataProduction, monthDataDowntime, monthDataPoweroff := downloadIndexChartData(email, loc)
 	consumptionData := downloadConsumptionData(email)
@@ -132,10 +136,13 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.WorkplacePercents = workplacePercents
 	data.TerminalDowntimeNames = terminalDowntimeNames
 	data.TerminalDowntimeDurations = terminalDowntimeValues
+	data.TerminalDowntimeDurationsAsString = terminalDowntimeDurations
 	data.TerminalBreakdownNames = terminalBreakdownNames
 	data.TerminalBreakdownDurations = terminalBreakdownValues
+	data.TerminalBreakdownDurationsAsString = terminalBreakdownDurations
 	data.TerminalAlarmNames = terminalAlarmNames
 	data.TerminalAlarmDurations = terminalAlarmValues
+	data.TerminalAlarmDurationsAsString = terminalAlarmDurations
 	data.TerminalDowntimeColor = cachedStatesById[2].Color
 	data.TerminalProductionColor = cachedStatesById[1].Color
 	data.TerminalBreakdownColor = cachedStatesById[3].Color
@@ -304,7 +311,7 @@ func downloadConsumptionData(email string) []string {
 	return consumptionData
 }
 
-func downloadTerminalAlarmData(db *gorm.DB, email string) ([]string, []float64) {
+func downloadTerminalAlarmData(db *gorm.DB, email string, loc *time.Location) ([]string, []float64, []string) {
 	var alarmRecords []database.AlarmRecord
 	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
 		workplaceIds := `workplace_id in ('`
@@ -322,6 +329,7 @@ func downloadTerminalAlarmData(db *gorm.DB, email string) ([]string, []float64) 
 		var indexDataWorkplace IndexDataWorkplace
 		indexDataWorkplace.Name = cachedWorkplacesById[uint(alarmRecord.WorkplaceID)].Name + ": " + cachedAlarmsById[uint(alarmRecord.AlarmID)].Name
 		indexDataWorkplace.Value = time.Since(alarmRecord.DateTimeStart).Seconds()
+		indexDataWorkplace.Duration = time.Now().In(loc).Sub(alarmRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
 	}
 	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
@@ -329,14 +337,16 @@ func downloadTerminalAlarmData(db *gorm.DB, email string) ([]string, []float64) 
 	})
 	var terminalAlarmNames []string
 	var terminalAlarmValues []float64
+	var terminalAlarmDurations []string
 	for _, workplace := range indexDataWorkplaces {
 		terminalAlarmNames = append(terminalAlarmNames, workplace.Name)
 		terminalAlarmValues = append(terminalAlarmValues, workplace.Value)
+		terminalAlarmDurations = append(terminalAlarmDurations, workplace.Duration)
 	}
-	return terminalAlarmNames, terminalAlarmValues
+	return terminalAlarmNames, terminalAlarmValues, terminalAlarmDurations
 }
 
-func downloadTerminalBreakdownData(db *gorm.DB, email string) ([]string, []float64) {
+func downloadTerminalBreakdownData(db *gorm.DB, email string, loc *time.Location) ([]string, []float64, []string) {
 	var breakdownRecords []database.BreakdownRecord
 	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
 		workplaceIds := `workplace_id in ('`
@@ -354,6 +364,7 @@ func downloadTerminalBreakdownData(db *gorm.DB, email string) ([]string, []float
 		var indexDataWorkplace IndexDataWorkplace
 		indexDataWorkplace.Name = cachedWorkplacesById[uint(breakdownRecord.WorkplaceID)].Name + ": " + cachedBreakdownsById[uint(breakdownRecord.BreakdownID)].Name
 		indexDataWorkplace.Value = time.Since(breakdownRecord.DateTimeStart).Seconds()
+		indexDataWorkplace.Duration = time.Now().In(loc).Sub(breakdownRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
 	}
 	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
@@ -361,14 +372,16 @@ func downloadTerminalBreakdownData(db *gorm.DB, email string) ([]string, []float
 	})
 	var terminalBreakdownNames []string
 	var terminalBreakdownValues []float64
+	var terminalBreakdownDurations []string
 	for _, workplace := range indexDataWorkplaces {
 		terminalBreakdownNames = append(terminalBreakdownNames, workplace.Name)
 		terminalBreakdownValues = append(terminalBreakdownValues, workplace.Value)
+		terminalBreakdownDurations = append(terminalBreakdownDurations, workplace.Duration)
 	}
-	return terminalBreakdownNames, terminalBreakdownValues
+	return terminalBreakdownNames, terminalBreakdownValues, terminalBreakdownDurations
 }
 
-func downloadTerminalDowntimeData(db *gorm.DB, email string) ([]string, []float64) {
+func downloadTerminalDowntimeData(db *gorm.DB, email string, loc *time.Location) ([]string, []float64, []string) {
 	var downtimeRecords []database.DowntimeRecord
 	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
 		workplaceIds := `workplace_id in ('`
@@ -387,6 +400,7 @@ func downloadTerminalDowntimeData(db *gorm.DB, email string) ([]string, []float6
 		var indexDataWorkplace IndexDataWorkplace
 		indexDataWorkplace.Name = cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name + ": " + cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name
 		indexDataWorkplace.Value = time.Since(downtimeRecord.DateTimeStart).Seconds()
+		indexDataWorkplace.Duration = time.Now().In(loc).Sub(downtimeRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
 	}
 	sort.Slice(indexDataWorkplaces, func(i, j int) bool {
@@ -394,11 +408,13 @@ func downloadTerminalDowntimeData(db *gorm.DB, email string) ([]string, []float6
 	})
 	var terminalDowntimeNames []string
 	var terminalDowntimeValues []float64
+	var terminalDowntimeDurations []string
 	for _, workplace := range indexDataWorkplaces {
 		terminalDowntimeNames = append(terminalDowntimeNames, workplace.Name)
 		terminalDowntimeValues = append(terminalDowntimeValues, workplace.Value)
+		terminalDowntimeDurations = append(terminalDowntimeDurations, workplace.Duration)
 	}
-	return terminalDowntimeNames, terminalDowntimeValues
+	return terminalDowntimeNames, terminalDowntimeValues, terminalDowntimeDurations
 }
 
 func downloadProductionData(loc *time.Location, email string) ([]string, []float64) {
