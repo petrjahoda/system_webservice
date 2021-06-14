@@ -14,6 +14,17 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.3.14] - 2021-06-14
+
+### Added
+- copyright
+- updated libraries
+- added proper locale for index terminal data
+- proper aligning top menu on workplaces and index page
+- proper loading index page
+- software textlogo on every page
+
+
 ## [2021.2.3.11] - 2021-06-11
 
 ### Changed

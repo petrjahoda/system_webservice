@@ -7,7 +7,6 @@ function drawAnalogChart(chartData) {
     let locale = getLocaleFrom(chartData);
     let seriesList = [];
     let sampling = "none"
-    moment.locale(locale);
     for (const analogData of chartData["ChartData"]) {
         if (analogData["AnalogData"].length > 8640 && flashButton.classList.contains("mif-flash-on")) {
             sampling = "average"
@@ -32,6 +31,8 @@ function drawAnalogChart(chartData) {
                 width: 0.5,
             },
             emphasis: null,
+            silent: true,
+            blur: null,
         });
     }
     if (!phoneLinkButton.classList.contains("mif-phonelink-off")) {
@@ -58,6 +59,7 @@ function drawAnalogChart(chartData) {
                 xAxisIndex: 1,
                 yAxisIndex: 1,
                 emphasis: null,
+                silent: true,
             });
         }
         if (chartData["OrderData"] !== null) {
@@ -83,6 +85,7 @@ function drawAnalogChart(chartData) {
                 xAxisIndex: 2,
                 yAxisIndex: 2,
                 emphasis: null,
+                silent: true,
             });
         }
         if (chartData["DowntimeData"] !== null) {
@@ -108,6 +111,7 @@ function drawAnalogChart(chartData) {
                 xAxisIndex: 3,
                 yAxisIndex: 3,
                 emphasis: null,
+                silent: true,
             });
         }
         if (chartData["BreakdownData"] !== null) {
@@ -133,6 +137,7 @@ function drawAnalogChart(chartData) {
                 xAxisIndex: 4,
                 yAxisIndex: 4,
                 emphasis: null,
+                silent: true,
             });
         }
         if (chartData["AlarmData"] !== null) {
@@ -158,6 +163,7 @@ function drawAnalogChart(chartData) {
                 xAxisIndex: 5,
                 yAxisIndex: 5,
                 emphasis: null,
+                silent: true,
             });
         }
     }

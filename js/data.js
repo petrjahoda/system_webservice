@@ -46,6 +46,7 @@ dataOkButton.addEventListener("click", () => {
 })
 
 function loadData() {
+    dataOkButton.disabled = true
     document.getElementById("loader").hidden = false
     const workplacesElement = document.getElementsByClassName("tag short-tag");
     let workplaces = []
@@ -76,9 +77,11 @@ function loadData() {
                 }
             }
             document.getElementById("loader").hidden = true
+            dataOkButton.disabled = false
         });
     }).catch(() => {
         document.getElementById("loader").hidden = true
+        dataOkButton.disabled = false
     });
 }
 

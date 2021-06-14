@@ -11,6 +11,7 @@ import (
 )
 
 var cachedCompanyName string
+var cachedSoftwareName string
 var location string
 var cachedLocales = map[string]string{}
 
@@ -285,8 +286,11 @@ func cacheWorkplaceDevicePorts(db *gorm.DB) {
 func cacheSystemSettings(db *gorm.DB) {
 	var companyName database.Setting
 	db.Where("name like 'company'").Find(&companyName)
+	var softwareName database.Setting
+	db.Where("name like 'software'").Find(&softwareName)
 	companyNameSync.Lock()
 	cachedCompanyName = companyName.Value
+	cachedSoftwareName = softwareName.Value
 	companyNameSync.Unlock()
 	logInfo("CACHING", "Cached company name")
 

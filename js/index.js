@@ -12,7 +12,6 @@ const downloadTimer = setInterval(function () {
             key: "index-selected-workplaces",
             value: workplaces,
         };
-        console.log(workplaces)
         fetch("/update_user_web_settings_from_web", {
             method: "POST",
             body: JSON.stringify(data)
@@ -35,7 +34,6 @@ let consumptionChartDom = document.getElementById('consumption-chart');
 consumptionChartDom.style.marginTop = "30px"
 let daysDom = document.getElementById('days-chart');
 let refreshButton = document.getElementById("data-refresh-button");
-
 let productivityChart = echarts.init(productivityChartDom, null, {renderer: 'svg'});
 let calendarChart = echarts.init(calendarChartDom, null, {renderer: 'svg'});
 let terminalDowntimeChart = echarts.init(terminalDowntimeChartDom, null, {renderer: 'svg'});
@@ -64,7 +62,6 @@ refreshButton.addEventListener('click', () => {
         key: "index-selected-workplaces",
         value: workplaces,
     };
-    console.log(workplaces)
     fetch("/update_user_web_settings_from_web", {
         method: "POST",
         body: JSON.stringify(data)
@@ -76,7 +73,7 @@ refreshButton.addEventListener('click', () => {
 })
 
 function loadIndexData() {
-    console.log("LOADING INDEX DATA")
+    refreshButton.disabled = true
     document.getElementById("loader").hidden = false
     let data = {
         email: document.getElementById("user-info").title
@@ -86,8 +83,10 @@ function loadIndexData() {
         body: JSON.stringify(data)
 
     }).then((response) => {
-        response.text().then(function (data) {
+        response.text().then(async function (data) {
             let result = JSON.parse(data);
+            let locale = getLocaleFrom(result);
+            await sleep(200)
             drawProductivityChart(result);
             drawCalendar(result);
             drawDaysChart(result);
@@ -96,6 +95,7 @@ function loadIndexData() {
             drawTerminalBreakdownChart(result);
             drawTerminalAlarmChart(result);
             document.getElementById("loader").hidden = true
+            refreshButton.disabled = false
             productivityChart.resize()
             calendarChart.resize();
             daysChart.resize()
@@ -106,7 +106,16 @@ function loadIndexData() {
         });
     }).catch(() => {
         document.getElementById("loader").hidden = true
+        refreshButton.disabled = false
     });
+}
+
+function sleep(milliseconds) {
+    return new Promise(resolve => {
+        setTimeout(() => {
+            resolve({})
+        }, milliseconds);
+    })
 }
 
 function drawProductivityChart(data) {
@@ -203,7 +212,7 @@ function drawTerminalDowntimeChart(data) {
                 type: 'shadow'
             },
             formatter: function (params) {
-                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").locale("cs").humanize() + "</b>"
+                return params[0]["name"] + ": <b>" + moment.duration(params[0]["data"], "seconds").humanize() + "</b>"
             },
             position: function (point, params, dom, rect, size) {
                 return [point[0] - size["contentSize"][0] / 2, point[1]];
@@ -505,9 +514,6 @@ function drawCalendar(data) {
 }
 
 function drawDaysChart(data) {
-    console.log(data["ConsumptionData"])
-    console.log(data["MonthDataDays"])
-    console.log(data["ConsumptionData"].slice(-data["MonthDataDays"].length))
     daysDom.style.height = "250px"
     let option;
     option = {

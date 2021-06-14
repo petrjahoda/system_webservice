@@ -51,6 +51,7 @@ phoneLinkButton.addEventListener("click", () => {
 const dataOkButton = document.getElementById("data-ok-button")
 
 function loadChart() {
+    dataOkButton.disabled = true
     chartDom.hidden = true
     chartIsLoading = true
     document.getElementById("loader").hidden = false
@@ -106,11 +107,13 @@ function loadChart() {
             chartDom.hidden = false
             myChart.resize()
             document.getElementById("loader").hidden = true
+            dataOkButton.disabled = false
 
         });
     }).catch((error) => {
         document.getElementById("loader").hidden = true
         document.getElementById("loader").style.transform = "none"
+        dataOkButton.disabled = false
     });
 }
 

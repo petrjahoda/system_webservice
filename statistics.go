@@ -14,6 +14,7 @@ import (
 type StatisticsPageData struct {
 	Version               string
 	Information           string
+	Software              string
 	Company               string
 	Alarms                string
 	MenuOverview          string
@@ -134,6 +135,7 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+	data.Software = cachedSoftwareName
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/statistics.html"))
 	_ = tmpl.Execute(writer, data)

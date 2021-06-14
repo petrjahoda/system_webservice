@@ -17,6 +17,7 @@ type SettingsPageInput struct {
 type SettingsPageOutput struct {
 	Version        string
 	Information    string
+	Software       string
 	Company        string
 	Alarms         string
 	MenuOverview   string
@@ -139,6 +140,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "system-settings"),
 		})
 	}
+	data.Software = cachedSoftwareName
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/settings.html"))
 	_ = tmpl.Execute(writer, data)

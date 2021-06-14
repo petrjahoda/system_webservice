@@ -30,6 +30,7 @@ type IndexPageData struct {
 	UserName              string
 	Workplaces            []IndexWorkplaceSelection
 	DataFilterPlaceholder string
+	Software              string
 }
 
 type IndexWorkplaceSelection struct {
@@ -466,6 +467,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	})
 	data.Workplaces = dataWorkplaces
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
+	data.Software = cachedSoftwareName
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)

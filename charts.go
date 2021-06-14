@@ -22,6 +22,7 @@ type ChartsDataPageInput struct {
 type ChartsPageData struct {
 	Version               string
 	Information           string
+	Software              string
 	Company               string
 	Alarms                string
 	MenuOverview          string
@@ -157,6 +158,7 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	if len(cachedUserWebSettings[email]["charts-selected-terminal"]) > 0 {
 		data.TerminalClass = cachedUserWebSettings[email]["charts-selected-terminal"]
 	}
+	data.Software = cachedSoftwareName
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/charts.html"))
 	_ = tmpl.Execute(writer, data)

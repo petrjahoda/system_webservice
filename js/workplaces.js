@@ -15,6 +15,7 @@ refreshButton.addEventListener('click', () => {
 })
 
 function updateWorkplaces() {
+    refreshButton.disabled = true
     document.getElementById("loader").hidden = false
     let data = {
         email: document.getElementById("user-info").title
@@ -32,10 +33,12 @@ function updateWorkplaces() {
                 timeLeft = timer
                 document.getElementById("progress-bar").value = timer - timeLeft;
                 document.getElementById("loader").hidden = true
+                refreshButton.disabled = false
             }
         });
     }).catch(() => {
         document.getElementById("loader").hidden = true
+        refreshButton.disabled = false
     });
 }
 
@@ -64,3 +67,5 @@ function dataExpand(element) {
     }).catch(() => {
     });
 }
+
+updateWorkplaces();
