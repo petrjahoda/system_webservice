@@ -24,7 +24,8 @@ function drawCombinedChart(chartData) {
                     color: element["PortColor"],
                     type: 'line',
                     step: 'end',
-                    areaStyle: {},
+                    areaStyle: {
+                    },
                     symbol: 'none',
                     data: data,
                     sampling: digitalSampling,
