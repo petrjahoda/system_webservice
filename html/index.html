@@ -27,7 +27,7 @@
         <div style="height: 52px;font-size: 10px;text-align: center;background: #cecece">
             <p style="padding-top: 20px;margin-bottom: 0;"><b>{{.Software}}</b></p>
         </div>
-        <ul class="navview-menu" id="navview-menu">
+        <ul class="navview-menu">
             <li class="item-separator"></li>
             <li class="active">
                 <a href="index" style="cursor: default">
@@ -74,25 +74,29 @@
     </div>
     <div class="navview-content">
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
-            <div id="user-info" title="{{.UserEmail}}" style="position: absolute;top:18px;left: 10px;font-size: 14px;cursor: default">
+            <div id="user-info" title="{{.UserEmail}}"
+                 style="position: absolute;top:18px;left: 10px;font-size: 14px;cursor: default">
                 {{.UserName}} @ {{.Company}}
             </div>
             <div class="app-bar-container mx-auto" style="margin: 0">
-                <div style="margin-top: 3px;margin-right: 10px;">
-                    <progress value="0" max="60" id="progress-bar" ></progress>
+                <div style="margin-top: 3px;margin-right: 10px">
+                    <progress value="0" max="60" id="progress-bar"></progress>
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="data-refresh-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px;cursor: default"><span class="mif-loop2"></span>
+                            style="min-width: 100px;max-width: 100px;height: 35px;cursor: default"><span
+                            class="mif-loop2"></span>
                     </button>
                 </div>
             </div>
             <div id="loader" hidden style="position: absolute;top:18px;right: 101px"><span
                     class="mif-loop2 ani-spin"></span></div>
-            <button class="button square m-1 mif-bell" id="alarm-button" style="position: absolute;top:5px;right: 51px;cursor:default">
+            <button class="button square m-1 mif-bell" id="alarm-button"
+                    style="position: absolute;top:5px;right: 51px;cursor: default">
                 <span class="badge bg-red fg-white">4</span>
             </button>
-            <button class="button square m-1 mif-switch" id="logout-button" style="position: absolute;top:5px;right: 9px;cursor:default">
+            <button class="button square m-1 mif-switch" id="logout-button"
+                    style="position: absolute;top:5px;right: 9px;cursor: default">
             </button>
         </div>
         <div id="content-wrapper" class="content-inner h-100"
@@ -109,7 +113,7 @@
                 <div class="cell-2">
                     <div id="productivity-overview"></div>
                 </div>
-                <div class="cell-8" id="inside" >
+                <div class="cell-8" id="inside">
                     <div id="calendar-heatmap" style="display: flex;justify-content: center;"></div>
                     <div id="days-chart" style="display: flex;justify-content: center;"></div>
                     <div id="consumption-chart" style="display: flex;justify-content: center;"></div>
