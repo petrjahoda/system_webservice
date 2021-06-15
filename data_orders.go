@@ -44,9 +44,9 @@ func loadOrdersTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
-	companyNameSync.Lock()
-	loc, err := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, err := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	addOrderTableHeaders(email, &data)
 	for _, record := range orderRecords {
 		addOrderTableRow(record, userRecordsByRecordId, &data, loc)

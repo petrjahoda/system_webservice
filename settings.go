@@ -40,9 +40,9 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	logInfo("SETTINGS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data SettingsPageOutput
 	data.Version = version
-	companyNameSync.Lock()
+	companyNameSync.RLock()
 	data.Company = cachedCompanyName
-	companyNameSync.Unlock()
+	companyNameSync.RUnlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.MenuOverview = getLocale(email, "menu-overview")
@@ -141,7 +141,9 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "system-settings"),
 		})
 	}
+	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
+	softwareNameSync.RUnlock()
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/settings.html"))
 	_ = tmpl.Execute(writer, data)

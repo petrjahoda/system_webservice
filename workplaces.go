@@ -127,9 +127,9 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 	for _, stateRecord := range stateRecords {
 		cachedStateRecords[stateRecord.WorkplaceID] = stateRecord
 	}
-	companyNameSync.Lock()
-	loc, _ := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, _ := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
 	cacheProductionData(db, todayNoon)
 	var workplaceSections []database.WorkplaceSection
@@ -300,9 +300,9 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	go updateWebUserRecord("workplaces", email)
 	var data WorkplacesData
 	data.Version = version
-	companyNameSync.Lock()
+	companyNameSync.RLock()
 	data.Company = cachedCompanyName
-	companyNameSync.Unlock()
+	companyNameSync.RUnlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -311,7 +311,9 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
+	softwareNameSync.RUnlock()
 	data.Result = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/workplaces.html"))
 	_ = tmpl.Execute(writer, data)

@@ -45,9 +45,9 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	logInfo("STATISTICS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data StatisticsPageData
 	data.Version = version
-	companyNameSync.Lock()
+	companyNameSync.RLock()
 	data.Company = cachedCompanyName
-	companyNameSync.Unlock()
+	companyNameSync.RUnlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -135,7 +135,9 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
+	softwareNameSync.RUnlock()
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/statistics.html"))
 	_ = tmpl.Execute(writer, data)
@@ -159,9 +161,9 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 		return
 	}
 	logInfo("DATA", "Loading statistics for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
-	companyNameSync.Lock()
-	loc, err := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, err := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	if err != nil {
 		logError("DATA", "Problem loading timezone, setting Europe/Prague")
 		loc, _ = time.LoadLocation("Europe/Prague")

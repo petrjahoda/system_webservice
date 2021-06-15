@@ -10,11 +10,22 @@ import (
 	"time"
 )
 
-var cachedCompanyName string
-var cachedSoftwareName string
-var location string
-var cachedLocales = map[string]string{}
+var (
+	cachedCompanyName string
+	companyNameSync   sync.RWMutex
+)
 
+var (
+	cachedSoftwareName string
+	softwareNameSync   sync.RWMutex
+)
+
+var (
+	cachedLocation string
+	locationSync   sync.RWMutex
+)
+
+var cachedLocales = map[string]string{}
 var cachedUserWebSettings = map[string]map[string]string{}
 var cachedBreakdownTypesByName = map[string]database.BreakdownType{}
 var cachedDevicesByName = map[string]database.Device{}
@@ -72,7 +83,6 @@ var cachedConsumptionDataByWorkplaceName = map[string]map[string]float32{}
 var workplacesRecords sync.RWMutex
 var alarmsSync sync.RWMutex
 var breakdownsSync sync.RWMutex
-var companyNameSync sync.RWMutex
 var devicesSync sync.RWMutex
 var devicePortColors sync.RWMutex
 var downtimesSync sync.RWMutex
@@ -121,17 +131,17 @@ func cacheData() {
 	cacheStates(db)
 	cacheWorkplaceDevicePorts(db)
 	cacheWorkplacePorts(db)
-	companyNameSync.Lock()
-	loc, _ := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, _ := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	cacheConsumptionData(db, time.Date(time.Now().Add(-720*time.Hour).Year(), time.Now().Add(-720*time.Hour).Month(), time.Now().Add(-720*time.Hour).Day(), 0, 0, 0, 0, loc))
 	logInfo("CACHING", "Initial caching done in "+time.Since(timer).String())
 }
 
 func cacheProductionData(db *gorm.DB, fromDate time.Time) {
-	companyNameSync.Lock()
-	loc, _ := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, _ := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	logInfo("CACHING", "Caching workplace production/downtime/poweroff from: "+fromDate.In(loc).String()+"  back until: "+time.Now().In(loc).String())
 	var workplaces []database.Workplace
 	db.Find(&workplaces)
@@ -212,9 +222,9 @@ func cacheProductionData(db *gorm.DB, fromDate time.Time) {
 }
 
 func cacheConsumptionData(db *gorm.DB, date time.Time) {
-	companyNameSync.Lock()
-	loc, _ := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, _ := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	latestCachedWorkplaceConsumption = time.Now().In(loc)
 	consumptionDataSync.Lock()
 	var workplaces []database.Workplace
@@ -286,20 +296,24 @@ func cacheWorkplaceDevicePorts(db *gorm.DB) {
 func cacheSystemSettings(db *gorm.DB) {
 	var companyName database.Setting
 	db.Where("name like 'company'").Find(&companyName)
-	var softwareName database.Setting
-	db.Where("name like 'software'").Find(&softwareName)
 	companyNameSync.Lock()
 	cachedCompanyName = companyName.Value
-	cachedSoftwareName = softwareName.Value
 	companyNameSync.Unlock()
-	logInfo("CACHING", "Cached company name")
+	logInfo("CACHING", "Company name cached: "+companyName.Value)
+
+	var softwareName database.Setting
+	db.Where("name like 'software'").Find(&softwareName)
+	softwareNameSync.Lock()
+	cachedSoftwareName = softwareName.Value
+	softwareNameSync.Unlock()
+	logInfo("CACHING", "Software name cached: "+softwareName.Name)
 
 	var timezone database.Setting
 	db.Where("name=?", "timezone").Find(&timezone)
-	companyNameSync.Lock()
-	location = timezone.Value
-	companyNameSync.Unlock()
-	logInfo("CACHING", "Cached timezone")
+	locationSync.Lock()
+	cachedLocation = timezone.Value
+	locationSync.Unlock()
+	logInfo("CACHING", "Timezone cached: "+timezone.Value)
 }
 
 func cacheLocales(db *gorm.DB) {

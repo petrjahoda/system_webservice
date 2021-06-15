@@ -19,6 +19,9 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Added
 - updating web user records on page load
 
+### Changed
+- mutex changed to rwmutex for location, companyName and softwareName
+
 ## [2021.2.3.14] - 2021-06-14
 
 ### Added

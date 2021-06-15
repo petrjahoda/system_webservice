@@ -105,9 +105,9 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	localesSync.Unlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
-	companyNameSync.Lock()
+	companyNameSync.RLock()
 	data.Company = cachedCompanyName
-	companyNameSync.Unlock()
+	companyNameSync.RUnlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -159,7 +159,9 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	if len(cachedUserWebSettings[email]["charts-selected-terminal"]) > 0 {
 		data.TerminalClass = cachedUserWebSettings[email]["charts-selected-terminal"]
 	}
+	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
+	softwareNameSync.RUnlock()
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/charts.html"))
 	_ = tmpl.Execute(writer, data)
@@ -182,9 +184,9 @@ func loadChartData(writer http.ResponseWriter, request *http.Request, params htt
 		return
 	}
 	logInfo("CHARTS", "Loading chart data for "+data.Data+" for "+data.Workplace)
-	companyNameSync.Lock()
-	loc, err := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, err := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	if err != nil {
 		logError("CHARTS", "Problem loading timezone, setting Europe/Prague")
 		loc, _ = time.LoadLocation("Europe/Prague")

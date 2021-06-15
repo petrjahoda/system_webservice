@@ -119,9 +119,9 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 		return
 	}
 	data := IndexData{}
-	companyNameSync.Lock()
-	loc, err := time.LoadLocation(location)
-	companyNameSync.Unlock()
+	locationSync.RLock()
+	loc, err := time.LoadLocation(cachedLocation)
+	locationSync.RUnlock()
 	cacheProductionData(db, time.Date(latestCachedWorkplaceCalendarData.Year(), latestCachedWorkplaceCalendarData.Month(), latestCachedWorkplaceCalendarData.Day(), 0, 0, 0, 0, loc))
 	cacheConsumptionData(db, time.Date(latestCachedWorkplaceConsumption.Year(), latestCachedWorkplaceConsumption.Month(), latestCachedWorkplaceConsumption.Day(), 0, 0, 0, 0, loc))
 	workplaceNames, workplacePercents := downloadProductionData(loc, email)
@@ -461,9 +461,9 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	logInfo("INDEX", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data IndexPageData
 	data.Version = version
-	companyNameSync.Lock()
+	companyNameSync.RLock()
 	data.Company = cachedCompanyName
-	companyNameSync.Unlock()
+	companyNameSync.RUnlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
@@ -484,7 +484,9 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	})
 	data.Workplaces = dataWorkplaces
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
+	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
+	softwareNameSync.RUnlock()
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
