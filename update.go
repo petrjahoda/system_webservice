@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"time"
@@ -46,9 +47,10 @@ func updateUserWebSettingsFromWeb(writer http.ResponseWriter, request *http.Requ
 		logInfo("UPDATE", "Loading settings ended with error")
 		return
 	}
+	fmt.Println(data.Email)
 	if len(email) == 0 {
-		logInfo("UPDATE", "Updating user web settings for parsed email "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 		email = data.Email
+		logInfo("UPDATE", "Updating user web settings for parsed email "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	}
 	logInfo("UPDATE", "Settings: "+data.Key+", "+data.Value)
 	settings := cachedUserWebSettings[email]
