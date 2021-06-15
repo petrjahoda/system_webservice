@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -296,9 +295,9 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	go updatePageCount("workplaces")
-	ipAddress := strings.Split(request.RemoteAddr, ":")
-	logInfo("MAIN", "Sending home page to "+ipAddress[0])
 	email, _, _ := request.BasicAuth()
+	logInfo("WORKPLACES", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	go updateWebUserRecord("workplaces", email)
 	var data WorkplacesData
 	data.Version = version
 	companyNameSync.Lock()
@@ -316,5 +315,5 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.Result = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/workplaces.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("MAIN", "Workplace page sent in "+time.Since(timer).String())
+	logInfo("MAIN", "Page sent in "+time.Since(timer).String())
 }

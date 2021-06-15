@@ -457,7 +457,8 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	timer := time.Now()
 	go updatePageCount("index")
 	email, _, _ := request.BasicAuth()
-	logInfo("INDEX", "Sending home page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	go updateWebUserRecord("index", email)
+	logInfo("INDEX", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data IndexPageData
 	data.Version = version
 	companyNameSync.Lock()
@@ -487,7 +488,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/index.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("INDEX", "Index page sent in "+time.Since(timer).String())
+	logInfo("INDEX", "Page sent in "+time.Since(timer).String())
 }
 
 func getLocale(email string, locale string) string {

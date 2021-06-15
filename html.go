@@ -128,3 +128,20 @@ func updatePageCount(pageName string) {
 	pageCount.Count = pageCount.Count + 1
 	db.Save(&pageCount)
 }
+
+func updateWebUserRecord(webpage string, email string) {
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("WEB-USER-RECORD", "Problem opening database: "+err.Error())
+		return
+	}
+	var webUserRecord database.WebUserRecord
+	webUserRecord.UserEmail = email
+	webUserRecord.WebPage = webpage
+	webUserRecord.DateTime = time.Now()
+	db.Save(&webUserRecord)
+	db.Raw("delete from web_user_records where created_at < now() - interval '30 days'")
+	logInfo("WEB-USER-RECORD", webpage+" updated for "+email)
+}

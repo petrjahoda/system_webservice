@@ -36,6 +36,7 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	timer := time.Now()
 	go updatePageCount("settings")
 	email, _, _ := request.BasicAuth()
+	go updateWebUserRecord("settings", email)
 	logInfo("SETTINGS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data SettingsPageOutput
 	data.Version = version

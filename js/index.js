@@ -9,6 +9,7 @@ const downloadTimer = setInterval(function () {
         }
         workplaces = workplaces.slice(0, -1)
         let data = {
+            email: document.getElementById("user-info").title,
             key: "index-selected-workplaces",
             value: workplaces,
         };
@@ -59,6 +60,7 @@ refreshButton.addEventListener('click', () => {
     }
     workplaces = workplaces.slice(0, -1)
     let data = {
+        email: document.getElementById("user-info").title,
         key: "index-selected-workplaces",
         value: workplaces,
     };

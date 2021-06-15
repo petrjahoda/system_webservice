@@ -57,6 +57,7 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	timer := time.Now()
 	go updatePageCount("data")
 	email, _, _ := request.BasicAuth()
+	go updateWebUserRecord("data", email)
 	logInfo("DATA", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data DataPageOutput
 	data.Version = version

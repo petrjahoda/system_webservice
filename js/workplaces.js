@@ -44,6 +44,7 @@ function updateWorkplaces() {
 
 function dataCollapse(element) {
     let data = {
+        email: document.getElementById("user-info").title,
         key: element.dataset.titleCaption,
         value: "display:none"
     };
@@ -57,6 +58,7 @@ function dataCollapse(element) {
 
 function dataExpand(element) {
     let data = {
+        email: document.getElementById("user-info").title,
         key: element.dataset.titleCaption,
         value: "display:block"
     };

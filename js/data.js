@@ -13,6 +13,7 @@ tableButton.addEventListener("click", () => {
         tableButton.classList.add("mif-lines")
         document.getElementById("data-table").classList.add("compact")
         data = {
+            email: document.getElementById("user-info").title,
             key: "data-selected-size",
             value: "compact"
         };
@@ -22,6 +23,7 @@ tableButton.addEventListener("click", () => {
         tableButton.classList.add("mif-menu")
         document.getElementById("data-table").classList.remove("compact")
         data = {
+            email: document.getElementById("user-info").title,
             key: "data-selected-size",
             value: ""
         };

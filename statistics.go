@@ -40,9 +40,9 @@ type StatisticsOutput struct {
 func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	go updatePageCount("statistics")
-	ipAddress := strings.Split(request.RemoteAddr, ":")
-	logInfo("MAIN", "Sending home page to "+ipAddress[0])
 	email, _, _ := request.BasicAuth()
+	go updateWebUserRecord("statistics", email)
+	logInfo("STATISTICS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data StatisticsPageData
 	data.Version = version
 	companyNameSync.Lock()
@@ -111,7 +111,7 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "states"),
 	})
 	if cachedUsersByEmail[email].UserRoleID == 1 {
-		logInfo("DATA", "Adding data menu for administrator")
+		logInfo("STATISTICS", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
 			SelectionValue: "users",
@@ -139,7 +139,7 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/statistics.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("MAIN", "Home page sent")
+	logInfo("STATISTICS", "Page sent in "+time.Since(timer).String())
 }
 
 func loadStatisticsData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {

@@ -96,7 +96,8 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	timer := time.Now()
 	go updatePageCount("charts")
 	email, _, _ := request.BasicAuth()
-	logInfo("CHARTS", "Sending data page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	go updateWebUserRecord("charts", email)
+	logInfo("CHARTS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data ChartsPageData
 	data.Version = version
 	localesSync.Lock()
@@ -162,7 +163,7 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	data.Information = "INF: Page processed in " + time.Since(timer).String()
 	tmpl := template.Must(template.ParseFiles("./html/charts.html"))
 	_ = tmpl.Execute(writer, data)
-	logInfo("CHARTS", "Charts page sent in "+time.Since(timer).String())
+	logInfo("CHARTS", "Page sent in "+time.Since(timer).String())
 }
 
 func loadChartData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
