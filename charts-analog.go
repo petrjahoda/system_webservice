@@ -206,7 +206,7 @@ func downloadChartDowntimeData(db *gorm.DB, dateTo time.Time, dateFrom time.Time
 			Note:     record.Note,
 		}
 		statesByIdSync.RLock()
-		oneData.Color = cachedStatesById[poweroff].Color
+		oneData.Color = cachedStatesById[downtime].Color
 		statesByIdSync.RUnlock()
 		downtimesByIdSync.RLock()
 		oneData.Information = cachedDowntimesById[uint(record.DowntimeID)].Name
@@ -241,7 +241,7 @@ func downloadChartOrderData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, w
 			Note:     record.Note,
 		}
 		statesByIdSync.RLock()
-		oneData.Color = cachedStatesById[poweroff].Color
+		oneData.Color = cachedStatesById[production].Color
 		statesByIdSync.RUnlock()
 		ordersByIdSync.RLock()
 		orderName := cachedOrdersById[uint(record.OrderID)].Name
