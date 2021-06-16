@@ -117,7 +117,9 @@ func loadWorkshift(id string, writer http.ResponseWriter, email string) {
 		return
 	}
 	workshiftId, _ := strconv.Atoi(id)
+	workShiftsByIdSync.RLock()
 	workshift := cachedWorkShiftsById[uint(workshiftId)]
+	workShiftsByIdSync.RUnlock()
 	data := WorkShiftDetailsDataOutput{
 		WorkshiftName:        workshift.Name,
 		WorkshiftNamePrepend: getLocale(email, "workshift-name"),

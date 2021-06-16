@@ -61,9 +61,10 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	logInfo("DATA", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data DataPageOutput
 	data.Version = version
-	localesSync.Lock()
-	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
-	localesSync.Unlock()
+	userLocale := cachedUsersByEmail[email].Locale
+	localesSync.RLock()
+	data.DateLocale = cachedLocales[userLocale]
+	localesSync.RUnlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	data.DateFrom = cachedUserWebSettings[email]["data-selected-from"]

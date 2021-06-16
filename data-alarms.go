@@ -70,7 +70,9 @@ func addAlarmTableRow(record database.AlarmRecord, data *TableOutput, loc *time.
 		alarmEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, alarmEnd)
 	}
+	alarmByIdSync.RLock()
 	alarmName := TableCell{CellName: cachedAlarmsById[uint(record.AlarmID)].Name}
+	alarmByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, alarmName)
 	if record.DateTimeProcessed.Time.IsZero() {
 		alarmProcessed := TableCell{CellName: time.Now().In(loc).Format("2006-01-02 15:04:05") + " +"}

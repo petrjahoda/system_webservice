@@ -171,8 +171,11 @@ func loadDowntime(id string, writer http.ResponseWriter, email string) {
 	var downtime database.Downtime
 	db.Where("id = ?", id).Find(&downtime)
 	var downTypes []DowntimeTypeSelection
-	for _, downtimeType := range cachedDowntimeTypesById {
-		if downtimeType.Name == cachedDowntimeTypesById[uint(downtime.DowntimeTypeID)].Name {
+	downtimeTypesByIdSync.RLock()
+	downtimeTypesById := cachedDowntimeTypesById
+	downtimeTypesByIdSync.RUnlock()
+	for _, downtimeType := range downtimeTypesById {
+		if downtimeType.Name == downtimeTypesById[uint(downtime.DowntimeTypeID)].Name {
 			downTypes = append(downTypes, DowntimeTypeSelection{DowntimeTypeName: downtimeType.Name, DowntimeTypeId: downtimeType.ID, DowntimeTypeSelected: "selected"})
 		} else {
 			downTypes = append(downTypes, DowntimeTypeSelection{DowntimeTypeName: downtimeType.Name, DowntimeTypeId: downtimeType.ID})
@@ -184,7 +187,6 @@ func loadDowntime(id string, writer http.ResponseWriter, email string) {
 	data := DowntimeDetailsDataOutput{
 		DowntimeName:            downtime.Name,
 		DowntimeNamePrepend:     getLocale(email, "downtime-name"),
-		DowntimeTypeName:        cachedDowntimeTypesById[uint(downtime.DowntimeTypeID)].Name,
 		DowntimeTypeNamePrepend: getLocale(email, "type-name"),
 		Barcode:                 downtime.Barcode,
 		BarcodePrepend:          getLocale(email, "barcode"),
@@ -198,6 +200,9 @@ func loadDowntime(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:        getLocale(email, "updated-at"),
 		DowntimeTypes:           downTypes,
 	}
+	downtimeTypesByIdSync.RLock()
+	data.DowntimeTypeName = cachedDowntimeTypesById[uint(downtime.DowntimeTypeID)].Name
+	downtimeTypesByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-downtime.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -282,7 +287,9 @@ func saveDowntime(writer http.ResponseWriter, request *http.Request, _ httproute
 	var downtime database.Downtime
 	db.Where("id=?", data.Id).Find(&downtime)
 	downtime.Name = data.Name
+	downtimeTypesByNameSync.Lock()
 	downtime.DowntimeTypeID = int(cachedDowntimeTypesByName[data.Type].ID)
+	downtimeTypesByNameSync.Unlock()
 	downtime.Color = data.Color
 	downtime.Barcode = data.Barcode
 	downtime.Note = data.Note

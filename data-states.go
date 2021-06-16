@@ -63,7 +63,9 @@ func addStateTableRow(record database.StateRecord, loc *time.Location, data *Tab
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	stateStartDate := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, stateStartDate)
+	statesByIdSync.RLock()
 	stateName := TableCell{CellName: cachedStatesById[uint(record.StateID)].Name}
+	statesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, stateName)
 	note := TableCell{CellName: record.Note}
 	tableRow.TableCell = append(tableRow.TableCell, note)

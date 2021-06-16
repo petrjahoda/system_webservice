@@ -113,7 +113,9 @@ func loadState(id string, writer http.ResponseWriter, email string) {
 		return
 	}
 	stateId, _ := strconv.Atoi(id)
+	statesByIdSync.RLock()
 	state := cachedStatesById[uint(stateId)]
+	statesByIdSync.RUnlock()
 	data := StateDetailsDataOutput{
 		StateName:        state.Name,
 		StateNamePrepend: getLocale(email, "state-name"),

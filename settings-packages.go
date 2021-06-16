@@ -174,8 +174,11 @@ func loadPackage(id string, writer http.ResponseWriter, email string) {
 	var onePackage database.Package
 	db.Where("id = ?", id).Find(&onePackage)
 	var packageTypes []PackageTypeSelection
-	for _, packageType := range cachedPackageTypesById {
-		if packageType.Name == cachedPackageTypesById[uint(onePackage.PackageTypeID)].Name {
+	packageTypesByIdSync.RLock()
+	packageTypesById := cachedPackageTypesById
+	packageTypesByIdSync.RUnlock()
+	for _, packageType := range packageTypesById {
+		if packageType.Name == packageTypesById[uint(onePackage.PackageTypeID)].Name {
 			packageTypes = append(packageTypes, PackageTypeSelection{PackageTypeName: packageType.Name, PackageTypeId: packageType.ID, PackageTypeSelected: "selected"})
 		} else {
 			packageTypes = append(packageTypes, PackageTypeSelection{PackageTypeName: packageType.Name, PackageTypeId: packageType.ID})
@@ -187,8 +190,11 @@ func loadPackage(id string, writer http.ResponseWriter, email string) {
 	var orders []database.Order
 	db.Find(&orders)
 	var orderSelection []OrderSelection
+	ordersByIdSync.RLock()
+	ordersById := cachedOrdersById
+	ordersByIdSync.RUnlock()
 	for _, order := range orders {
-		if order.Name == cachedOrdersById[uint(onePackage.OrderID)].Name {
+		if order.Name == ordersById[uint(onePackage.OrderID)].Name {
 			orderSelection = append(orderSelection, OrderSelection{OrderName: order.Name, OrderId: order.ID, OrderSelected: "selected"})
 		} else {
 			orderSelection = append(orderSelection, OrderSelection{OrderName: order.Name, OrderId: order.ID})
@@ -198,9 +204,9 @@ func loadPackage(id string, writer http.ResponseWriter, email string) {
 		return orderSelection[i].OrderName < orderSelection[j].OrderName
 	})
 	data := PackageDetailsDataOutput{
-		PackageName:            onePackage.Name,
-		PackageNamePrepend:     getLocale(email, "package-name"),
-		PackageTypeName:        cachedPackageTypesById[uint(onePackage.PackageTypeID)].Name,
+		PackageName:        onePackage.Name,
+		PackageNamePrepend: getLocale(email, "package-name"),
+
 		PackageTypeNamePrepend: getLocale(email, "type-name"),
 		OrderNamePrepend:       getLocale(email, "order-name"),
 		Barcode:                onePackage.Barcode,
@@ -214,6 +220,9 @@ func loadPackage(id string, writer http.ResponseWriter, email string) {
 		PackageTypes:           packageTypes,
 		Orders:                 orderSelection,
 	}
+	packageTypesByIdSync.RLock()
+	data.PackageTypeName = cachedPackageTypesById[uint(onePackage.PackageTypeID)].Name
+	packageTypesByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-package.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -300,8 +309,12 @@ func savePackage(writer http.ResponseWriter, request *http.Request, _ httprouter
 	var onePackage database.Package
 	db.Where("id=?", data.Id).Find(&onePackage)
 	onePackage.Name = data.Name
+	packageTypesByNameSync.RLock()
 	onePackage.PackageTypeID = int(cachedPackageTypesByName[data.Type].ID)
+	packageTypesByNameSync.RUnlock()
+	ordersByNameSync.RLock()
 	onePackage.OrderID = int(cachedOrdersByName[data.Order].ID)
+	ordersByNameSync.RUnlock()
 	onePackage.Barcode = data.Barcode
 	onePackage.Note = data.Note
 	result := db.Save(&onePackage)

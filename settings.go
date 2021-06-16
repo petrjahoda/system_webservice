@@ -51,9 +51,10 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	data.MenuStatistics = getLocale(email, "menu-statistics")
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
-	localesSync.Lock()
-	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
-	localesSync.Unlock()
+	userLocale := cachedUsersByEmail[email].Locale
+	localesSync.RLock()
+	data.DateLocale = cachedLocales[userLocale]
+	localesSync.RUnlock()
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "user-name"),
 		SelectionValue: "user",

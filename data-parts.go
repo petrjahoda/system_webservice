@@ -68,9 +68,13 @@ func addPartTableRow(record database.PartRecord, data *TableOutput, db *gorm.DB,
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	var orderRecord database.OrderRecord
 	db.Where("id = ?", record.OrderRecordID).Find(&orderRecord)
+	ordersByIdSync.RLock()
 	orderName := TableCell{CellName: cachedOrdersById[uint(orderRecord.OrderID)].Name}
+	ordersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, orderName)
+	partsByIdSync.RLock()
 	partName := TableCell{CellName: cachedPartsById[uint(record.PartID)].Name}
+	partsByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, partName)
 	countAsString := strconv.Itoa(record.Count)
 	count := TableCell{CellName: countAsString}

@@ -28,16 +28,22 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	}
 	var responseData ChartDataPageOutput
 	var combinedOutputData []PortData
+	workplacePortsSync.RLock()
 	allWorkplacePorts := cachedWorkplacePorts[workplaceName]
+	workplacePortsSync.RUnlock()
 	for _, port := range allWorkplacePorts {
 		if port.StateID.Int32 == production {
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("date_time").Order("id").Find(&digitalData)
 			var portData PortData
 			portData.PortType = "digital"
+			devicePortsByIdSync.RLock()
 			workplaceDevicePort := cachedDevicePortsById[uint(port.DevicePortID)]
+			devicePortsByIdSync.RUnlock()
 			portData.PortName = "ID" + strconv.Itoa(int(workplaceDevicePort.ID)) + ": " + workplaceDevicePort.Name + " (" + workplaceDevicePort.Unit + ")"
+			devicePortsColorsByIdSync.RLock()
 			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			devicePortsColorsByIdSync.RUnlock()
 			if portColor == "#000000" {
 				portData.PortColor = ""
 			}
@@ -75,9 +81,13 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("date_time").Order("id").Find(&analogData)
 			var portData PortData
 			portData.PortType = "analog"
+			devicePortsByIdSync.RLock()
 			workplaceDevicePort := cachedDevicePortsById[uint(port.DevicePortID)]
+			devicePortsByIdSync.RUnlock()
 			portData.PortName = "ID" + strconv.Itoa(int(workplaceDevicePort.ID)) + ": " + workplaceDevicePort.Name + " (" + workplaceDevicePort.Unit + ")"
+			devicePortsColorsByIdSync.RLock()
 			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			devicePortsColorsByIdSync.RUnlock()
 			if portColor == "#000000" {
 				portData.PortColor = ""
 			}
@@ -114,11 +124,13 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	downtimeStateData.PortType = "state"
 	poweroffStateData.PortType = "state"
 	productionStateData.PortName = getLocale(email, "production")
+	statesByIdSync.RLock()
 	productionStateData.PortColor = cachedStatesById[production].Color
 	downtimeStateData.PortName = getLocale(email, "downtime")
 	downtimeStateData.PortColor = cachedStatesById[downtime].Color
 	poweroffStateData.PortName = getLocale(email, "poweroff")
 	poweroffStateData.PortColor = cachedStatesById[poweroff].Color
+	statesByIdSync.RUnlock()
 	startLoop := true
 	actualState := 0
 	for _, record := range allStateRecords {

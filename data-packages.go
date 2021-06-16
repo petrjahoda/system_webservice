@@ -68,9 +68,13 @@ func addPackageTableRow(record database.PackageRecord, data *TableOutput, db *go
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	var orderRecord database.OrderRecord
 	db.Where("id = ?", record.OrderRecordID).Find(&orderRecord)
+	ordersByIdSync.RLock()
 	orderName := TableCell{CellName: cachedOrdersById[uint(orderRecord.OrderID)].Name}
+	ordersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, orderName)
+	packagesByIdSync.RLock()
 	packageName := TableCell{CellName: cachedPackagesById[uint(record.PackageID)].Name}
+	packagesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, packageName)
 	countAsString := strconv.Itoa(record.Count)
 	count := TableCell{CellName: countAsString}

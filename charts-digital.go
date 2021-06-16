@@ -27,14 +27,18 @@ func processDigitalData(writer http.ResponseWriter, workplaceName string, dateFr
 	}
 	var responseData ChartDataPageOutput
 	var digitalOutputData []PortData
+	workplaceDevicePortsSync.RLock()
 	allWorkplacePorts := cachedWorkplaceDevicePorts[workplaceName]
+	workplaceDevicePortsSync.RUnlock()
 	for _, port := range allWorkplacePorts {
 		if port.DevicePortTypeID == digital {
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("date_time").Order("id").Find(&digitalData)
 			var portData PortData
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name + " (" + port.Unit + ")"
+			devicePortsColorsByIdSync.RLock()
 			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			devicePortsColorsByIdSync.RUnlock()
 			if portColor == "#000000" {
 				portData.PortColor = ""
 			}

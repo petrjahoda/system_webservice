@@ -107,16 +107,24 @@ func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int
 		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	}
+	workplaceModesByIdSync.RLock()
 	workplaceModeNameCell := TableCell{CellName: cachedWorkplaceModesById[uint(record.WorkplaceModeID)].Name}
+	workplaceModesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceModeNameCell)
+	workShiftsByIdSync.RLock()
 	workshiftName := TableCell{CellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
+	workShiftsByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workshiftName)
 	actualUserId := userRecordsByRecordId[int(record.ID)].UserID
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
 	tableRow.TableCell = append(tableRow.TableCell, userName)
+	ordersByIdSync.RLock()
 	orderName := TableCell{CellName: cachedOrdersById[uint(record.OrderID)].Name}
+	ordersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, orderName)
+	operationsByIdSync.RLock()
 	operationName := TableCell{CellName: cachedOperationsById[uint(record.OperationID)].Name}
+	operationsByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, operationName)
 	averageCycleAsString := strconv.FormatFloat(float64(record.AverageCycle), 'f', 2, 64)
 	averageCycle := TableCell{CellName: averageCycleAsString + "s"}

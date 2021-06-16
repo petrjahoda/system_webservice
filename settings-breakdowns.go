@@ -213,8 +213,11 @@ func loadBreakdown(id string, writer http.ResponseWriter, email string) {
 	var breakdown database.Breakdown
 	db.Where("id = ?", id).Find(&breakdown)
 	var breakdownTypes []BreakdownTypeSelection
-	for _, breakdownType := range cachedBreakdownTypesById {
-		if breakdownType.Name == cachedBreakdownTypesById[uint(breakdown.BreakdownTypeID)].Name {
+	breakdownTypesByIdSync.RLock()
+	breakdownTypesById := cachedBreakdownTypesById
+	breakdownTypesByIdSync.RUnlock()
+	for _, breakdownType := range breakdownTypesById {
+		if breakdownType.Name == breakdownTypesById[uint(breakdown.BreakdownTypeID)].Name {
 			breakdownTypes = append(breakdownTypes, BreakdownTypeSelection{BreakdownTypeName: breakdownType.Name, BreakdownTypeId: breakdownType.ID, BreakdownTypeSelected: "selected"})
 		} else {
 			breakdownTypes = append(breakdownTypes, BreakdownTypeSelection{BreakdownTypeName: breakdownType.Name, BreakdownTypeId: breakdownType.ID})
@@ -226,7 +229,6 @@ func loadBreakdown(id string, writer http.ResponseWriter, email string) {
 	data := BreakdownDetailsDataOutput{
 		BreakdownName:            breakdown.Name,
 		BreakdownNamePrepend:     getLocale(email, "breakdown-name"),
-		BreakdownTypeName:        cachedBreakdownTypesById[uint(breakdown.BreakdownTypeID)].Name,
 		BreakdownTypeNamePrepend: getLocale(email, "type-name"),
 		Barcode:                  breakdown.Barcode,
 		BarcodePrepend:           getLocale(email, "barcode"),
@@ -240,6 +242,9 @@ func loadBreakdown(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:         getLocale(email, "updated-at"),
 		BreakdownTypes:           breakdownTypes,
 	}
+	breakdownTypesByIdSync.RLock()
+	data.BreakdownTypeName = cachedBreakdownTypesById[uint(breakdown.BreakdownTypeID)].Name
+	breakdownTypesByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-breakdown.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -330,7 +335,9 @@ func saveBreakdown(writer http.ResponseWriter, request *http.Request, _ httprout
 	var breakdown database.Breakdown
 	db.Where("id=?", data.Id).Find(&breakdown)
 	breakdown.Name = data.Name
+	breakdownTypesByNameSync.RLock()
 	breakdown.BreakdownTypeID = int(cachedBreakdownTypesByName[data.Type].ID)
+	breakdownTypesByNameSync.RUnlock()
 	breakdown.Color = data.Color
 	breakdown.Barcode = data.Barcode
 	breakdown.Note = data.Note

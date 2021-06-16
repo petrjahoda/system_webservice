@@ -113,7 +113,9 @@ func loadPart(id string, writer http.ResponseWriter, email string) {
 		return
 	}
 	partId, _ := strconv.Atoi(id)
+	partsByIdSync.RLock()
 	part := cachedPartsById[uint(partId)]
+	partsByIdSync.RUnlock()
 	data := PartDetailsDataOutput{
 		PartName:         part.Name,
 		PartNamePrepend:  getLocale(email, "part-name"),

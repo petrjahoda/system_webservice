@@ -205,8 +205,11 @@ func loadDevice(id string, writer http.ResponseWriter, email string) {
 	var device database.Device
 	db.Where("id = ?", id).Find(&device)
 	var deviceTypes []DeviceTypeSelection
-	for _, deviceType := range cachedDeviceTypesById {
-		if deviceType.Name == cachedDeviceTypesById[uint(device.DeviceTypeID)].Name {
+	deviceTypesByIdSync.RLock()
+	deviceTypesById := cachedDeviceTypesById
+	deviceTypesByIdSync.RUnlock()
+	for _, deviceType := range deviceTypesById {
+		if deviceType.Name == deviceTypesById[uint(device.DeviceTypeID)].Name {
 			deviceTypes = append(deviceTypes, DeviceTypeSelection{DeviceTypeName: deviceType.Name, DeviceTypeId: deviceType.ID, DeviceTypeSelected: "selected"})
 		} else {
 			deviceTypes = append(deviceTypes, DeviceTypeSelection{DeviceTypeName: deviceType.Name, DeviceTypeId: deviceType.ID})
@@ -309,8 +312,11 @@ func loadDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	var devicePort database.DevicePort
 	db.Where("id=?", data.Data).Find(&devicePort)
 	var devicePortTypes []DevicePortTypeSelection
-	for _, devicePortType := range cachedDevicePortTypesById {
-		if devicePortType.Name == cachedDevicePortTypesById[uint(devicePort.DevicePortTypeID)].Name {
+	devicePortTypesByIdSync.RLock()
+	devicePortTypesById := cachedDevicePortTypesById
+	devicePortTypesByIdSync.RUnlock()
+	for _, devicePortType := range devicePortTypesById {
+		if devicePortType.Name == devicePortTypesById[uint(devicePort.DevicePortTypeID)].Name {
 			devicePortTypes = append(devicePortTypes, DevicePortTypeSelection{DevicePortTypeName: devicePortType.Name, DevicePortTypeId: devicePortType.ID, DevicePortTypeSelected: "selected"})
 		} else {
 			devicePortTypes = append(devicePortTypes, DevicePortTypeSelection{DevicePortTypeName: devicePortType.Name, DevicePortTypeId: devicePortType.ID})
@@ -389,7 +395,9 @@ func saveDevice(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	var device database.Device
 	db.Where("id=?", data.Id).Find(&device)
 	device.Name = data.Name
+	deviceTypesByNameSync.RLock()
 	device.DeviceTypeID = int(cachedDeviceTypesByName[data.Type].ID)
+	deviceTypesByNameSync.RUnlock()
 	device.IpAddress = data.Ip
 	device.MacAddress = data.Mac
 	device.Settings = data.Settings
@@ -442,8 +450,12 @@ func saveDevicePort(writer http.ResponseWriter, request *http.Request, _ httprou
 	var port database.DevicePort
 	db.Where("id=?", data.Id).Find(&port)
 	port.Name = data.Name
+	devicePortTypesByNameSync.RLock()
 	port.DevicePortTypeID = int(cachedDevicePortTypesByName[data.Type].ID)
+	devicePortTypesByNameSync.RUnlock()
+	devicesByNameSync.RLock()
 	port.DeviceID = int(cachedDevicesByName[data.DeviceName].ID)
+	devicesByNameSync.RUnlock()
 	port.PortNumber, _ = strconv.Atoi(data.Position)
 	port.PlcDataType = data.PlcDataType
 	port.PlcDataAddress = data.PlcDataAddress

@@ -98,7 +98,9 @@ func addDowntimeTableRow(downtimeRecord database.DowntimeRecord, userRecords []d
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
 
 	tableRow.TableCell = append(tableRow.TableCell, userName)
+	downtimesByIdSync.RLock()
 	downtimeName := TableCell{CellName: cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name}
+	downtimesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, downtimeName)
 	note := TableCell{CellName: downtimeRecord.Note}
 	tableRow.TableCell = append(tableRow.TableCell, note)

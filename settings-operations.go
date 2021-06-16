@@ -128,7 +128,10 @@ func loadOperation(id string, writer http.ResponseWriter, email string) {
 	var operation database.Operation
 	db.Where("id = ?", id).Find(&operation)
 	var orders []OrderSelection
-	for _, order := range cachedOrdersById {
+	ordersByIdSync.RLock()
+	ordersById := cachedOrdersById
+	ordersByIdSync.RUnlock()
+	for _, order := range ordersById {
 		if order.Name == cachedWorkplacesById[uint(operation.OrderID)].Name {
 			orders = append(orders, OrderSelection{OrderName: order.Name, OrderId: order.ID, OrderSelected: "selected"})
 		} else {
@@ -141,7 +144,6 @@ func loadOperation(id string, writer http.ResponseWriter, email string) {
 	data := OperationDetailsDataOutput{
 		OperationName:        operation.Name,
 		OperationNamePrepend: getLocale(email, "operation-name"),
-		OrderName:            cachedOrdersById[uint(operation.OrderID)].Name,
 		OrderNamePrepend:     getLocale(email, "order-name"),
 		Barcode:              operation.Barcode,
 		BarcodePrepend:       getLocale(email, "barcode"),
@@ -153,6 +155,9 @@ func loadOperation(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		Orders:               orders,
 	}
+	ordersByIdSync.RLock()
+	data.OrderName = cachedOrdersById[uint(operation.OrderID)].Name
+	ordersByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-operation.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -196,7 +201,9 @@ func saveOperation(writer http.ResponseWriter, request *http.Request, _ httprout
 	var operation database.Operation
 	db.Where("id=?", data.Id).Find(&operation)
 	operation.Name = data.Name
+	ordersByNameSync.RLock()
 	operation.OrderID = int(cachedOrdersByName[data.Order].ID)
+	ordersByNameSync.RUnlock()
 	operation.Barcode = data.Barcode
 	operation.Note = data.Note
 	result := db.Save(&operation)

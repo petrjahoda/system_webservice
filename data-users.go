@@ -74,7 +74,9 @@ func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB,
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	var orderRecord database.OrderRecord
 	db.Where("id = ?", record.OrderRecordID).Find(&orderRecord)
+	ordersByIdSync.RLock()
 	orderName := TableCell{CellName: cachedOrdersById[uint(orderRecord.OrderID)].Name}
+	ordersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, orderName)
 	note := TableCell{CellName: record.Note}
 	tableRow.TableCell = append(tableRow.TableCell, note)

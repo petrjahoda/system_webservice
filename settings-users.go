@@ -211,8 +211,11 @@ func loadUser(id string, writer http.ResponseWriter, email string) {
 	var user database.User
 	db.Where("id = ?", id).Find(&user)
 	var userTypes []UserTypeSelection
-	for _, userType := range cachedUserTypesById {
-		if userType.Name == cachedUserTypesById[uint(user.UserTypeID)].Name {
+	userTypesByIdSync.RLock()
+	userTypesById := cachedUserTypesById
+	userTypesByIdSync.RUnlock()
+	for _, userType := range userTypesById {
+		if userType.Name == userTypesById[uint(user.UserTypeID)].Name {
 			userTypes = append(userTypes, UserTypeSelection{UserTypeName: userType.Name, UserTypeId: userType.ID, UserTypeSelected: "selected"})
 		} else {
 			userTypes = append(userTypes, UserTypeSelection{UserTypeName: userType.Name, UserTypeId: userType.ID})
@@ -222,8 +225,11 @@ func loadUser(id string, writer http.ResponseWriter, email string) {
 		return userTypes[i].UserTypeName < userTypes[j].UserTypeName
 	})
 	var userRoles []UserRoleSelection
-	for _, userRole := range cachedUserRolesById {
-		if userRole.Name == cachedUserRolesById[uint(user.UserRoleID)].Name {
+	userRolesByIdSync.RLock()
+	userRolesById := cachedUserRolesById
+	userRolesByIdSync.RUnlock()
+	for _, userRole := range userRolesById {
+		if userRole.Name == userRolesById[uint(user.UserRoleID)].Name {
 			userRoles = append(userRoles, UserRoleSelection{UserRoleName: userRole.Name, UserRoleId: userRole.ID, UserRoleSelected: "selected"})
 		} else {
 			userRoles = append(userRoles, UserRoleSelection{UserRoleName: userRole.Name, UserRoleId: userRole.ID})
@@ -248,9 +254,7 @@ func loadUser(id string, writer http.ResponseWriter, email string) {
 		FirstNamePrepend:    getLocale(email, "first-name"),
 		SecondName:          user.SecondName,
 		SecondNamePrepend:   getLocale(email, "second-name"),
-		UserRoleName:        cachedUserRolesById[uint(user.UserRoleID)].Name,
 		UserRoleNamePrepend: getLocale(email, "role-name"),
-		UserTypeName:        cachedUserTypesById[uint(user.UserTypeID)].Name,
 		UserTypeNamePrepend: getLocale(email, "type-name"),
 		LocalePrepend:       getLocale(email, "locale"),
 		Barcode:             user.Barcode,
@@ -277,6 +281,12 @@ func loadUser(id string, writer http.ResponseWriter, email string) {
 		UserRoles:           userRoles,
 		Locales:             locales,
 	}
+	userRolesByIdSync.RLock()
+	data.UserRoleName = cachedUserRolesById[uint(user.UserRoleID)].Name
+	userRolesByIdSync.RUnlock()
+	userTypesByIdSync.RLock()
+	data.UserTypeName = cachedUserTypesById[uint(user.UserTypeID)].Name
+	userTypesByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-user.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -362,8 +372,12 @@ func saveUser(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	db.Where("id=?", data.Id).Find(&user)
 	user.FirstName = data.FirstName
 	user.SecondName = data.SecondName
+	userTypesByNameSync.RLock()
 	user.UserTypeID = int(cachedUserTypesByName[data.Type].ID)
+	userTypesByNameSync.RUnlock()
+	userRolesByNameSync.RLock()
 	user.UserRoleID = int(cachedUserRolesByName[data.Role].ID)
+	userRolesByNameSync.RUnlock()
 	user.Barcode = data.Barcode
 	user.Email = data.Email
 	user.Phone = data.Phone

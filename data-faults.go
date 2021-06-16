@@ -68,9 +68,13 @@ func addFaultTableRow(record database.FaultRecord, data *TableOutput, db *gorm.D
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	var orderRecord database.OrderRecord
 	db.Where("id = ?", record.OrderRecordID).Find(&orderRecord)
+	ordersByIdSync.RLock()
 	orderName := TableCell{CellName: cachedOrdersById[uint(orderRecord.OrderID)].Name}
+	ordersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, orderName)
+	faultsByIdSync.RLock()
 	faultName := TableCell{CellName: cachedFaultsById[uint(record.FaultID)].Name}
+	faultsByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, faultName)
 	countAsString := strconv.Itoa(record.Count)
 	count := TableCell{CellName: countAsString}

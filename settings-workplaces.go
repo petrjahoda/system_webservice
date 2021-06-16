@@ -432,12 +432,18 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	var productionDowntimes []WorkplacePortSelection
 	for _, port := range digitalPorts {
 		if int(port.ID) == workplaceProductionPort.DevicePortID {
-			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
 			var workplacePort database.WorkplacePort
 			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
 			data.ProductionColorValue = workplacePort.Color
 		} else {
-			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			productionDowntimes = append(productionDowntimes, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
 		}
 	}
 	data.ProductionDowntimes = productionDowntimes
@@ -446,12 +452,18 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	var powerOnPowerOffs []WorkplacePortSelection
 	for _, port := range analogPorts {
 		if int(port.ID) == workplacePowerOffPort.DevicePortID {
-			powerOnPowerOffs = append(powerOnPowerOffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			powerOnPowerOffs = append(powerOnPowerOffs, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
 			var workplacePort database.WorkplacePort
 			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
 			data.PoweroffColorValue = workplacePort.Color
 		} else {
-			powerOnPowerOffs = append(powerOnPowerOffs, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			powerOnPowerOffs = append(powerOnPowerOffs, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
 		}
 	}
 	data.PoweronPoweroffs = powerOnPowerOffs
@@ -461,12 +473,18 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: ""})
 	for _, port := range digitalPorts {
 		if int(port.ID) == countOkPort.DevicePortID {
-			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
 			var workplacePort database.WorkplacePort
 			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
 			data.OkColorValue = workplacePort.Color
 		} else {
-			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			countOks = append(countOks, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
 		}
 	}
 	data.CountOks = countOks
@@ -476,12 +494,18 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 	countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: ""})
 	for _, port := range digitalPorts {
 		if int(port.ID) == countNokPort.DevicePortID {
-			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID, WorkplacePortSelected: "selected"})
 			var workplacePort database.WorkplacePort
 			db.Where("device_port_id = ?", port.ID).Where("workplace_id = ?", workplace.ID).Find(&workplacePort)
 			data.NokColorValue = workplacePort.Color
 		} else {
-			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			countNoks = append(countNoks, WorkplacePortSelection{WorkplacePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortId: port.ID})
 		}
 	}
 	data.CountNoks = countNoks
@@ -502,9 +526,15 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 		addWorkplaceWorkshiftsTableRow(workshift, &data)
 	}
 	var workshiftSelection []WorkshiftSelection
-	for _, workshift := range cachedWorkShiftsById {
+	workShiftsByIdSync.RLock()
+	workShiftById := cachedWorkShiftsById
+	workShiftsByIdSync.RUnlock()
+	workplaceWorkShiftsByIdSync.RLock()
+	workplaceWorkShiftsById := cachedWorkplaceWorkShiftsById
+	workplaceWorkShiftsByIdSync.RUnlock()
+	for _, workshift := range workShiftById {
 		workshiftAdded := false
-		for _, workplaceWorkshift := range cachedWorkplaceWorkShiftsById {
+		for _, workplaceWorkshift := range workplaceWorkShiftsById {
 			if int(workshift.ID) == workplaceWorkshift.WorkshiftID && int(workplace.ID) == workplaceWorkshift.WorkplaceID {
 				workshiftSelection = append(workshiftSelection, WorkshiftSelection{WorkshiftName: workshift.Name + " [" + strconv.Itoa(int(workshift.ID)) + "]", WorkshiftSelection: "selected"})
 				workshiftAdded = true
@@ -536,8 +566,11 @@ func loadWorkplace(id string, writer http.ResponseWriter, email string) {
 
 func loadWorkplaceModes(workplace database.Workplace) []WorkplaceModeSelection {
 	var workplaceModes []WorkplaceModeSelection
-	for _, workplaceMode := range cachedWorkplaceModesById {
-		if workplaceMode.Name == cachedWorkplaceModesById[uint(workplace.WorkplaceModeID)].Name {
+	workplaceModesByIdSync.RLock()
+	workplaceModesById := cachedWorkplaceModesById
+	workplaceModesByIdSync.RUnlock()
+	for _, workplaceMode := range workplaceModesById {
+		if workplaceMode.Name == workplaceModesById[uint(workplace.WorkplaceModeID)].Name {
 			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID, WorkplaceModeSelected: "selected"})
 		} else {
 			workplaceModes = append(workplaceModes, WorkplaceModeSelection{WorkplaceModeName: workplaceMode.Name, WorkplaceModeId: workplaceMode.ID})
@@ -551,8 +584,11 @@ func loadWorkplaceModes(workplace database.Workplace) []WorkplaceModeSelection {
 
 func loadWorkplaceSections(workplace database.Workplace) []WorkplaceSectionSelection {
 	var workplaceSections []WorkplaceSectionSelection
-	for _, workplaceSection := range cachedWorkplaceSectionsById {
-		if workplaceSection.Name == cachedWorkplaceSectionsById[uint(workplace.WorkplaceSectionID)].Name {
+	workplaceSectionsByIdSync.RLock()
+	workplaceSectionsById := cachedWorkplaceSectionsById
+	workplaceSectionsByIdSync.RUnlock()
+	for _, workplaceSection := range workplaceSectionsById {
+		if workplaceSection.Name == workplaceSectionsById[uint(workplace.WorkplaceSectionID)].Name {
 			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID, WorkplaceSectionSelected: "selected"})
 		} else {
 			workplaceSections = append(workplaceSections, WorkplaceSectionSelection{WorkplaceSectionName: workplaceSection.Name, WorkplaceSectionId: workplaceSection.ID})
@@ -568,7 +604,9 @@ func addWorkplaceWorkshiftsTableRow(record database.WorkplaceWorkshift, data *Wo
 	var tableRow WorkshiftTableRow
 	id := WorkshiftTableCell{WorkshiftCellName: strconv.Itoa(int(record.ID))}
 	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, id)
+	workShiftsByIdSync.RLock()
 	name := WorkshiftTableCell{WorkshiftCellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
+	workShiftsByIdSync.RUnlock()
 	tableRow.WorkshiftTableCell = append(tableRow.WorkshiftTableCell, name)
 	data.WorkshiftTableRows = append(data.WorkshiftTableRows, tableRow)
 }
@@ -628,19 +666,31 @@ func loadWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 	var devicePorts []database.DevicePort
 	db.Raw("select * from device_ports where id not in (select device_port_id from workplace_ports where workplace_id=? and (state_id in (1,3) or counter_ok is true or counter_nok is true))", data.WorkplaceId).Find(&devicePorts)
 	var workplacePortDevicePorts []WorkplacePortDevicePortSelection
+	devicePortsByIdSync.RLock()
+	devicePortsById := cachedDevicePortsById
+	devicePortsByIdSync.RUnlock()
 	for _, port := range devicePorts {
-		if port.ID == cachedDevicePortsById[uint(workplacePort.DevicePortID)].ID {
-			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortDevicePortId: port.ID, WorkplacePortDevicePortSelected: "selected"})
+		if port.ID == devicePortsById[uint(workplacePort.DevicePortID)].ID {
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortDevicePortId: port.ID, WorkplacePortDevicePortSelected: "selected"})
 		} else {
-			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: cachedDevicesById[uint(port.DeviceID)].Name + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortDevicePortId: port.ID})
+			devicesByIdSync.RLock()
+			deviceName := cachedDevicesById[uint(port.DeviceID)].Name
+			devicesByIdSync.RUnlock()
+			workplacePortDevicePorts = append(workplacePortDevicePorts, WorkplacePortDevicePortSelection{WorkplacePortDevicePortName: deviceName + " #" + strconv.Itoa(port.PortNumber) + ": " + port.Name + " [" + strconv.Itoa(int(port.ID)) + "]", WorkplacePortDevicePortId: port.ID})
 		}
 	}
 	sort.Slice(workplacePortDevicePorts, func(i, j int) bool {
 		return workplacePortDevicePorts[i].WorkplacePortDevicePortName < workplacePortDevicePorts[j].WorkplacePortDevicePortName
 	})
 	var states []WorkplacePortStateSelection
-	for _, state := range cachedStatesById {
-		if state.ID == cachedStatesById[uint(workplacePort.StateID.Int32)].ID {
+	statesByIdSync.RLock()
+	statesById := cachedStatesById
+	statesByIdSync.RUnlock()
+	for _, state := range statesById {
+		if state.ID == statesById[uint(workplacePort.StateID.Int32)].ID {
 			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name + " [" + strconv.Itoa(int(state.ID)) + "]", WorkplacePortStateId: state.ID, WorkplacePortStateSelected: "selected"})
 		} else {
 			states = append(states, WorkplacePortStateSelection{WorkplacePortStateName: state.Name + " [" + strconv.Itoa(int(state.ID)) + "]", WorkplacePortStateId: state.ID})
@@ -707,8 +757,12 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 	var workplace database.Workplace
 	db.Where("id=?", data.Id).Find(&workplace)
 	workplace.Name = data.Name
+	workplaceModesByNameSync.RLock()
 	workplace.WorkplaceModeID = int(cachedWorkplaceModesByName[data.Mode].ID)
+	workplaceModesByNameSync.RUnlock()
+	workplaceSectionsByNameSync.RLock()
 	workplace.WorkplaceSectionID = int(cachedWorkplaceSectionsByName[data.Section].ID)
+	workplaceSectionsByNameSync.RUnlock()
 	workplace.Code = data.Code
 	workplace.Note = data.Note
 	result := db.Save(&workplace)

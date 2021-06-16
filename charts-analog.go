@@ -28,7 +28,9 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	}
 	var responseData ChartDataPageOutput
 	var analogOutputData []PortData
+	workplaceDevicePortsSync.RLock()
 	allWorkplacePorts := cachedWorkplaceDevicePorts[workplaceName]
+	workplaceDevicePortsSync.RUnlock()
 	for _, port := range allWorkplacePorts {
 		if port.DevicePortTypeID == analog {
 			analogTimeDifference := 20.0
@@ -36,7 +38,9 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.ID).Order("date_time").Order("id").Find(&analogData)
 			var portData PortData
 			portData.PortName = "ID" + strconv.Itoa(int(port.ID)) + ": " + port.Name + " (" + port.Unit + ")"
+			devicePortsColorsByIdSync.RLock()
 			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			devicePortsColorsByIdSync.RUnlock()
 			if portColor == "#000000" {
 				portData.PortColor = ""
 			}
@@ -126,11 +130,13 @@ func downloadChartAlarmData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, w
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       "grey",
-			FromDate:    dateTimeStart,
-			ToDate:      dateTimeEnd,
-			Information: cachedAlarmsById[uint(record.AlarmID)].Name,
+			Color:    "grey",
+			FromDate: dateTimeStart,
+			ToDate:   dateTimeEnd,
 		}
+		alarmByIdSync.RLock()
+		oneData.Information = cachedAlarmsById[uint(record.AlarmID)].Name
+		alarmByIdSync.RUnlock()
 		alarmData = append(alarmData, oneData)
 	}
 	return alarmData
@@ -150,12 +156,16 @@ func downloadChartBreakdownData(db *gorm.DB, dateTo time.Time, dateFrom time.Tim
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       cachedStatesById[poweroff].Color,
-			FromDate:    dateTimeStart,
-			ToDate:      dateTimeEnd,
-			Information: cachedBreakdownsById[uint(record.BreakdownID)].Name,
-			Note:        record.Note,
+			FromDate: dateTimeStart,
+			ToDate:   dateTimeEnd,
+			Note:     record.Note,
 		}
+		statesByIdSync.RLock()
+		oneData.Color = cachedStatesById[poweroff].Color
+		statesByIdSync.RUnlock()
+		breakdownByIdSync.RLock()
+		oneData.Information = cachedBreakdownsById[uint(record.BreakdownID)].Name
+		breakdownByIdSync.RUnlock()
 		breakdownData = append(breakdownData, oneData)
 	}
 	return breakdownData
@@ -175,12 +185,16 @@ func downloadChartDowntimeData(db *gorm.DB, dateTo time.Time, dateFrom time.Time
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       cachedStatesById[downtime].Color,
-			FromDate:    dateTimeStart,
-			ToDate:      dateTimeEnd,
-			Information: cachedDowntimesById[uint(record.DowntimeID)].Name,
-			Note:        record.Note,
+			FromDate: dateTimeStart,
+			ToDate:   dateTimeEnd,
+			Note:     record.Note,
 		}
+		statesByIdSync.RLock()
+		oneData.Color = cachedStatesById[poweroff].Color
+		statesByIdSync.RUnlock()
+		downtimesByIdSync.RLock()
+		oneData.Information = cachedDowntimesById[uint(record.DowntimeID)].Name
+		downtimesByIdSync.RUnlock()
 		downtimeData = append(downtimeData, oneData)
 	}
 	return downtimeData
@@ -191,7 +205,9 @@ func downloadChartOrderData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, w
 	var orderRecords []database.OrderRecord
 	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Order("id").Find(&orderRecords)
 	for _, record := range orderRecords {
+		ordersByIdSync.RLock()
 		productId := int(cachedOrdersById[uint(record.OrderID)].ProductID.Int32)
+		ordersByIdSync.RUnlock()
 		dateTimeStart := record.DateTimeStart.Unix() * 1000
 		if record.DateTimeStart.Before(dateFrom) {
 			dateTimeStart = dateFrom.Unix() * 1000
@@ -201,12 +217,23 @@ func downloadChartOrderData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, w
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       cachedStatesById[production].Color,
-			FromDate:    dateTimeStart,
-			ToDate:      dateTimeEnd,
-			Information: cachedOrdersById[uint(record.OrderID)].Name + ", " + cachedOperationsById[uint(record.OperationID)].Name + ", " + cachedProductsById[uint(productId)].Name,
-			Note:        record.Note,
+			FromDate: dateTimeStart,
+			ToDate:   dateTimeEnd,
+			Note:     record.Note,
 		}
+		statesByIdSync.RLock()
+		oneData.Color = cachedStatesById[poweroff].Color
+		statesByIdSync.RUnlock()
+		ordersByIdSync.RLock()
+		orderName := cachedOrdersById[uint(record.OrderID)].Name
+		ordersByIdSync.RUnlock()
+		operationsByIdSync.RLock()
+		operationName := cachedOperationsById[uint(record.OperationID)].Name
+		operationsByIdSync.RUnlock()
+		productsByIdSync.RLock()
+		productName := cachedProductsById[uint(productId)].Name
+		productsByIdSync.RUnlock()
+		oneData.Information = orderName + ", " + operationName + ", " + productName
 		orderData = append(orderData, oneData)
 	}
 	return orderData

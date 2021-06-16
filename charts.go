@@ -100,9 +100,10 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	logInfo("CHARTS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
 	var data ChartsPageData
 	data.Version = version
-	localesSync.Lock()
-	data.DateLocale = cachedLocales[cachedUsersByEmail[email].Locale]
-	localesSync.Unlock()
+	userLocale := cachedUsersByEmail[email].Locale
+	localesSync.RLock()
+	data.DateLocale = cachedLocales[userLocale]
+	localesSync.RUnlock()
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
 	companyNameSync.RLock()

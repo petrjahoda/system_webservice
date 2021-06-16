@@ -72,7 +72,9 @@ func addBreakdownTableRow(record database.BreakdownRecord, data *TableOutput, lo
 	}
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}
 	tableRow.TableCell = append(tableRow.TableCell, userName)
+	breakdownByIdSync.RLock()
 	breakdownName := TableCell{CellName: cachedBreakdownsById[uint(record.BreakdownID)].Name}
+	breakdownByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, breakdownName)
 	note := TableCell{CellName: record.Note}
 	tableRow.TableCell = append(tableRow.TableCell, note)

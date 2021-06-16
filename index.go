@@ -122,7 +122,13 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	locationSync.RLock()
 	loc, err := time.LoadLocation(cachedLocation)
 	locationSync.RUnlock()
+	latestCachedWorkplaceCalendarDataSync.RLock()
+	latestCachedWorkplaceCalendarData := cachedLatestCachedWorkplaceCalendarData
+	latestCachedWorkplaceCalendarDataSync.RUnlock()
 	cacheProductionData(db, time.Date(latestCachedWorkplaceCalendarData.Year(), latestCachedWorkplaceCalendarData.Month(), latestCachedWorkplaceCalendarData.Day(), 0, 0, 0, 0, loc))
+	latestCachedWorkplaceConsumptionSync.RLock()
+	latestCachedWorkplaceConsumption := cachedLatestCachedWorkplaceConsumption
+	latestCachedWorkplaceConsumptionSync.RUnlock()
 	cacheConsumptionData(db, time.Date(latestCachedWorkplaceConsumption.Year(), latestCachedWorkplaceConsumption.Month(), latestCachedWorkplaceConsumption.Day(), 0, 0, 0, 0, loc))
 	workplaceNames, workplacePercents := downloadProductionData(loc, email)
 	terminalDowntimeNames, terminalDowntimeValues, terminalDowntimeDurations := downloadTerminalDowntimeData(db, email, loc)
@@ -143,9 +149,11 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.TerminalAlarmNames = terminalAlarmNames
 	data.TerminalAlarmDurations = terminalAlarmValues
 	data.TerminalAlarmDurationsAsString = terminalAlarmDurations
+	statesByIdSync.RLock()
 	data.TerminalDowntimeColor = cachedStatesById[2].Color
 	data.TerminalProductionColor = cachedStatesById[1].Color
 	data.TerminalBreakdownColor = cachedStatesById[3].Color
+	statesByIdSync.RUnlock()
 	data.TerminalAlarmColor = "grey"
 	data.ProductivityTodayTitle = getLocale(email, "production-today")
 	data.ProductivityYearTitle = getLocale(email, "production-last-year")
@@ -194,21 +202,21 @@ func downloadIndexChartData(email string, loc *time.Location) ([]string, []strin
 	var cachedDowntimeData = map[string]time.Duration{}
 	var cachedPoweroffData = map[string]time.Duration{}
 	for _, workplace := range workplaces {
-		workplacesRecords.Lock()
+		workplacesProductionRecordsSync.RLock()
 		productionData := cachedWorkplacesProductionRecords[workplace.Name]
-		workplacesRecords.Unlock()
+		workplacesProductionRecordsSync.RUnlock()
 		for date, duration := range productionData {
 			cachedProductionData[date] = cachedProductionData[date] + duration
 		}
-		workplacesRecords.Lock()
+		workplacesDowntimeRecordsSync.RLock()
 		downtimeData := cachedWorkplacesDowntimeRecords[workplace.Name]
-		workplacesRecords.Unlock()
+		workplacesDowntimeRecordsSync.RUnlock()
 		for date, duration := range downtimeData {
 			cachedDowntimeData[date] = cachedDowntimeData[date] + duration
 		}
-		workplacesRecords.Lock()
+		workplacesPoweroffRecordsSync.RLock()
 		poweroffData := cachedWorkplacesPoweroffRecords[workplace.Name]
-		workplacesRecords.Unlock()
+		workplacesPoweroffRecordsSync.RUnlock()
 		for date, duration := range poweroffData {
 			cachedPoweroffData[date] = cachedPoweroffData[date] + duration
 		}
@@ -261,9 +269,9 @@ func downloadCalendarData(email string, loc *time.Location) [][]string {
 	totalTodayDuration := time.Now().In(loc).Sub(todayNoon).Seconds()
 	var cachedCalendarData = map[string]time.Duration{}
 	for _, workplace := range workplaces {
-		workplacesRecords.Lock()
+		workplacesProductionRecordsSync.RLock()
 		data := cachedWorkplacesProductionRecords[workplace.Name]
-		workplacesRecords.Unlock()
+		workplacesProductionRecordsSync.RUnlock()
 		for date, duration := range data {
 			cachedCalendarData[date] = cachedCalendarData[date] + duration
 		}
@@ -295,9 +303,9 @@ func downloadConsumptionData(email string) []string {
 	}
 	var cachedConsumptionData = map[string]float32{}
 	for _, workplace := range workplaces {
-		consumptionDataSync.Lock()
+		consumptionDataByWorkplaceNameSync.RLock()
 		data := cachedConsumptionDataByWorkplaceName[workplace.Name]
-		consumptionDataSync.Unlock()
+		consumptionDataByWorkplaceNameSync.RUnlock()
 		for date, value := range data {
 			cachedConsumptionData[date] = cachedConsumptionData[date] + value
 		}
@@ -327,7 +335,10 @@ func downloadTerminalAlarmData(db *gorm.DB, email string, loc *time.Location) ([
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, alarmRecord := range alarmRecords {
 		var indexDataWorkplace IndexDataWorkplace
-		indexDataWorkplace.Name = cachedWorkplacesById[uint(alarmRecord.WorkplaceID)].Name + ": " + cachedAlarmsById[uint(alarmRecord.AlarmID)].Name
+		alarmByIdSync.RLock()
+		alarmName := cachedAlarmsById[uint(alarmRecord.AlarmID)].Name
+		alarmByIdSync.RUnlock()
+		indexDataWorkplace.Name = cachedWorkplacesById[uint(alarmRecord.WorkplaceID)].Name + ": " + alarmName
 		indexDataWorkplace.Value = time.Since(alarmRecord.DateTimeStart).Seconds()
 		indexDataWorkplace.Duration = time.Now().In(loc).Sub(alarmRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
@@ -362,7 +373,10 @@ func downloadTerminalBreakdownData(db *gorm.DB, email string, loc *time.Location
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, breakdownRecord := range breakdownRecords {
 		var indexDataWorkplace IndexDataWorkplace
-		indexDataWorkplace.Name = cachedWorkplacesById[uint(breakdownRecord.WorkplaceID)].Name + ": " + cachedBreakdownsById[uint(breakdownRecord.BreakdownID)].Name
+		breakdownByIdSync.RLock()
+		breakdownName := cachedBreakdownsById[uint(breakdownRecord.BreakdownID)].Name
+		breakdownByIdSync.RUnlock()
+		indexDataWorkplace.Name = cachedWorkplacesById[uint(breakdownRecord.WorkplaceID)].Name + ": " + breakdownName
 		indexDataWorkplace.Value = time.Since(breakdownRecord.DateTimeStart).Seconds()
 		indexDataWorkplace.Duration = time.Now().In(loc).Sub(breakdownRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
@@ -398,7 +412,10 @@ func downloadTerminalDowntimeData(db *gorm.DB, email string, loc *time.Location)
 	var indexDataWorkplaces []IndexDataWorkplace
 	for _, downtimeRecord := range downtimeRecords {
 		var indexDataWorkplace IndexDataWorkplace
-		indexDataWorkplace.Name = cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name + ": " + cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name
+		downtimesByIdSync.RLock()
+		downtimeName := cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name
+		downtimesByIdSync.RUnlock()
+		indexDataWorkplace.Name = cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name + ": " + downtimeName
 		indexDataWorkplace.Value = time.Since(downtimeRecord.DateTimeStart).Seconds()
 		indexDataWorkplace.Duration = time.Now().In(loc).Sub(downtimeRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
@@ -434,9 +451,9 @@ func downloadProductionData(loc *time.Location, email string) ([]string, []float
 	todayNoon := time.Date(time.Now().UTC().Year(), time.Now().UTC().Month(), time.Now().UTC().Day(), 0, 0, 0, 0, loc).In(loc)
 	totalTodayDuration := time.Now().In(loc).Sub(todayNoon)
 	for _, workplace := range workplaces {
-		workplacesRecords.Lock()
+		workplacesProductionRecordsSync.RLock()
 		data := cachedWorkplacesProductionRecords[workplace.Name]
-		workplacesRecords.Unlock()
+		workplacesProductionRecordsSync.RUnlock()
 		var indexDataWorkplace IndexDataWorkplace
 		indexDataWorkplace.Name = workplace.Name
 		indexDataWorkplace.Value = (data[todayNoon.Format("2006-01-02")].Seconds() / totalTodayDuration.Seconds()) * 100
@@ -499,47 +516,69 @@ func getLocale(email string, locale string) string {
 	switch user.Locale {
 	case "CsCZ":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].CsCZ
+			localedByNameSync.RUnlock()
 		}
 	case "DeDE":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].DeDE
+			localedByNameSync.RUnlock()
 		}
 	case "EnUS":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].EnUS
+			localedByNameSync.RUnlock()
 		}
 	case "EsES":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].EsES
+			localedByNameSync.RUnlock()
 		}
 	case "FrFR":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].FrFR
+			localedByNameSync.RUnlock()
 		}
 	case "ItIT":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].ItIT
+			localedByNameSync.RUnlock()
 		}
 	case "PlPL":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].PlPL
+			localedByNameSync.RUnlock()
 		}
 	case "PtPT":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].PtPT
+			localedByNameSync.RUnlock()
 		}
 	case "SkSK":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].SkSK
+			localedByNameSync.RUnlock()
 		}
 	case "RuRU":
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].RuRU
+			localedByNameSync.RUnlock()
 		}
 	default:
 		{
+			localedByNameSync.RLock()
 			menuOverview = cachedLocalesByName[locale].EnUS
+			localedByNameSync.RUnlock()
 		}
 	}
 	return menuOverview

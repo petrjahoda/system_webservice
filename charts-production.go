@@ -27,15 +27,21 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 	}
 	var responseData ChartDataPageOutput
 	var digitalOutputData []PortData
+	workplacePortsSync.RLock()
 	allWorkplacePorts := cachedWorkplacePorts[workplaceName]
+	workplacePortsSync.RUnlock()
 	for _, port := range allWorkplacePorts {
 		if port.StateID.Int32 == production {
 			var digitalData []database.DevicePortDigitalRecord
 			db.Select("date_time, data").Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where("device_port_id = ?", port.DevicePortID).Order("date_time").Order("id").Find(&digitalData)
 			var portData PortData
+			devicePortsByIdSync.RLock()
 			workplaceDevicePort := cachedDevicePortsById[uint(port.DevicePortID)]
+			devicePortsByIdSync.RUnlock()
 			portData.PortName = "ID" + strconv.Itoa(int(workplaceDevicePort.ID)) + ": " + workplaceDevicePort.Name + " (" + workplaceDevicePort.Unit + ")"
+			devicePortsColorsByIdSync.RLock()
 			portColor := cachedDevicePortsColorsById[int(port.ID)]
+			devicePortsColorsByIdSync.RUnlock()
 			if portColor == "#000000" {
 				portData.PortColor = ""
 			}

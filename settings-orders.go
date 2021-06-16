@@ -151,8 +151,11 @@ func loadOrder(id string, writer http.ResponseWriter, email string) {
 		return workplaces[i].WorkplaceName < workplaces[j].WorkplaceName
 	})
 	var products []ProductSelection
-	for _, product := range cachedProductsById {
-		if product.Name == cachedProductsById[uint(order.ProductID.Int32)].Name {
+	productsByIdSync.RLock()
+	productsById := cachedProductsById
+	productsByIdSync.RUnlock()
+	for _, product := range productsById {
+		if product.Name == productsById[uint(order.ProductID.Int32)].Name {
 			products = append(products, ProductSelection{ProductName: product.Name, ProductId: product.ID, ProductSelected: "selected"})
 		} else {
 			products = append(products, ProductSelection{ProductName: product.Name, ProductId: product.ID})
@@ -168,7 +171,6 @@ func loadOrder(id string, writer http.ResponseWriter, email string) {
 	data := OrderDetailsDataOutput{
 		OrderName:              order.Name,
 		OrderNamePrepend:       getLocale(email, "order-name"),
-		ProductName:            cachedProductsById[uint(order.ProductID.Int32)].Name,
 		ProductNamePrepend:     getLocale(email, "product-name"),
 		WorkplaceName:          cachedWorkplacesById[uint(order.WorkplaceID.Int32)].Name,
 		WorkplaceNamePrepend:   getLocale(email, "workplace-name"),
@@ -189,6 +191,9 @@ func loadOrder(id string, writer http.ResponseWriter, email string) {
 		Products:               products,
 		Workplaces:             workplaces,
 	}
+	productsByIdSync.RLock()
+	data.ProductName = cachedProductsById[uint(order.ProductID.Int32)].Name
+	productsByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-order.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -233,7 +238,9 @@ func saveOrder(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	db.Where("id=?", data.Id).Find(&order)
 	order.Name = data.Name
 	if len(data.Product) > 0 {
+		productsByNameSync.RLock()
 		order.ProductID = sql.NullInt32{Int32: int32(cachedProductsByName[data.Product].ID), Valid: true}
+		productsByNameSync.RUnlock()
 	}
 	if len(data.Workplace) > 0 {
 		order.WorkplaceID = sql.NullInt32{Int32: int32(cachedWorkplacesByName[data.Workplace].ID), Valid: true}

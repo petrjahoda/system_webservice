@@ -119,7 +119,9 @@ func loadProduct(id string, writer http.ResponseWriter, email string) {
 		return
 	}
 	productId, _ := strconv.Atoi(id)
+	productsByIdSync.RLock()
 	product := cachedProductsById[uint(productId)]
+	productsByIdSync.RUnlock()
 	data := ProductDetailsDataOutput{
 		ProductName:             product.Name,
 		ProductNamePrepend:      getLocale(email, "product-name"),

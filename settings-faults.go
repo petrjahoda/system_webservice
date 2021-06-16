@@ -170,8 +170,11 @@ func loadFault(id string, writer http.ResponseWriter, email string) {
 	var fault database.Fault
 	db.Where("id = ?", id).Find(&fault)
 	var faultTypes []FaultTypeSelection
-	for _, faultType := range cachedFaultTypesById {
-		if faultType.Name == cachedFaultTypesById[uint(fault.FaultTypeID)].Name {
+	faultTypesByIdSync.RLock()
+	faultTypesById := cachedFaultTypesById
+	faultTypesByIdSync.RUnlock()
+	for _, faultType := range faultTypesById {
+		if faultType.Name == faultTypesById[uint(fault.FaultTypeID)].Name {
 			faultTypes = append(faultTypes, FaultTypeSelection{FaultTypeName: faultType.Name, FaultTypeId: faultType.ID, FaultTypeSelected: "selected"})
 		} else {
 			faultTypes = append(faultTypes, FaultTypeSelection{FaultTypeName: faultType.Name, FaultTypeId: faultType.ID})
@@ -183,7 +186,6 @@ func loadFault(id string, writer http.ResponseWriter, email string) {
 	data := FaultDetailsDataOutput{
 		FaultName:            fault.Name,
 		FaultNamePrepend:     getLocale(email, "fault-name"),
-		FaultTypeName:        cachedFaultTypesById[uint(fault.FaultTypeID)].Name,
 		FaultTypeNamePrepend: getLocale(email, "type-name"),
 		Barcode:              fault.Barcode,
 		BarcodePrepend:       getLocale(email, "barcode"),
@@ -195,6 +197,9 @@ func loadFault(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		FaultTypes:           faultTypes,
 	}
+	faultTypesByIdSync.RLock()
+	data.FaultTypeName = cachedFaultTypesById[uint(fault.FaultTypeID)].Name
+	faultTypesByIdSync.RUnlock()
 	tmpl, err := template.ParseFiles("./html/settings-detail-fault.html")
 	if err != nil {
 		logError("SETTINGS", "Problem parsing html file: "+err.Error())
@@ -280,7 +285,9 @@ func saveFault(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	var fault database.Fault
 	db.Where("id=?", data.Id).Find(&fault)
 	fault.Name = data.Name
+	faultTypesByNameSync.RLock()
 	fault.FaultTypeID = int(cachedFaultTypesByName[data.Type].ID)
+	faultTypesByNameSync.RUnlock()
 	fault.Barcode = data.Barcode
 	fault.Note = data.Note
 	result := db.Save(&fault)
