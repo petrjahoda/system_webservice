@@ -306,6 +306,8 @@ function drawCombinedChart(chartData) {
             top: '82%',
             height: '3%'
         }, {
+            left: 0,
+            right: 0,
             top: '86%',
             height: '3%'
         }],
@@ -455,14 +457,14 @@ function drawCombinedChart(chartData) {
                 id: 'terminalInsideChartZoom',
                 filterMode: 'none',
                 show: false,
-                xAxisIndex: [0, 1, 3, 4, 5, 6, 7,8,9]
+                xAxisIndex: [0, 1, 3, 4, 5, 6, 7]
             }, {
                 type: 'slider',
                 id: 'terminalSliderChartZoom',
                 showDataShadow: false,
                 filterMode: 'none',
                 show: false,
-                xAxisIndex: [0, 1, 3, 4, 5, 6, 7,8,9]
+                xAxisIndex: [0, 1, 3, 4, 5, 6, 7]
             },
         ],
         series: seriesList,
