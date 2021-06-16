@@ -32,7 +32,9 @@ func loadStatesTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 		db.Where("date_time_start >= ?", dateFrom).Where("date_time_start <= ?", dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&orderRecords)
 	}
 	var data TableOutput
+	userWebSettingsSync.RLock()
 	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
+	userWebSettingsSync.RUnlock()
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -59,7 +61,9 @@ func loadStatesTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 
 func addStateTableRow(record database.StateRecord, loc *time.Location, data *TableOutput) {
 	var tableRow TableRow
+	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
+	workplacesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	stateStartDate := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, stateStartDate)

@@ -139,8 +139,11 @@ func loadAlarm(id string, writer http.ResponseWriter, email string) {
 	var alarm database.Alarm
 	db.Where("id = ?", id).Find(&alarm)
 	var workplaces []WorkplaceSelection
-	for _, workplace := range cachedWorkplacesById {
-		if workplace.Name == cachedWorkplacesById[uint(alarm.WorkplaceID)].Name {
+	workplacesByIdSync.RLock()
+	workplacesById := cachedWorkplacesById
+	workplacesByIdSync.RUnlock()
+	for _, workplace := range workplacesById {
+		if workplace.Name == workplacesById[uint(alarm.WorkplaceID)].Name {
 			workplaces = append(workplaces, WorkplaceSelection{WorkplaceName: workplace.Name, WorkplaceId: workplace.ID, WorkplaceSelected: "selected"})
 		} else {
 			workplaces = append(workplaces, WorkplaceSelection{WorkplaceName: workplace.Name, WorkplaceId: workplace.ID})
@@ -150,9 +153,9 @@ func loadAlarm(id string, writer http.ResponseWriter, email string) {
 		return workplaces[i].WorkplaceName < workplaces[j].WorkplaceName
 	})
 	data := AlarmDetailsDataOutput{
-		AlarmName:            alarm.Name,
-		AlarmNamePrepend:     getLocale(email, "alarm-name"),
-		WorkplaceName:        cachedWorkplacesById[uint(alarm.WorkplaceID)].Name,
+		AlarmName:        alarm.Name,
+		AlarmNamePrepend: getLocale(email, "alarm-name"),
+
 		WorkplaceNamePrepend: getLocale(email, "workplace-name"),
 		SqlCommand:           alarm.SqlCommand,
 		SqlCommandPrepend:    getLocale(email, "sql-command"),
@@ -172,6 +175,9 @@ func loadAlarm(id string, writer http.ResponseWriter, email string) {
 		UpdatedAtPrepend:     getLocale(email, "updated-at"),
 		Workplaces:           workplaces,
 	}
+	workplacesByIdSync.RLock()
+	data.WorkplaceName = cachedWorkplacesById[uint(alarm.WorkplaceID)].Name
+	workplacesByIdSync.RUnlock()
 
 	tmpl, err := template.ParseFiles("./html/settings-detail-alarm.html")
 	if err != nil {
@@ -216,7 +222,9 @@ func saveAlarm(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 	var alarm database.Alarm
 	db.Where("id=?", data.Id).Find(&alarm)
 	alarm.Name = data.Name
+	workplacesByNameSync.RLock()
 	alarm.WorkplaceID = int(cachedWorkplacesByName[data.Workplace].ID)
+	workplacesByNameSync.RUnlock()
 	alarm.SqlCommand = data.Sql
 	alarm.MessageHeader = data.Header
 	alarm.MessageText = data.Text

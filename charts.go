@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"html/template"
 	"net/http"
@@ -97,15 +96,19 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	go updatePageCount("charts")
 	email, _, _ := request.BasicAuth()
 	go updateWebUserRecord("charts", email)
-	logInfo("CHARTS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("CHARTS", "Sending page to "+email)
 	var data ChartsPageData
 	data.Version = version
+	usersByEmailSync.RLock()
 	userLocale := cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	localesSync.RLock()
 	data.DateLocale = cachedLocales[userLocale]
 	localesSync.RUnlock()
 	data.UserEmail = email
+	usersByEmailSync.RLock()
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	usersByEmailSync.RUnlock()
 	companyNameSync.RLock()
 	data.Company = cachedCompanyName
 	companyNameSync.RUnlock()
@@ -116,49 +119,68 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
+	userWebSettingsSync.RLock()
+	selectedChart := cachedUserWebSettings[email]["charts-selected-chart"]
+	userWebSettingsSync.RUnlock()
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "combined-chart"),
 		SelectionValue: "combined-chart",
-		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "combined-chart"),
+		Selection:      getSelected(selectedChart, "combined-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "production-chart"),
 		SelectionValue: "production-chart",
-		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "production-chart"),
+		Selection:      getSelected(selectedChart, "production-chart"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "analog-data"),
 		SelectionValue: "analog-data",
-		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "analog-data"),
+		Selection:      getSelected(selectedChart, "analog-data"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, ChartSelection{
 		SelectionName:  getLocale(email, "digital-data"),
 		SelectionValue: "digital-data",
-		Selection:      getSelected(cachedUserWebSettings[email]["charts-selected-chart"], "digital-data"),
+		Selection:      getSelected(selectedChart, "digital-data"),
 	})
 	var dataWorkplaces []ChartWorkplaceSelection
-	for _, workplace := range cachedWorkplacesById {
+	workplacesByIdSync.RLock()
+	workplacesById := cachedWorkplacesById
+	workplacesByIdSync.RUnlock()
+	for _, workplace := range workplacesById {
+		userWebSettingsSync.RLock()
+		selectedWorkplace := cachedUserWebSettings[email]["charts-selected-workplace"]
+		userWebSettingsSync.RUnlock()
 		dataWorkplaces = append(dataWorkplaces, ChartWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
 			WorkplaceValue:     workplace.Name,
-			WorkplaceSelection: getSelected(cachedUserWebSettings[email]["charts-selected-workplace"], workplace.Name),
+			WorkplaceSelection: getSelected(selectedWorkplace, workplace.Name),
 		})
 	}
 	sort.Slice(dataWorkplaces, func(i, j int) bool {
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+	userWebSettingsSync.RLock()
 	data.DateFrom = cachedUserWebSettings[email]["charts-selected-from"]
+	userWebSettingsSync.RUnlock()
+	userWebSettingsSync.RLock()
 	data.DateTo = cachedUserWebSettings[email]["charts-selected-to"]
-	fmt.Println("FLASH", cachedUserWebSettings[email]["charts-selected-flash"])
-	fmt.Println("TERMINAL", cachedUserWebSettings[email]["charts-selected-terminal"])
+	userWebSettingsSync.RUnlock()
 	data.FlashClass = "mif-flash-on"
-	if len(cachedUserWebSettings[email]["charts-selected-flash"]) > 0 {
+	userWebSettingsSync.RLock()
+	selectedFlash := cachedUserWebSettings[email]["charts-selected-flash"]
+	selectedTerminal := cachedUserWebSettings[email]["charts-selected-terminal"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedFlash) > 0 {
+		userWebSettingsSync.RLock()
 		data.FlashClass = cachedUserWebSettings[email]["charts-selected-flash"]
+		userWebSettingsSync.RUnlock()
 	}
 	data.TerminalClass = "mif-phonelink"
-	if len(cachedUserWebSettings[email]["charts-selected-terminal"]) > 0 {
+	if len(selectedTerminal) > 0 {
+		userWebSettingsSync.RLock()
 		data.TerminalClass = cachedUserWebSettings[email]["charts-selected-terminal"]
+		userWebSettingsSync.RUnlock()
 	}
 	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
@@ -172,7 +194,7 @@ func charts(writer http.ResponseWriter, request *http.Request, _ httprouter.Para
 func loadChartData(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("CHARTS", "Sending chart data to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("CHARTS", "Sending chart data to "+email)
 	var data ChartsDataPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {

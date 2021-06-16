@@ -5,7 +5,6 @@ import (
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"strconv"
 	"sync"
 	"time"
 )
@@ -259,17 +258,29 @@ var (
 	workplacesPoweroffRecordsSync   sync.RWMutex
 )
 
-var cachedUsersByEmail = map[string]database.User{}
-var cachedUsersById = map[uint]database.User{}
-var cachedUserWebSettings = map[string]map[string]string{}
+var (
+	cachedWorkplacesByName = map[string]database.Workplace{}
+	workplacesByNameSync   sync.RWMutex
+)
 
-var cachedWorkplacesByName = map[string]database.Workplace{}
-var cachedWorkplacesById = map[uint]database.Workplace{}
+var (
+	cachedWorkplacesById = map[uint]database.Workplace{}
+	workplacesByIdSync   sync.RWMutex
+)
 
-var devicesSync sync.RWMutex
-var usersSync sync.RWMutex
-var userSettingsSync sync.RWMutex
-var workplacesSync sync.RWMutex
+var (
+	cachedUsersByEmail = map[string]database.User{}
+	usersByEmailSync   sync.RWMutex
+)
+
+var (
+	cachedUsersById = map[uint]database.User{}
+	usersByIdSync   sync.RWMutex
+)
+var (
+	cachedUserWebSettings = map[string]map[string]string{}
+	userWebSettingsSync   sync.RWMutex
+)
 
 func cacheData() {
 	logInfo("CACHING", "Caching started")
@@ -569,7 +580,6 @@ func cacheWorkplaces(db *gorm.DB) {
 	db.Find(&workplaces)
 	db.Find(&workplaceModes)
 	db.Find(&workplaceSections)
-	workplacesSync.Lock()
 	for _, workplaceMode := range workplaceModes {
 		workplaceModesByIdSync.Lock()
 		cachedWorkplaceModesById[workplaceMode.ID] = workplaceMode
@@ -589,11 +599,14 @@ func cacheWorkplaces(db *gorm.DB) {
 
 	}
 	for _, workplace := range workplaces {
+		workplacesByIdSync.Lock()
 		cachedWorkplacesById[workplace.ID] = workplace
+		workplacesByIdSync.Unlock()
+		workplacesByNameSync.Lock()
 		cachedWorkplacesByName[workplace.Name] = workplace
+		workplacesByNameSync.Unlock()
 
 	}
-	workplacesSync.Unlock()
 	logInfo("CACHING", "Workplaces cached")
 	logInfo("CACHING", "Workplace modes cached")
 	logInfo("CACHING", "Workplace sections cached")
@@ -608,7 +621,6 @@ func cacheDevices(db *gorm.DB) {
 	db.Find(&deviceTypes)
 	db.Find(&devicePortTypes)
 	db.Find(&devicePorts)
-	devicesSync.Lock()
 	for _, device := range devices {
 		devicesByIdSync.Lock()
 		cachedDevicesById[device.ID] = device
@@ -638,8 +650,6 @@ func cacheDevices(db *gorm.DB) {
 		cachedDevicePortsById[devicePort.ID] = devicePort
 		devicePortsByIdSync.Unlock()
 	}
-
-	devicesSync.Unlock()
 	logInfo("CACHING", "Devices cached")
 	logInfo("CACHING", "Device ports cached")
 	logInfo("CACHING", "Device types cached")
@@ -653,22 +663,25 @@ func cacheUsers(db *gorm.DB) {
 	db.Find(&users)
 	db.Find(&userTypes)
 	db.Find(&userRoles)
-	usersSync.Lock()
-	userSettingsSync.Lock()
-	cachedUsersByEmail = map[string]database.User{}
-	cachedUsersById = map[uint]database.User{}
-	cachedUserWebSettings = map[string]map[string]string{}
 	for _, user := range users {
 		if len(user.Email) > 0 {
+			usersByEmailSync.Lock()
 			cachedUsersByEmail[user.Email] = user
+			usersByEmailSync.Unlock()
+			userWebSettingsSync.RLock()
 			_, userWebCached := cachedUserWebSettings[user.Email]
+			userWebSettingsSync.RUnlock()
 			if !userWebCached {
 				data := map[string]string{}
+				userWebSettingsSync.Lock()
 				cachedUserWebSettings[user.Email] = data
+				userWebSettingsSync.Unlock()
 			}
 
 		}
+		usersByIdSync.Lock()
 		cachedUsersById[user.ID] = user
+		usersByIdSync.Unlock()
 	}
 	for _, userType := range userTypes {
 		userTypesByIdSync.Lock()
@@ -686,10 +699,8 @@ func cacheUsers(db *gorm.DB) {
 		cachedUserRolesByName[userRole.Name] = userRole
 		userRolesByNameSync.Unlock()
 	}
-	usersSync.Unlock()
-	userSettingsSync.Unlock()
-	logInfo("CACHING", "Cached "+strconv.Itoa(len(cachedUsersByEmail))+" users")
-	logInfo("CACHING", "Cached "+strconv.Itoa(len(cachedUserWebSettings))+" user settings")
+	logInfo("CACHING", "Users cached")
+	logInfo("CACHING", "User settings cached")
 }
 
 func cachePackages(db *gorm.DB) {

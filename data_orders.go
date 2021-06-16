@@ -40,7 +40,9 @@ func loadOrdersTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 		userRecordsByRecordId[record.OrderRecordID] = record
 	}
 	var data TableOutput
+	userWebSettingsSync.RLock()
 	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
+	userWebSettingsSync.RUnlock()
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -96,7 +98,9 @@ func addOrderTableHeaders(email string, data *TableOutput) {
 
 func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
+	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
+	workplacesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	orderStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, orderStart)
@@ -116,7 +120,9 @@ func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int
 	workShiftsByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workshiftName)
 	actualUserId := userRecordsByRecordId[int(record.ID)].UserID
+	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
+	usersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	ordersByIdSync.RLock()
 	orderName := TableCell{CellName: cachedOrdersById[uint(record.OrderID)].Name}

@@ -113,10 +113,13 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 			combinedOutputData = append(combinedOutputData, portData)
 		}
 	}
+	workplacesByNameSync.RLock()
+	workplaceId := cachedWorkplacesByName[workplaceName].ID
+	workplacesByNameSync.RUnlock()
 	var initialStateRecord database.StateRecord
-	db.Select("id, date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateFrom).Last(&initialStateRecord)
+	db.Select("id, date_time_start, state_id").Where("workplace_id = ?", workplaceId).Where("date_time_start < ?", dateFrom).Last(&initialStateRecord)
 	var allStateRecords []database.StateRecord
-	db.Select("date_time_start, state_id").Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Where("date_time_start < ?", dateTo).Where("id >= ?", initialStateRecord.ID).Order("date_time_start").Order("id").Find(&allStateRecords)
+	db.Select("date_time_start, state_id").Where("workplace_id = ?", workplaceId).Where("date_time_start < ?", dateTo).Where("id >= ?", initialStateRecord.ID).Order("date_time_start").Order("id").Find(&allStateRecords)
 	var productionStateData PortData
 	var downtimeStateData PortData
 	var poweroffStateData PortData
@@ -204,7 +207,9 @@ func processCombinedChart(writer http.ResponseWriter, workplaceName string, date
 	responseData.BreakdownsLocale = getLocale(email, "breakdowns")
 	responseData.UsersLocale = getLocale(email, "users")
 	responseData.AlarmsLocale = getLocale(email, "alarms")
+	usersByEmailSync.RLock()
 	responseData.Locale = cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	responseData.Result = "INF: Combined chart data downloaded from database in " + time.Since(timer).String()
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")

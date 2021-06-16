@@ -132,7 +132,10 @@ func loadOperation(id string, writer http.ResponseWriter, email string) {
 	ordersById := cachedOrdersById
 	ordersByIdSync.RUnlock()
 	for _, order := range ordersById {
-		if order.Name == cachedWorkplacesById[uint(operation.OrderID)].Name {
+		workplacesByIdSync.RLock()
+		cachedOrderName := cachedWorkplacesById[uint(operation.OrderID)].Name
+		workplacesByIdSync.RUnlock()
+		if order.Name == cachedOrderName {
 			orders = append(orders, OrderSelection{OrderName: order.Name, OrderId: order.ID, OrderSelected: "selected"})
 		} else {
 			orders = append(orders, OrderSelection{OrderName: order.Name, OrderId: order.ID})

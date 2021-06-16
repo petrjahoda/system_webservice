@@ -33,7 +33,9 @@ func loadPartsTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 		db.Where("date_time >= ?", dateFrom).Where("date_time <= ?", dateTo).Where(workplaceIds).Order("date_time desc").Find(&packageRecords)
 	}
 	var data TableOutput
+	userWebSettingsSync.RLock()
 	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
+	userWebSettingsSync.RUnlock()
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -60,11 +62,15 @@ func loadPartsTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 
 func addPartTableRow(record database.PartRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {
 	var tableRow TableRow
+	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
+	workplacesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	partdate := TableCell{CellName: record.DateTime.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, partdate)
+	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}
+	usersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	var orderRecord database.OrderRecord
 	db.Where("id = ?", record.OrderRecordID).Find(&orderRecord)

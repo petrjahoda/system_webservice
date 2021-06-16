@@ -35,7 +35,9 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
 	}
 	var data TableOutput
+	userWebSettingsSync.RLock()
 	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
+	userWebSettingsSync.RUnlock()
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -62,7 +64,9 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 
 func addDowntimeTableRow(downtimeRecord database.DowntimeRecord, userRecords []database.UserRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
+	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name}
+	workplacesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	orderStart := TableCell{CellName: downtimeRecord.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, orderStart)
@@ -94,9 +98,9 @@ func addDowntimeTableRow(downtimeRecord database.DowntimeRecord, userRecords []d
 			}
 		}
 	}
-
+	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
-
+	usersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	downtimesByIdSync.RLock()
 	downtimeName := TableCell{CellName: cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name}

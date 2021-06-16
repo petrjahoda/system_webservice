@@ -105,7 +105,7 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 		}
 		email = data.Email
 	}
-	logInfo("INDEX", "Loading index data for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("INDEX", "Loading index data for "+email)
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
@@ -171,7 +171,9 @@ func loadIndexData(writer http.ResponseWriter, request *http.Request, _ httprout
 	data.MonthDataPoweroff = monthDataPoweroff
 	data.CalendarStart = time.Date(timeBack.Year(), timeBack.Month(), 1, 0, 0, 0, 0, loc).Format("2006-01-02")
 	data.CalendarEnd = now.EndOfMonth().Format("2006-01-02")
+	usersByEmailSync.RLock()
 	data.Locale = cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	data.ProductionLocale = getLocale(email, "production")
 	data.DowntimeLocale = getLocale(email, "downtime")
 	data.PoweroffLocale = getLocale(email, "poweroff")
@@ -189,13 +191,19 @@ func downloadIndexChartData(email string, loc *time.Location) ([]string, []strin
 	var monthDataDowntime []string
 	var monthDataPoweroff []string
 	var workplaces []database.Workplace
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
-		for _, workplace := range cachedWorkplacesByName {
+	workplacesByNameSync.RLock()
+	workplaceByName := cachedWorkplacesByName
+	workplacesByNameSync.RUnlock()
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) == 0 {
+		for _, workplace := range workplaceByName {
 			workplaces = append(workplaces, workplace)
 		}
 	} else {
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
-			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplaces = append(workplaces, workplaceByName[workplace])
 		}
 	}
 	var cachedProductionData = map[string]time.Duration{}
@@ -255,13 +263,19 @@ func downloadIndexChartData(email string, loc *time.Location) ([]string, []strin
 
 func downloadCalendarData(email string, loc *time.Location) [][]string {
 	var workplaces []database.Workplace
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
-		for _, workplace := range cachedWorkplacesByName {
+	workplacesByNameSync.RLock()
+	workplaceByName := cachedWorkplacesByName
+	workplacesByNameSync.RUnlock()
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) == 0 {
+		for _, workplace := range workplaceByName {
 			workplaces = append(workplaces, workplace)
 		}
 	} else {
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
-			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplaces = append(workplaces, workplaceByName[workplace])
 		}
 	}
 	var calendarData [][]string
@@ -292,13 +306,19 @@ func downloadCalendarData(email string, loc *time.Location) [][]string {
 
 func downloadConsumptionData(email string) []string {
 	var workplaces []database.Workplace
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
-		for _, workplace := range cachedWorkplacesByName {
+	workplacesByNameSync.RLock()
+	workplacesByName := cachedWorkplacesByName
+	workplacesByNameSync.RUnlock()
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) == 0 {
+		for _, workplace := range workplacesByName {
 			workplaces = append(workplaces, workplace)
 		}
 	} else {
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
-			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplaces = append(workplaces, workplacesByName[workplace])
 		}
 	}
 	var cachedConsumptionData = map[string]float32{}
@@ -321,10 +341,15 @@ func downloadConsumptionData(email string) []string {
 
 func downloadTerminalAlarmData(db *gorm.DB, email string, loc *time.Location) ([]string, []float64, []string) {
 	var alarmRecords []database.AlarmRecord
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) > 0 {
 		workplaceIds := `workplace_id in ('`
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplacesByNameSync.RLock()
 			workplaceIds += strconv.Itoa(int(cachedWorkplacesByName[workplace].ID)) + `','`
+			workplacesByNameSync.RUnlock()
 		}
 		workplaceIds = strings.TrimSuffix(workplaceIds, `,'`)
 		workplaceIds += ")"
@@ -338,7 +363,9 @@ func downloadTerminalAlarmData(db *gorm.DB, email string, loc *time.Location) ([
 		alarmByIdSync.RLock()
 		alarmName := cachedAlarmsById[uint(alarmRecord.AlarmID)].Name
 		alarmByIdSync.RUnlock()
+		workplacesByIdSync.RLock()
 		indexDataWorkplace.Name = cachedWorkplacesById[uint(alarmRecord.WorkplaceID)].Name + ": " + alarmName
+		workplacesByIdSync.RUnlock()
 		indexDataWorkplace.Value = time.Since(alarmRecord.DateTimeStart).Seconds()
 		indexDataWorkplace.Duration = time.Now().In(loc).Sub(alarmRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
@@ -359,10 +386,15 @@ func downloadTerminalAlarmData(db *gorm.DB, email string, loc *time.Location) ([
 
 func downloadTerminalBreakdownData(db *gorm.DB, email string, loc *time.Location) ([]string, []float64, []string) {
 	var breakdownRecords []database.BreakdownRecord
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) > 0 {
 		workplaceIds := `workplace_id in ('`
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplacesByNameSync.RLock()
 			workplaceIds += strconv.Itoa(int(cachedWorkplacesByName[workplace].ID)) + `','`
+			workplacesByNameSync.RUnlock()
 		}
 		workplaceIds = strings.TrimSuffix(workplaceIds, `,'`)
 		workplaceIds += ")"
@@ -376,7 +408,9 @@ func downloadTerminalBreakdownData(db *gorm.DB, email string, loc *time.Location
 		breakdownByIdSync.RLock()
 		breakdownName := cachedBreakdownsById[uint(breakdownRecord.BreakdownID)].Name
 		breakdownByIdSync.RUnlock()
+		workplacesByIdSync.RLock()
 		indexDataWorkplace.Name = cachedWorkplacesById[uint(breakdownRecord.WorkplaceID)].Name + ": " + breakdownName
+		workplacesByIdSync.RUnlock()
 		indexDataWorkplace.Value = time.Since(breakdownRecord.DateTimeStart).Seconds()
 		indexDataWorkplace.Duration = time.Now().In(loc).Sub(breakdownRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
@@ -397,10 +431,15 @@ func downloadTerminalBreakdownData(db *gorm.DB, email string, loc *time.Location
 
 func downloadTerminalDowntimeData(db *gorm.DB, email string, loc *time.Location) ([]string, []float64, []string) {
 	var downtimeRecords []database.DowntimeRecord
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) > 0 {
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) > 0 {
 		workplaceIds := `workplace_id in ('`
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplacesByNameSync.RLock()
 			workplaceIds += strconv.Itoa(int(cachedWorkplacesByName[workplace].ID)) + `','`
+			workplacesByNameSync.RUnlock()
 		}
 		workplaceIds = strings.TrimSuffix(workplaceIds, `,'`)
 		workplaceIds += ")"
@@ -415,7 +454,9 @@ func downloadTerminalDowntimeData(db *gorm.DB, email string, loc *time.Location)
 		downtimesByIdSync.RLock()
 		downtimeName := cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name
 		downtimesByIdSync.RUnlock()
+		workplacesByIdSync.RLock()
 		indexDataWorkplace.Name = cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name + ": " + downtimeName
+		workplacesByIdSync.RUnlock()
 		indexDataWorkplace.Value = time.Since(downtimeRecord.DateTimeStart).Seconds()
 		indexDataWorkplace.Duration = time.Now().In(loc).Sub(downtimeRecord.DateTimeStart).Round(time.Second).String()
 		indexDataWorkplaces = append(indexDataWorkplaces, indexDataWorkplace)
@@ -436,13 +477,19 @@ func downloadTerminalDowntimeData(db *gorm.DB, email string, loc *time.Location)
 
 func downloadProductionData(loc *time.Location, email string) ([]string, []float64) {
 	var workplaces []database.Workplace
-	if len(cachedUserWebSettings[email]["index-selected-workplaces"]) == 0 {
-		for _, workplace := range cachedWorkplacesByName {
+	workplacesByNameSync.RLock()
+	workplacesByName := cachedWorkplacesByName
+	workplacesByNameSync.RUnlock()
+	userWebSettingsSync.RLock()
+	selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	if len(selectedWorkplaces) == 0 {
+		for _, workplace := range workplacesByName {
 			workplaces = append(workplaces, workplace)
 		}
 	} else {
-		for _, workplace := range strings.Split(cachedUserWebSettings[email]["index-selected-workplaces"], ";") {
-			workplaces = append(workplaces, cachedWorkplacesByName[workplace])
+		for _, workplace := range strings.Split(selectedWorkplaces, ";") {
+			workplaces = append(workplaces, workplacesByName[workplace])
 		}
 	}
 	var workplaceNames []string
@@ -475,7 +522,7 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	go updatePageCount("index")
 	email, _, _ := request.BasicAuth()
 	go updateWebUserRecord("index", email)
-	logInfo("INDEX", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("INDEX", "Sending page to "+email)
 	var data IndexPageData
 	data.Version = version
 	companyNameSync.RLock()
@@ -488,12 +535,20 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.UserEmail = email
+	usersByEmailSync.RLock()
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	usersByEmailSync.RUnlock()
 	var dataWorkplaces []IndexWorkplaceSelection
-	for _, workplace := range cachedWorkplacesById {
+	workplacesByIdSync.RLock()
+	workplacesById := cachedWorkplacesById
+	workplacesByIdSync.RUnlock()
+	for _, workplace := range workplacesById {
+		userWebSettingsSync.RLock()
+		selectedWorkplaces := cachedUserWebSettings[email]["index-selected-workplaces"]
+		userWebSettingsSync.RUnlock()
 		dataWorkplaces = append(dataWorkplaces, IndexWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
-			WorkplaceSelection: getWorkplaceWebSelection(cachedUserWebSettings[email]["index-selected-workplaces"], workplace.Name),
+			WorkplaceSelection: getWorkplaceWebSelection(selectedWorkplaces, workplace.Name),
 		})
 	}
 	sort.Slice(dataWorkplaces, func(i, j int) bool {
@@ -512,7 +567,9 @@ func index(writer http.ResponseWriter, request *http.Request, _ httprouter.Param
 
 func getLocale(email string, locale string) string {
 	var menuOverview string
+	usersByEmailSync.RLock()
 	user, _ := cachedUsersByEmail[email]
+	usersByEmailSync.RUnlock()
 	switch user.Locale {
 	case "CsCZ":
 		{

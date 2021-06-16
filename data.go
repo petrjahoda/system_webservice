@@ -58,17 +58,23 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	go updatePageCount("data")
 	email, _, _ := request.BasicAuth()
 	go updateWebUserRecord("data", email)
-	logInfo("DATA", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("DATA", "Sending page to "+email)
 	var data DataPageOutput
 	data.Version = version
+	usersByEmailSync.RLock()
 	userLocale := cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	localesSync.RLock()
 	data.DateLocale = cachedLocales[userLocale]
 	localesSync.RUnlock()
 	data.UserEmail = email
+	usersByEmailSync.RLock()
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	usersByEmailSync.RUnlock()
+	userWebSettingsSync.RLock()
 	data.DateFrom = cachedUserWebSettings[email]["data-selected-from"]
 	data.DateTo = cachedUserWebSettings[email]["data-selected-to"]
+	userWebSettingsSync.RUnlock()
 	companyNameSync.RLock()
 	data.Company = cachedCompanyName
 	companyNameSync.RUnlock()
@@ -79,65 +85,77 @@ func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
+	userWebSettingsSync.RLock()
+	selectedType := cachedUserWebSettings[email]["data-selected-type"]
+	userWebSettingsSync.RUnlock()
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "alarms"),
 		SelectionValue: "alarms",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "alarms"),
+		Selection:      getSelected(selectedType, "alarms"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "breakdowns"),
 		SelectionValue: "breakdowns",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "breakdowns"),
+		Selection:      getSelected(selectedType, "breakdowns"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "downtimes"),
 		SelectionValue: "downtimes",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "downtimes"),
+		Selection:      getSelected(selectedType, "downtimes"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "faults"),
 		SelectionValue: "faults",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "faults"),
+		Selection:      getSelected(selectedType, "faults"),
 	})
 
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "orders"),
 		SelectionValue: "orders",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "orders"),
+		Selection:      getSelected(selectedType, "orders"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "packages"),
 		SelectionValue: "packages",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "packages"),
+		Selection:      getSelected(selectedType, "packages"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "parts"),
 		SelectionValue: "parts",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "parts"),
+		Selection:      getSelected(selectedType, "parts"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "states"),
 		SelectionValue: "states",
-		Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "states"),
+		Selection:      getSelected(selectedType, "states"),
 	})
-	if cachedUsersByEmail[email].UserRoleID == 1 {
+	usersByEmailSync.RLock()
+	userRoleId := cachedUsersByEmail[email].UserRoleID
+	usersByEmailSync.RUnlock()
+	if userRoleId == 1 {
 		logInfo("DATA", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
 			SelectionValue: "users",
-			Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "users"),
+			Selection:      getSelected(selectedType, "users"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "system-statistics"),
 			SelectionValue: "system-statistics",
-			Selection:      getSelected(cachedUserWebSettings[email]["data-selected-type"], "system-statistics"),
+			Selection:      getSelected(selectedType, "system-statistics"),
 		})
 	}
 	var dataWorkplaces []TableWorkplaceSelection
-	for _, workplace := range cachedWorkplacesById {
+	workplacesByIdSync.RLock()
+	workplacesById := cachedWorkplacesById
+	workplacesByIdSync.RUnlock()
+	for _, workplace := range workplacesById {
+		userWebSettingsSync.RLock()
+		selectedWorkplace := cachedUserWebSettings[email]["data-selected-workplaces"]
+		userWebSettingsSync.RUnlock()
 		dataWorkplaces = append(dataWorkplaces, TableWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
-			WorkplaceSelection: getWorkplaceWebSelection(cachedUserWebSettings[email]["data-selected-workplaces"], workplace.Name),
+			WorkplaceSelection: getWorkplaceWebSelection(selectedWorkplace, workplace.Name),
 		})
 	}
 	sort.Slice(dataWorkplaces, func(i, j int) bool {
@@ -182,7 +200,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	timer := time.Now()
 	go updatePageCount("data")
 	email, _, _ := request.BasicAuth()
-	logInfo("DATA", "Loading table for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("DATA", "Loading table for "+email)
 	var data DataPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {

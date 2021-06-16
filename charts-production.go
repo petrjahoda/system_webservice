@@ -80,7 +80,9 @@ func processProductionChart(writer http.ResponseWriter, workplaceName string, da
 	responseData.BreakdownsLocale = getLocale(email, "breakdowns")
 	responseData.UsersLocale = getLocale(email, "users")
 	responseData.AlarmsLocale = getLocale(email, "alarms")
+	usersByEmailSync.RLock()
 	responseData.Locale = cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	responseData.Result = "INF: Production chart data downloaded from database in " + time.Since(timer).String()
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")

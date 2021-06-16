@@ -788,7 +788,10 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
 			productionDowntimeIdAsInt, _ := strconv.Atoi(productionDowntimeId)
-			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), productionDowntimeIdAsInt).Find(&workplacePort)
+			workplacesByNameSync.RLock()
+			workplaceId := cachedWorkplacesByName[data.Name].ID
+			workplacesByNameSync.RUnlock()
+			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(workplaceId), productionDowntimeIdAsInt).Find(&workplacePort)
 			workplacePort.StateID = sql.NullInt32{Int32: production, Valid: true}
 			workplacePort.DevicePortID = productionDowntimeIdAsInt
 			workplacePort.Name = devicePort.Name
@@ -821,7 +824,10 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
 			poweroffDowntimeIdAsInt, _ := strconv.Atoi(poweroffDowntimeId)
-			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), poweroffDowntimeIdAsInt).Find(&workplacePort)
+			workplacesByNameSync.RLock()
+			workplaceId := cachedWorkplacesByName[data.Name].ID
+			workplacesByNameSync.RUnlock()
+			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(workplaceId), poweroffDowntimeIdAsInt).Find(&workplacePort)
 			workplacePort.StateID = sql.NullInt32{Int32: poweroff, Valid: true}
 			workplacePort.DevicePortID = poweroffDowntimeIdAsInt
 			workplacePort.Name = devicePort.Name
@@ -856,7 +862,10 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 		} else {
 			fmt.Println("nenaslo")
 			countOkIdAsInt, _ := strconv.Atoi(countOkId)
-			db.Debug().Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), countOkIdAsInt).Find(&workplacePort)
+			workplacesByNameSync.RLock()
+			workplaceId := cachedWorkplacesByName[data.Name].ID
+			workplacesByNameSync.RUnlock()
+			db.Debug().Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(workplaceId), countOkIdAsInt).Find(&workplacePort)
 			workplacePort.DevicePortID = countOkIdAsInt
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
@@ -890,7 +899,10 @@ func saveWorkplace(writer http.ResponseWriter, request *http.Request, _ httprout
 			logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 		} else {
 			countNokIdAsInt, _ := strconv.Atoi(countNokId)
-			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(cachedWorkplacesByName[data.Name].ID), countNokIdAsInt).Find(&workplacePort)
+			workplacesByNameSync.RLock()
+			workplaceId := cachedWorkplacesByName[data.Name].ID
+			workplacesByNameSync.RUnlock()
+			db.Raw("SELECT * from workplace_ports where workplace_id = ? and device_port_id = ? and deleted_at is not null", int(workplaceId), countNokIdAsInt).Find(&workplacePort)
 			workplacePort.DevicePortID = countNokIdAsInt
 			workplacePort.Name = devicePort.Name
 			workplacePort.WorkplaceID = int(workplace.ID)
@@ -1088,7 +1100,9 @@ func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 	if workplacePort.ID > 0 {
 		workplacePort.Name = data.Name
 		workplacePort.DevicePortID = devicePortId
+		workplacesByNameSync.RLock()
 		workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
+		workplacesByNameSync.RUnlock()
 		if len(data.StateId) > 0 {
 			stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
 			workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}
@@ -1099,10 +1113,15 @@ func saveWorkplacePort(writer http.ResponseWriter, request *http.Request, _ http
 		cacheWorkplaces(db)
 		logInfo("SETTINGS", "Workplace port "+workplacePort.Name+" saved in "+time.Since(timer).String())
 	} else {
-		db.Raw("SELECT * from workplace_ports where name = ? and workplace_id = ? and device_port_id = ? and deleted_at is not null", data.Name, int(cachedWorkplacesByName[data.WorkplaceName].ID), devicePortId).Find(&workplacePort)
+		workplacesByNameSync.RLock()
+		workplaceId := cachedWorkplacesByName[data.Name].ID
+		workplacesByNameSync.RUnlock()
+		db.Raw("SELECT * from workplace_ports where name = ? and workplace_id = ? and device_port_id = ? and deleted_at is not null", data.Name, int(workplaceId), devicePortId).Find(&workplacePort)
 		workplacePort.Name = data.Name
 		workplacePort.DevicePortID = devicePortId
+		workplacesByNameSync.RLock()
 		workplacePort.WorkplaceID = int(cachedWorkplacesByName[data.WorkplaceName].ID)
+		workplacesByNameSync.RUnlock()
 		if len(data.StateId) > 0 {
 			stateId, _ := strconv.Atoi(strings.TrimRight(strings.Split(data.DevicePortId, "[")[1], "]"))
 			workplacePort.StateID = sql.NullInt32{Int32: int32(stateId), Valid: true}

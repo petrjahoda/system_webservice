@@ -138,9 +138,14 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 	for _, workplaceSection := range workplaceSections {
 		var section WorkplaceSection
 		section.SectionName = workplaceSection.Name
+		userWebSettingsSync.RLock()
 		section.PanelCompacted = cachedUserWebSettings[email][workplaceSection.Name]
+		userWebSettingsSync.RUnlock()
 		var tempWorkplaces []database.Workplace
-		for _, workplace := range cachedWorkplacesById {
+		workplacesByIdSync.RLock()
+		workplacesById := cachedWorkplacesById
+		workplacesByIdSync.RUnlock()
+		for _, workplace := range workplacesById {
 			tempWorkplaces = append(tempWorkplaces, workplace)
 		}
 		sort.Slice(tempWorkplaces, func(i, j int) bool {
@@ -179,10 +184,16 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 						ordersByIdSync.RUnlock()
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + orderName
 						pageWorkplace.OrderDuration = "(" + time.Now().In(loc).Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
-						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+						usersByIdSync.RLock()
+						user := cachedUsersById[uint(userRecordId)]
+						usersByIdSync.RUnlock()
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
-						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+						usersByIdSync.RLock()
+						user := cachedUsersById[uint(userRecordId)]
+						usersByIdSync.RUnlock()
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
 					} else {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
@@ -231,10 +242,16 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 						ordersByIdSync.RUnlock()
 						pageWorkplace.Information = getLocale(email, "order-name") + ": " + orderName
 						pageWorkplace.OrderDuration = "(" + time.Now().In(loc).Sub(cachedOrderRecords[int(workplace.ID)].DateTimeStart).Round(time.Second).String() + ")"
-						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+						usersByIdSync.RLock()
+						user := cachedUsersById[uint(userRecordId)]
+						usersByIdSync.RUnlock()
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
 					} else if userRecordId > 0 {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
-						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + cachedUsersById[uint(userRecordId)].FirstName + " " + cachedUsersById[uint(userRecordId)].SecondName
+						usersByIdSync.RLock()
+						user := cachedUsersById[uint(userRecordId)]
+						usersByIdSync.RUnlock()
+						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": " + user.FirstName + " " + user.SecondName
 					} else {
 						pageWorkplace.Information = getLocale(email, "order-name") + ": -"
 						pageWorkplace.UserInformation = getLocale(email, "user-name") + ": -"
@@ -324,7 +341,7 @@ func workplaces(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	timer := time.Now()
 	go updatePageCount("workplaces")
 	email, _, _ := request.BasicAuth()
-	logInfo("WORKPLACES", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("WORKPLACES", "Sending page to "+email)
 	go updateWebUserRecord("workplaces", email)
 	var data WorkplacesData
 	data.Version = version

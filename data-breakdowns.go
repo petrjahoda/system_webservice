@@ -32,7 +32,9 @@ func loadBreakdownTable(writer http.ResponseWriter, workplaceIds string, dateFro
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&breakdownRecords)
 	}
 	var data TableOutput
+	userWebSettingsSync.RLock()
 	data.Compacted = cachedUserWebSettings[email]["data-selected-size"]
+	userWebSettingsSync.RUnlock()
 	data.DataTableSearchTitle = getLocale(email, "data-table-search-title")
 	data.DataTableInfoTitle = getLocale(email, "data-table-info-title")
 	data.DataTableRowsCountTitle = getLocale(email, "data-table-rows-count-title")
@@ -59,7 +61,9 @@ func loadBreakdownTable(writer http.ResponseWriter, workplaceIds string, dateFro
 
 func addBreakdownTableRow(record database.BreakdownRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
+	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
+	workplacesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	breakdownStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, breakdownStart)
@@ -70,7 +74,9 @@ func addBreakdownTableRow(record database.BreakdownRecord, data *TableOutput, lo
 		breakdownEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, breakdownEnd)
 	}
+	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}
+	usersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	breakdownByIdSync.RLock()
 	breakdownName := TableCell{CellName: cachedBreakdownsById[uint(record.BreakdownID)].Name}

@@ -37,109 +37,119 @@ func settings(writer http.ResponseWriter, request *http.Request, _ httprouter.Pa
 	go updatePageCount("settings")
 	email, _, _ := request.BasicAuth()
 	go updateWebUserRecord("settings", email)
-	logInfo("SETTINGS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("SETTINGS", "Sending page to "+email)
 	var data SettingsPageOutput
 	data.Version = version
 	companyNameSync.RLock()
 	data.Company = cachedCompanyName
 	companyNameSync.RUnlock()
 	data.UserEmail = email
+	usersByEmailSync.RLock()
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	usersByEmailSync.RUnlock()
 	data.MenuOverview = getLocale(email, "menu-overview")
 	data.MenuWorkplaces = getLocale(email, "menu-workplaces")
 	data.MenuCharts = getLocale(email, "menu-charts")
 	data.MenuStatistics = getLocale(email, "menu-statistics")
 	data.MenuData = getLocale(email, "menu-data")
 	data.MenuSettings = getLocale(email, "menu-settings")
+	usersByEmailSync.RLock()
 	userLocale := cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	localesSync.RLock()
 	data.DateLocale = cachedLocales[userLocale]
 	localesSync.RUnlock()
+	userWebSettingsSync.RLock()
+	selectedType := cachedUserWebSettings[email]["settings-selected-type"]
+	userWebSettingsSync.RUnlock()
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "user-name"),
 		SelectionValue: "user",
-		Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "user-name"),
+		Selection:      getSelected(selectedType, "user-name"),
 	})
-	if cachedUsersByEmail[email].UserRoleID != user {
+	usersByEmailSync.RLock()
+	userRoleId := cachedUsersByEmail[email].UserRoleID
+	usersByEmailSync.RUnlock()
+	if userRoleId != user {
 		logInfo("SETTINGS", "Adding data menu for power user")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "alarms"),
 			SelectionValue: "alarms",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "alarms"),
+			Selection:      getSelected(selectedType, "alarms"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "breakdowns"),
 			SelectionValue: "breakdowns",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "breakdowns"),
+			Selection:      getSelected(selectedType, "breakdowns"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "downtimes"),
 			SelectionValue: "downtimes",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "downtimes"),
+			Selection:      getSelected(selectedType, "downtimes"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "faults"),
 			SelectionValue: "faults",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "faults"),
+			Selection:      getSelected(selectedType, "faults"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "operations"),
 			SelectionValue: "operations",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "operations"),
+			Selection:      getSelected(selectedType, "operations"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "orders"),
 			SelectionValue: "orders",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "orders"),
+			Selection:      getSelected(selectedType, "orders"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "packages"),
 			SelectionValue: "packages",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "packages"),
+			Selection:      getSelected(selectedType, "packages"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "parts"),
 			SelectionValue: "parts",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "parts"),
+			Selection:      getSelected(selectedType, "parts"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "products"),
 			SelectionValue: "products",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "products"),
+			Selection:      getSelected(selectedType, "products"),
 		})
 	}
-	if cachedUsersByEmail[email].UserRoleID == administrator {
+	if userRoleId == administrator {
 		logInfo("SETTINGS", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "devices"),
 			SelectionValue: "devices",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "devices"),
+			Selection:      getSelected(selectedType, "devices"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "states"),
 			SelectionValue: "states",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "states"),
+			Selection:      getSelected(selectedType, "states"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
 			SelectionValue: "users",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "users"),
+			Selection:      getSelected(selectedType, "users"),
 		})
 
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "workplaces"),
 			SelectionValue: "workplaces",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "workplaces"),
+			Selection:      getSelected(selectedType, "workplaces"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "workshifts"),
 			SelectionValue: "workshifts",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "workshifts"),
+			Selection:      getSelected(selectedType, "workshifts"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "system-settings"),
 			SelectionValue: "system-settings",
-			Selection:      getSelected(cachedUserWebSettings[email]["settings-selected-type"], "system-settings"),
+			Selection:      getSelected(selectedType, "system-settings"),
 		})
 	}
 	softwareNameSync.RLock()
@@ -155,7 +165,7 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, _ httpr
 	timer := time.Now()
 	go updatePageCount("settings")
 	email, _, _ := request.BasicAuth()
-	logInfo("SETTINGS", "Loading settings for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("SETTINGS", "Loading settings for "+email)
 	var data SettingsPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
@@ -210,7 +220,7 @@ func loadSettingsData(writer http.ResponseWriter, request *http.Request, _ httpr
 func loadSettingsDetail(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	email, _, _ := request.BasicAuth()
-	logInfo("SETTINGS", "Loading settings detail for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("SETTINGS", "Loading settings detail for "+email)
 	var data SettingsPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {

@@ -59,7 +59,9 @@ func loadUsersTable(writer http.ResponseWriter, workplaceIds string, dateFrom ti
 
 func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB, loc *time.Location) {
 	var tableRow TableRow
+	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
+	workplacesByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workplaceNameCell)
 	userStart := TableCell{CellName: record.DateTimeStart.In(loc).Format("2006-01-02 15:04:05")}
 	tableRow.TableCell = append(tableRow.TableCell, userStart)
@@ -70,7 +72,9 @@ func addUserTableRow(record database.UserRecord, data *TableOutput, db *gorm.DB,
 		orderEnd := TableCell{CellName: record.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	}
+	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName}
+	usersByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, userName)
 	var orderRecord database.OrderRecord
 	db.Where("id = ?", record.OrderRecordID).Find(&orderRecord)

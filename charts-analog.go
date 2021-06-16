@@ -83,7 +83,9 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 	responseData.BreakdownsLocale = getLocale(email, "breakdowns")
 	responseData.UsersLocale = getLocale(email, "users")
 	responseData.AlarmsLocale = getLocale(email, "alarms")
+	usersByEmailSync.RLock()
 	responseData.Locale = cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
 	responseData.Result = "INF: Analog chart data downloaded from database in " + time.Since(timer).String()
 	responseData.Type = chartName
 	writer.Header().Set("Content-Type", "application/json")
@@ -94,7 +96,10 @@ func processAnalogData(writer http.ResponseWriter, workplaceName string, dateFro
 func downloadChartUserData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, workplaceName string) []TerminalData {
 	var userData []TerminalData
 	var userRecords []database.UserRecord
-	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Find(&userRecords)
+	workplacesByNameSync.RLock()
+	workplaceId := cachedWorkplacesByName[workplaceName].ID
+	workplacesByNameSync.RUnlock()
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", workplaceId).Find(&userRecords)
 	for _, record := range userRecords {
 		dateTimeStart := record.DateTimeStart.Unix() * 1000
 		if record.DateTimeStart.Before(dateFrom) {
@@ -105,12 +110,14 @@ func downloadChartUserData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, wo
 			dateTimeEnd = dateTo.Unix() * 1000
 		}
 		oneData := TerminalData{
-			Color:       "#2274A5",
-			FromDate:    dateTimeStart,
-			ToDate:      dateTimeEnd,
-			Information: cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName,
-			Note:        record.Note,
+			Color:    "#2274A5",
+			FromDate: dateTimeStart,
+			ToDate:   dateTimeEnd,
+			Note:     record.Note,
 		}
+		usersByIdSync.RLock()
+		oneData.Information = cachedUsersById[uint(record.UserID)].FirstName + " " + cachedUsersById[uint(record.UserID)].SecondName
+		usersByIdSync.RUnlock()
 		userData = append(userData, oneData)
 	}
 	return userData
@@ -119,7 +126,10 @@ func downloadChartUserData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, wo
 func downloadChartAlarmData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, workplaceName string) []TerminalData {
 	var alarmData []TerminalData
 	var alarmRecords []database.AlarmRecord
-	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Find(&alarmRecords)
+	workplacesByNameSync.RLock()
+	workplaceId := cachedWorkplacesByName[workplaceName].ID
+	workplacesByNameSync.RUnlock()
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", workplaceId).Find(&alarmRecords)
 	for _, record := range alarmRecords {
 		dateTimeStart := record.DateTimeStart.Unix() * 1000
 		if record.DateTimeStart.Before(dateFrom) {
@@ -145,7 +155,10 @@ func downloadChartAlarmData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, w
 func downloadChartBreakdownData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, workplaceName string) []TerminalData {
 	var breakdownData []TerminalData
 	var breakdownRecords []database.BreakdownRecord
-	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Find(&breakdownRecords)
+	workplacesByNameSync.RLock()
+	workplaceId := cachedWorkplacesByName[workplaceName].ID
+	workplacesByNameSync.RUnlock()
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", workplaceId).Find(&breakdownRecords)
 	for _, record := range breakdownRecords {
 		dateTimeStart := record.DateTimeStart.Unix() * 1000
 		if record.DateTimeStart.Before(dateFrom) {
@@ -174,7 +187,10 @@ func downloadChartBreakdownData(db *gorm.DB, dateTo time.Time, dateFrom time.Tim
 func downloadChartDowntimeData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, workplaceName string) []TerminalData {
 	var downtimeData []TerminalData
 	var downtimeRecords []database.DowntimeRecord
-	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Find(&downtimeRecords)
+	workplacesByNameSync.RLock()
+	workplaceId := cachedWorkplacesByName[workplaceName].ID
+	workplacesByNameSync.RUnlock()
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", workplaceId).Find(&downtimeRecords)
 	for _, record := range downtimeRecords {
 		dateTimeStart := record.DateTimeStart.Unix() * 1000
 		if record.DateTimeStart.Before(dateFrom) {
@@ -203,7 +219,10 @@ func downloadChartDowntimeData(db *gorm.DB, dateTo time.Time, dateFrom time.Time
 func downloadChartOrderData(db *gorm.DB, dateTo time.Time, dateFrom time.Time, workplaceName string) []TerminalData {
 	var orderData []TerminalData
 	var orderRecords []database.OrderRecord
-	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", cachedWorkplacesByName[workplaceName].ID).Order("id").Find(&orderRecords)
+	workplacesByNameSync.RLock()
+	workplaceId := cachedWorkplacesByName[workplaceName].ID
+	workplacesByNameSync.RUnlock()
+	db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end is null", dateTo).Where("workplace_id = ?", workplaceId).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where("workplace_id = ?", workplaceId).Order("id").Find(&orderRecords)
 	for _, record := range orderRecords {
 		ordersByIdSync.RLock()
 		productId := int(cachedOrdersById[uint(record.OrderID)].ProductID.Int32)

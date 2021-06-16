@@ -140,8 +140,11 @@ func loadOrder(id string, writer http.ResponseWriter, email string) {
 	var order database.Order
 	db.Where("id = ?", id).Find(&order)
 	var workplaces []WorkplaceSelection
-	for _, workplace := range cachedWorkplacesById {
-		if workplace.Name == cachedWorkplacesById[uint(order.WorkplaceID.Int32)].Name {
+	workplacesByIdSync.RLock()
+	workplacesById := cachedWorkplacesById
+	workplacesByIdSync.RUnlock()
+	for _, workplace := range workplacesById {
+		if workplace.Name == workplacesById[uint(order.WorkplaceID.Int32)].Name {
 			workplaces = append(workplaces, WorkplaceSelection{WorkplaceName: workplace.Name, WorkplaceId: workplace.ID, WorkplaceSelected: "selected"})
 		} else {
 			workplaces = append(workplaces, WorkplaceSelection{WorkplaceName: workplace.Name, WorkplaceId: workplace.ID})
@@ -172,7 +175,6 @@ func loadOrder(id string, writer http.ResponseWriter, email string) {
 		OrderName:              order.Name,
 		OrderNamePrepend:       getLocale(email, "order-name"),
 		ProductNamePrepend:     getLocale(email, "product-name"),
-		WorkplaceName:          cachedWorkplacesById[uint(order.WorkplaceID.Int32)].Name,
 		WorkplaceNamePrepend:   getLocale(email, "workplace-name"),
 		DateTimeRequest:        requiredDate,
 		DateTimeRequestPrepend: getLocale(email, "date-requested"),
@@ -191,6 +193,9 @@ func loadOrder(id string, writer http.ResponseWriter, email string) {
 		Products:               products,
 		Workplaces:             workplaces,
 	}
+	workplacesByIdSync.RLock()
+	data.WorkplaceName = cachedWorkplacesById[uint(order.WorkplaceID.Int32)].Name
+	workplacesByIdSync.RUnlock()
 	productsByIdSync.RLock()
 	data.ProductName = cachedProductsById[uint(order.ProductID.Int32)].Name
 	productsByIdSync.RUnlock()
@@ -243,7 +248,9 @@ func saveOrder(writer http.ResponseWriter, request *http.Request, _ httprouter.P
 		productsByNameSync.RUnlock()
 	}
 	if len(data.Workplace) > 0 {
+		workplacesByNameSync.RLock()
 		order.WorkplaceID = sql.NullInt32{Int32: int32(cachedWorkplacesByName[data.Workplace].ID), Valid: true}
+		workplacesByNameSync.RUnlock()
 	}
 	timeParsed, _ := time.Parse("2006-01-02T15:04:05", data.DateTimeRequest)
 	order.DateTimeRequest = sql.NullTime{

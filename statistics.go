@@ -42,7 +42,7 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	go updatePageCount("statistics")
 	email, _, _ := request.BasicAuth()
 	go updateWebUserRecord("statistics", email)
-	logInfo("STATISTICS", "Sending page to "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("STATISTICS", "Sending page to "+email)
 	var data StatisticsPageData
 	data.Version = version
 	companyNameSync.RLock()
@@ -56,79 +56,92 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.MenuSettings = getLocale(email, "menu-settings")
 	data.UserEmail = email
 	data.UserName = cachedUsersByEmail[email].FirstName + " " + cachedUsersByEmail[email].SecondName
+	usersByEmailSync.RLock()
 	data.DateFrom = cachedUserWebSettings[email]["statistics-selected-from"]
 	data.DateTo = cachedUserWebSettings[email]["statistics-selected-to"]
+	selectedType := cachedUserWebSettings[email]["statistics-selected-type"]
+	usersByEmailSync.RUnlock()
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "user-name"),
 		SelectionValue: "username",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "username"),
+		Selection:      getSelected(selectedType, "username"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "company"),
 		SelectionValue: "company",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "company"),
+		Selection:      getSelected(selectedType, "company"),
 	})
 	// TODO: ADD COMPANY TO LOCALES
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "alarms"),
 		SelectionValue: "alarms",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "alarms"),
+		Selection:      getSelected(selectedType, "alarms"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "breakdowns"),
 		SelectionValue: "breakdowns",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "breakdowns"),
+		Selection:      getSelected(selectedType, "breakdowns"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "downtimes"),
 		SelectionValue: "downtimes",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "downtimes"),
+		Selection:      getSelected(selectedType, "downtimes"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "faults"),
 		SelectionValue: "faults",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "faults"),
+		Selection:      getSelected(selectedType, "faults"),
 	})
 
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "orders"),
 		SelectionValue: "orders",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "orders"),
+		Selection:      getSelected(selectedType, "orders"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "packages"),
 		SelectionValue: "packages",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "packages"),
+		Selection:      getSelected(selectedType, "packages"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "parts"),
 		SelectionValue: "parts",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "parts"),
+		Selection:      getSelected(selectedType, "parts"),
 	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "states"),
 		SelectionValue: "states",
-		Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "states"),
+		Selection:      getSelected(selectedType, "states"),
 	})
-	if cachedUsersByEmail[email].UserRoleID == 1 {
+	usersByEmailSync.RLock()
+	userRoleId := cachedUsersByEmail[email].UserRoleID
+	usersByEmailSync.RUnlock()
+
+	if userRoleId == 1 {
 		logInfo("STATISTICS", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
 			SelectionValue: "users",
-			Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "users"),
+			Selection:      getSelected(selectedType, "users"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "system-statistics"),
 			SelectionValue: "system-statistics",
-			Selection:      getSelected(cachedUserWebSettings[email]["statistics-selected-type"], "system-statistics"),
+			Selection:      getSelected(selectedType, "system-statistics"),
 		})
 	}
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
 	var dataWorkplaces []TableWorkplaceSelection
-	for _, workplace := range cachedWorkplacesById {
+	workplacesByIdSync.RLock()
+	workplacesById := cachedWorkplacesById
+	workplacesByIdSync.RUnlock()
+	for _, workplace := range workplacesById {
+		userWebSettingsSync.RLock()
+		selectedWorkplaces := cachedUserWebSettings[email]["statistics-selected-workplaces"]
+		userWebSettingsSync.RUnlock()
 		dataWorkplaces = append(dataWorkplaces, TableWorkplaceSelection{
 			WorkplaceName:      workplace.Name,
-			WorkplaceSelection: getWorkplaceWebSelection(cachedUserWebSettings[email]["statistics-selected-workplaces"], workplace.Name),
+			WorkplaceSelection: getWorkplaceWebSelection(selectedWorkplaces, workplace.Name),
 		})
 	}
 	sort.Slice(dataWorkplaces, func(i, j int) bool {
@@ -148,7 +161,7 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	timer := time.Now()
 	go updatePageCount("statistics")
 	email, _, _ := request.BasicAuth()
-	logInfo("DATA", "Loading statistics for "+cachedUsersByEmail[email].FirstName+" "+cachedUsersByEmail[email].SecondName)
+	logInfo("DATA", "Loading statistics for "+email)
 	var data DataPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {

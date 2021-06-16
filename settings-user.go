@@ -52,7 +52,10 @@ func loadUserSettings(writer http.ResponseWriter, email string) {
 		return
 	}
 	var user database.User
-	db.Where("id = ?", cachedUsersByEmail[email].ID).Find(&user)
+	usersByEmailSync.RLock()
+	userId := cachedUsersByEmail[email].ID
+	usersByEmailSync.RUnlock()
+	db.Where("id = ?", userId).Find(&user)
 	var locales []LocaleSelection
 	locales = append(locales, LocaleSelection{LocaleName: "CsCZ", LocaleSelected: testLocaleForUser(user.Locale, "CsCZ")})
 	locales = append(locales, LocaleSelection{LocaleName: "DeDE", LocaleSelected: testLocaleForUser(user.Locale, "DeDE")})
@@ -126,7 +129,10 @@ func saveUserSettings(writer http.ResponseWriter, request *http.Request, params 
 		return
 	}
 	var user database.User
-	db.Where("id=?", cachedUsersByEmail[email].ID).Find(&user)
+	usersByEmailSync.RLock()
+	userId := cachedUsersByEmail[email].ID
+	usersByEmailSync.RUnlock()
+	db.Where("id=?", userId).Find(&user)
 	user.FirstName = data.FirstName
 	user.SecondName = data.SecondName
 	user.Email = data.Email
