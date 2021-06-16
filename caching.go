@@ -514,7 +514,7 @@ func cacheSystemSettings(db *gorm.DB) {
 	softwareNameSync.Lock()
 	cachedSoftwareName = softwareName.Value
 	softwareNameSync.Unlock()
-	logInfo("CACHING", "Software name cached: "+softwareName.Name)
+	logInfo("CACHING", "Software name cached: "+softwareName.Value)
 
 	var timezone database.Setting
 	db.Where("name=?", "timezone").Find(&timezone)

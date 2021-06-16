@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -180,15 +181,6 @@ func getWorkplaceWebSelection(selectedWorkplaces string, workplace string) strin
 	return ""
 }
 
-func getWorkplaceSelection(selectedWorkplaces []string, workplace string) string {
-	for _, selectedWorkplace := range selectedWorkplaces {
-		if selectedWorkplace == workplace {
-			return "selected"
-		}
-	}
-	return ""
-}
-
 func getSelected(selection string, menu string) string {
 	if selection == menu {
 		return "selected"
@@ -247,13 +239,11 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	updateUserWebSettings(email, "data-selected-type", data.Data)
 	updateUserWebSettings(email, "data-selected-from", data.From)
 	updateUserWebSettings(email, "data-selected-to", data.To)
-	selectedWorkplaces := ""
-	for _, workplace := range data.Workplaces {
-		selectedWorkplaces += workplace + ";"
-	}
-	selectedWorkplaces = strings.TrimRight(selectedWorkplaces, ";")
-	updateUserWebSettings(email, "data-selected-workplaces", selectedWorkplaces)
-	workplaceIds := getWorkplaceIds(data)
+	userWebSettingsSync.RLock()
+	workplaceNames := cachedUserWebSettings[email]["data-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	workplaceIds := getWorkplaceIds(workplaceNames)
+	fmt.Println(workplaceNames)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "alarms":
@@ -281,16 +271,17 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	return
 }
 
-func getWorkplaceIds(data DataPageInput) string {
-	if len(data.Workplaces) == 0 {
+func getWorkplaceIds(workplaceNames string) string {
+	if len(workplaceNames) == 0 {
 		return ""
 	}
-	workplaceNames := `name in ('`
-	for _, workplace := range data.Workplaces {
-		workplaceNames += workplace + `','`
+	workplaceNamesAsArray := strings.Split(workplaceNames, ";")
+	workplaceNamesSql := `name in ('`
+	for _, workplace := range workplaceNamesAsArray {
+		workplaceNamesSql += workplace + `','`
 	}
-	workplaceNames = strings.TrimSuffix(workplaceNames, `,'`)
-	workplaceNames += ")"
+	workplaceNamesSql = strings.TrimSuffix(workplaceNamesSql, `,'`)
+	workplaceNamesSql += ")"
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	sqlDB, _ := db.DB()
 	defer sqlDB.Close()
@@ -299,7 +290,7 @@ func getWorkplaceIds(data DataPageInput) string {
 		return ""
 	}
 	var workplaces []database.Workplace
-	db.Select("id").Where(workplaceNames).Find(&workplaces)
+	db.Select("id").Where(workplaceNamesSql).Find(&workplaces)
 	workplaceIds := `workplace_id in ('`
 	for _, workplace := range workplaces {
 		workplaceIds += strconv.Itoa(int(workplace.ID)) + `','`

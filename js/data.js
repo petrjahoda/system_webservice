@@ -4,7 +4,6 @@ document.getElementById('to-date').value = now.toISOString().slice(0, 16);
 now.setMonth(now.getMonth() - 1);
 document.getElementById('from-date').value = now.toISOString().slice(0, 16);
 
-
 const tableButton = document.getElementById("table-button")
 tableButton.addEventListener("click", () => {
     let data
@@ -43,8 +42,25 @@ dataSelection.addEventListener("change", () => {
 })
 
 const dataOkButton = document.getElementById("data-ok-button")
-dataOkButton.addEventListener("click", () => {
-    loadData();
+dataOkButton.addEventListener("click", async () => {
+    const workplacesElement = document.getElementsByClassName("tag short-tag");
+    let workplaces = ""
+    for (let index = 0; index < workplacesElement.length; index++) {
+        workplaces += workplacesElement[index].children[0].innerHTML + ";"
+    }
+    workplaces = workplaces.slice(0, -1)
+    let data = {
+        email: document.getElementById("user-info").title,
+        key: "data-selected-workplaces",
+        value: workplaces,
+    };
+    fetch("/update_user_web_settings_from_web", {
+        method: "POST",
+        body: JSON.stringify(data)
+    }).then(() => {
+        loadData();
+    }).catch(() => {
+    });
 })
 
 function loadData() {
@@ -99,5 +115,3 @@ function addDate(dt, amount, dateType) {
             return dt.setFullYear(dt.getFullYear() + amount) && dt;
     }
 }
-
-document.addEventListener('DOMContentLoaded', loadData, false);

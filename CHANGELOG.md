@@ -19,6 +19,9 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 ### Changed
 - all mutexes changed to rwmutexes with proper behavior
 
+### Fixed
+- proper remembering workplaces on data page
+
 ## [2021.2.3.15] - 2021-06-15
 
 ### Added
