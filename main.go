@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "2021.2.3.16"
+const version = "2021.2.3.18"
 const serviceName = "System WebService"
 const serviceDescription = "System web interface"
 

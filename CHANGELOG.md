@@ -14,6 +14,11 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.3.18] - 2021-06-18
+
+### Changed
+- cursor default under left software name on all pages
+
 ## [2021.2.3.16] - 2021-06-16
 
 ### Changed
