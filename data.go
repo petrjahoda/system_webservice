@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/julienschmidt/httprouter"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
@@ -243,7 +242,7 @@ func loadTableData(writer http.ResponseWriter, request *http.Request, params htt
 	workplaceNames := cachedUserWebSettings[email]["data-selected-workplaces"]
 	userWebSettingsSync.RUnlock()
 	workplaceIds := getWorkplaceIds(workplaceNames)
-	fmt.Println(workplaceNames)
+
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "alarms":

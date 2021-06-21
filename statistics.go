@@ -37,6 +37,25 @@ type StatisticsOutput struct {
 	Compacted string
 }
 
+type StatisticsDataOutput struct {
+	Result              string
+	Compacted           string
+	DurationChartData   []string
+	DurationChartValue  []float64
+	DurationChartText   []string
+	WorkplaceChartData  []string
+	WorkplaceChartValue []float64
+	WorkplaceChartText  []string
+	UsersChartData      []string
+	UsersChartValue     []float64
+	UsersChartText      []string
+	StartChartData      []string
+	StartChartValue     []float64
+	StartChartText      []string
+	DaysChartData       []string
+	DaysChartValue      []float64
+}
+
 func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
 	timer := time.Now()
 	go updatePageCount("statistics")
@@ -62,16 +81,10 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	selectedType := cachedUserWebSettings[email]["statistics-selected-type"]
 	usersByEmailSync.RUnlock()
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "user-name"),
-		SelectionValue: "username",
-		Selection:      getSelected(selectedType, "username"),
+		SelectionName:  getLocale(email, "overview"),
+		SelectionValue: "overview",
+		Selection:      getSelected(selectedType, "overview"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "company"),
-		SelectionValue: "company",
-		Selection:      getSelected(selectedType, "company"),
-	})
-	// TODO: ADD COMPANY TO LOCALES
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "alarms"),
 		SelectionValue: "alarms",
@@ -92,7 +105,6 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		SelectionValue: "faults",
 		Selection:      getSelected(selectedType, "faults"),
 	})
-
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "orders"),
 		SelectionValue: "orders",
@@ -121,8 +133,8 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		logInfo("STATISTICS", "Adding data menu for administrator")
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "users"),
-			SelectionValue: "users",
-			Selection:      getSelected(selectedType, "users"),
+			SelectionValue: "web-users",
+			Selection:      getSelected(selectedType, "web-users"),
 		})
 		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 			SelectionName:  getLocale(email, "system-statistics"),
@@ -214,15 +226,20 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	}
 	selectedWorkplaces = strings.TrimRight(selectedWorkplaces, ";")
 	updateUserWebSettings(email, "statistics-selected-workplaces", selectedWorkplaces)
-	//workplaceIds := getWorkplaceIds(data)
+	userWebSettingsSync.RLock()
+	workplaceNames := cachedUserWebSettings[email]["statistics-selected-workplaces"]
+	userWebSettingsSync.RUnlock()
+	workplaceIds := getWorkplaceIds(workplaceNames)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
+	case "overview":
+		//loadOverView(writer, workplaceIDs, dateFrom, dateTo, email)
 	case "alarms":
 		//loadAlarmsStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "breakdowns":
 		//loadBreakdownStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "downtimes":
-		//loadDowntimesStatistics(writer, workplaceIds, dateFrom, dateTo, email)
+		loadDowntimesStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "faults":
 		//loadFaultsStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "orders":

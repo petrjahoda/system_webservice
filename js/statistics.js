@@ -37,14 +37,8 @@ function loadData() {
             if (data.includes("ERR: ")) {
                 JSON.parse(data);
             } else {
-                // document.getElementById("data-table-container").innerHTML = data
-                // if (document.getElementById("data-table").classList.contains("compact")) {
-                //     tableButton.classList.remove("mif-menu")
-                //     tableButton.classList.add("mif-lines")
-                // } else {
-                //     tableButton.classList.remove("mif-lines")
-                //     tableButton.classList.add("mif-menu")
-                // }
+                let result = JSON.parse(data);
+                console.log(result)
             }
             document.getElementById("loader").hidden = true
         });
@@ -65,5 +59,3 @@ function addDate(dt, amount, dateType) {
             return dt.setFullYear(dt.getFullYear() + amount) && dt;
     }
 }
-
-document.addEventListener('DOMContentLoaded', loadData, false);

@@ -21,7 +21,7 @@
 </head>
 <body class="m4-cloak h-vh-100" style="min-width: 1360px;">
 <div id="mainmenu" data-role="navview" data-expand="fs" data-compact="fs" class="compacted">
-    <div class="navview-pane" style="z-index: 999" >
+    <div class="navview-pane" style="z-index: 999">
         <div style="height: 52px;font-size: 10px;text-align: center;background: #cecece;cursor: default">
             <p style="padding-top: 20px;margin-bottom: 0;"><b>{{.Software}}</b></p>
         </div>
@@ -39,7 +39,7 @@
                     <span class="caption" style="text-transform: uppercase">{{.MenuWorkplaces}}</span>
                 </a>
             </li>
-            <li >
+            <li>
                 <a href="charts" style="cursor: default">
                     <span class="icon"><span class="mif-chart-dots"></span></span>
                     <span class="caption" style="text-transform: uppercase">{{.MenuCharts}}</span>
@@ -72,7 +72,8 @@
     </div>
     <div class="navview-content">
         <div data-role="appbar" class="pos-absolute" style="background: #e5e5e5">
-            <div id="user-info" title="{{.UserEmail}}" style="position: absolute;top:20px;left: 10px;font-size: 10px;">
+            <div id="user-info" title="{{.UserEmail}}"
+                 style="position: absolute;top:20px;left: 10px;font-size: 10px;cursor: default">
                 {{.UserName}} @ {{.Company}}
             </div>
             <div class="app-bar-container mx-auto" style="margin: 0">
@@ -89,11 +90,12 @@
                 </div>
                 <div style="margin-top: 3px;margin-left: 3px">
                     <input id="to-date" type="datetime-local"
-                            value="{{.DateTo}}">
+                           value="{{.DateTo}}">
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
                     <button id="statistics-ok-button" class="button primary"
-                            style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 2px"><span class="mif-loop2"></span>
+                            style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 2px"><span
+                            class="mif-loop2"></span>
                     </button>
                 </div>
             </div>
@@ -116,10 +118,28 @@
                     {{end}}
                 </select>
             </div>
-            <div id="statistics-table-container" style="display: block">
+            <div class="row" id="content">
+                <div class="cell-3">
+                    <div id="duration-chart" style="display: flex;justify-content: center;">top 1</div>
+                </div>
+                <div class="cell-3">
+                    <div id="workplaces-chart" style="display: flex;justify-content: center;">top 2</div>
+                </div>
+                <div class="cell-3">
+                    <div id="users-chart" style="display: flex;justify-content: center;">top 3</div>
+                </div>
+                <div class="cell-3">
+                    <div id="start-chart" style="display: flex;justify-content: center;">top 4</div>
+                </div>
+            </div>
+            <div class="row" id="lower-content">
+                <div class="cell-12">
+                    <div id="days-chart" style="display: flex;justify-content: center;">lower</div>
+                </div>
             </div>
         </div>
     </div>
+</div>
 </div>
 <div data-role="charms" data-position="bottom" id="right-charms" class="charms bottom-side" data-opacity=".65"
      style="height: 75px;text-align:center;overflow: scroll;">
