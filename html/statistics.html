@@ -110,11 +110,27 @@
         </div>
         <div id="content-wrapper" class="content-inner h-100"
              style="padding-top: 62px;padding-left: 10px;padding-right: 10px;overflow-y: auto">
-            <div class="row" style="margin: 0 0 0 0;">
+            <div class="row" style="margin: 0 0 0 0;" id="workplaces">
                 <select data-role="select" multiple data-clear-button="true"
                         data-filter-placeholder="{{.DataFilterPlaceholder}}">
                     {{range .Workplaces}}
                     <option value="{{.WorkplaceName}}" {{.WorkplaceSelection}}>{{.WorkplaceName}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="row" style="margin: 10px 0 0 0;" id="types">
+                <select data-role="select" multiple data-clear-button="true"
+                        data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                    {{range .Types}}
+                    <option value="{{.TypeName}}" {{.TypeSelection}}>{{.TypeName}}</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="row" style="margin: 10px 0 0 0;" id="users">
+                <select data-role="select" multiple data-clear-button="true"
+                        data-filter-placeholder="{{.DataFilterPlaceholder}}">
+                    {{range .Users}}
+                    <option value="{{.UserName}}" {{.UserSelection}}>{{.UserName}}</option>
                     {{end}}
                 </select>
             </div>

@@ -103,12 +103,6 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 	for _, orderRecord := range orderRecords {
 		cachedOrderRecords[orderRecord.WorkplaceID] = orderRecord
 	}
-	var userRecords []database.UserRecord
-	db.Where("date_time_end is null").Find(&userRecords)
-	cachedUserRecords := make(map[int]database.UserRecord)
-	for _, userRecord := range userRecords {
-		cachedUserRecords[userRecord.WorkplaceID] = userRecord
-	}
 	var breakdownRecords []database.BreakdownRecord
 	db.Where("date_time_end is null").Find(&breakdownRecords)
 	cachedBreakdownRecords := make(map[int]database.BreakdownRecord)
@@ -175,7 +169,7 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 					workplacesProductionRecordsSync.RUnlock()
 					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
-					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
+					userRecordId := cachedOrderRecords[int(workplace.ID)].UserId.Int32
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {
@@ -233,7 +227,7 @@ func updateWorkplaces(writer http.ResponseWriter, request *http.Request, _ httpr
 					workplacesProductionRecordsSync.RUnlock()
 					pageWorkplace.WorkplaceProductivityToday = strconv.FormatFloat((productionDurationToday/totalTodayDuration.Seconds())*100, 'f', 1, 64)
 					orderRecordId := cachedOrderRecords[int(workplace.ID)].OrderID
-					userRecordId := cachedUserRecords[int(workplace.ID)].UserID
+					userRecordId := cachedOrderRecords[int(workplace.ID)].UserId.Int32
 					breakdownRecordId := cachedBreakdownRecords[int(workplace.ID)].BreakdownID
 					alarmRecordId := cachedAlarmRecords[int(workplace.ID)].AlarmID
 					if orderRecordId > 0 {

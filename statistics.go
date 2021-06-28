@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -25,6 +24,8 @@ type StatisticsPageData struct {
 	MenuSettings          string
 	SelectionMenu         []TableSelection
 	Workplaces            []TableWorkplaceSelection
+	Types                 []TableTypeSelection
+	Users                 []TableUserSelection
 	DataFilterPlaceholder string
 	DateFrom              string
 	DateTo                string
@@ -37,21 +38,31 @@ type StatisticsOutput struct {
 	Compacted string
 }
 
+type StatisticsTypeInput struct {
+	Email     string
+	Selection string
+}
+
+type StatisticsTypeOutput struct {
+	Result string
+	Data   string
+}
+
 type StatisticsDataOutput struct {
 	Result              string
 	Compacted           string
-	DurationChartData   []string
-	DurationChartValue  []float64
-	DurationChartText   []string
+	SelectionChartData  []string
+	SelectionChartValue []float64
+	SelectionChartText  []string
 	WorkplaceChartData  []string
 	WorkplaceChartValue []float64
 	WorkplaceChartText  []string
 	UsersChartData      []string
 	UsersChartValue     []float64
 	UsersChartText      []string
-	StartChartData      []string
-	StartChartValue     []float64
-	StartChartText      []string
+	TimeChartData       []string
+	TimeChartValue      []float64
+	TimeChartText       []string
 	DaysChartData       []string
 	DaysChartValue      []float64
 }
@@ -120,11 +131,6 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		SelectionValue: "parts",
 		Selection:      getSelected(selectedType, "parts"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "states"),
-		SelectionValue: "states",
-		Selection:      getSelected(selectedType, "states"),
-	})
 	usersByEmailSync.RLock()
 	userRoleId := cachedUsersByEmail[email].UserRoleID
 	usersByEmailSync.RUnlock()
@@ -143,6 +149,7 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		})
 	}
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
+
 	var dataWorkplaces []TableWorkplaceSelection
 	workplacesByIdSync.RLock()
 	workplacesById := cachedWorkplacesById
@@ -160,6 +167,50 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 		return dataWorkplaces[i].WorkplaceName < dataWorkplaces[j].WorkplaceName
 	})
 	data.Workplaces = dataWorkplaces
+
+	var dataUsers []TableUserSelection
+	usersByIdSync.RLock()
+	usersById := cachedUsersById
+	usersByIdSync.RUnlock()
+	for _, user := range usersById {
+		userWebSettingsSync.RLock()
+		selectedUsers := cachedUserWebSettings[email]["statistics-selected-users"]
+		userWebSettingsSync.RUnlock()
+		dataUsers = append(dataUsers, TableUserSelection{
+			UserName:      user.SecondName + " " + user.FirstName + " [" + user.Email + "]",
+			UserSelection: getWorkplaceWebSelection(selectedUsers, user.SecondName+" "+user.FirstName+" ["+user.Email+"]"),
+		})
+	}
+	sort.Slice(dataUsers, func(i, j int) bool {
+		return dataUsers[i].UserName < dataUsers[j].UserName
+	})
+	data.Users = dataUsers
+	for _, menu := range data.SelectionMenu {
+		if menu.Selection == "selected" {
+			switch menu.SelectionValue {
+			case "downtimes":
+				var datasTypes []TableTypeSelection
+				downtimesByIdSync.RLock()
+				downtimesById := cachedDowntimesById
+				downtimesByIdSync.RUnlock()
+				for _, downtime := range downtimesById {
+					userWebSettingsSync.RLock()
+					selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+menu.SelectionValue]
+					userWebSettingsSync.RUnlock()
+					datasTypes = append(datasTypes, TableTypeSelection{
+						TypeName:      downtime.Name,
+						TypeSelection: getWorkplaceWebSelection(selectedTypes, downtime.Name),
+					})
+				}
+				sort.Slice(datasTypes, func(i, j int) bool {
+					return datasTypes[i].TypeName < datasTypes[j].TypeName
+				})
+				data.Types = datasTypes
+			}
+			break
+		}
+	}
+
 	softwareNameSync.RLock()
 	data.Software = cachedSoftwareName
 	softwareNameSync.RUnlock()
@@ -173,7 +224,6 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	timer := time.Now()
 	go updatePageCount("statistics")
 	email, _, _ := request.BasicAuth()
-	logInfo("DATA", "Loading statistics for "+email)
 	var data DataPageInput
 	err := json.NewDecoder(request.Body).Decode(&data)
 	if err != nil {
@@ -186,6 +236,7 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 		return
 	}
 	logInfo("DATA", "Loading statistics for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
+	logInfo("DATA", "Loading statistics for "+email)
 	locationSync.RLock()
 	loc, err := time.LoadLocation(cachedLocation)
 	locationSync.RUnlock()
@@ -220,16 +271,6 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	updateUserWebSettings(email, "statistics-selected-type", data.Data)
 	updateUserWebSettings(email, "statistics-selected-from", data.From)
 	updateUserWebSettings(email, "statistics-selected-to", data.To)
-	selectedWorkplaces := ""
-	for _, workplace := range data.Workplaces {
-		selectedWorkplaces += workplace + ";"
-	}
-	selectedWorkplaces = strings.TrimRight(selectedWorkplaces, ";")
-	updateUserWebSettings(email, "statistics-selected-workplaces", selectedWorkplaces)
-	userWebSettingsSync.RLock()
-	workplaceNames := cachedUserWebSettings[email]["statistics-selected-workplaces"]
-	userWebSettingsSync.RUnlock()
-	workplaceIds := getWorkplaceIds(workplaceNames)
 	logInfo("DATA", "Preprocessing takes "+time.Since(timer).String())
 	switch data.Data {
 	case "overview":
@@ -239,7 +280,7 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	case "breakdowns":
 		//loadBreakdownStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "downtimes":
-		loadDowntimesStatistics(writer, workplaceIds, dateFrom, dateTo, email)
+		loadDowntimesStatistics(writer, dateFrom, dateTo, email)
 	case "faults":
 		//loadFaultsStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "orders":
@@ -248,8 +289,6 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 		//loadPackagesStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "parts":
 		//loadPartsStatistics(writer, workplaceIds, dateFrom, dateTo, email)
-	case "states":
-		//loadStatesStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "users":
 		//loadUsersStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "system-statistics":
@@ -257,4 +296,149 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	}
 	logInfo("DATA", "Statistics loaded in "+time.Since(timer).String())
 	return
+}
+
+func loadTypesForSelectedStatistics(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	timer := time.Now()
+	logInfo("STATISTICS", "Loading statistics types")
+	email, _, _ := request.BasicAuth()
+	var data StatisticsTypeInput
+	err := json.NewDecoder(request.Body).Decode(&data)
+	if err != nil {
+		logError("STATISTICS", "Error parsing data: "+err.Error())
+		var responseData StatisticsTypeOutput
+		responseData.Result = "ERR: Error parsing data, " + err.Error()
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+		logInfo("STATISTICS", "Loading statistics ended")
+		return
+	}
+	logInfo("STATISTICS", "Loading statistics types for "+data.Selection)
+	if len(email) == 0 {
+		email = data.Email
+	}
+	updateUserWebSettings(email, "statistics-selected-type", data.Selection)
+	var dataTypes []TableTypeSelection
+	switch data.Selection {
+	case "alarms":
+		{
+			alarmByIdSync.RLock()
+			alarmsById := cachedAlarmsById
+			alarmByIdSync.RUnlock()
+			for _, selection := range alarmsById {
+				userWebSettingsSync.RLock()
+				selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+data.Selection]
+				userWebSettingsSync.RUnlock()
+				dataTypes = append(dataTypes, TableTypeSelection{
+					TypeName:      selection.Name,
+					TypeSelection: getWorkplaceWebSelection(selectedTypes, selection.Name),
+				})
+			}
+			sort.Slice(dataTypes, func(i, j int) bool {
+				return dataTypes[i].TypeName < dataTypes[j].TypeName
+			})
+		}
+	case "breakdowns":
+		{
+			breakdownByIdSync.RLock()
+			breakdownsById := cachedBreakdownsById
+			breakdownByIdSync.RUnlock()
+			for _, selection := range breakdownsById {
+				userWebSettingsSync.RLock()
+				selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+data.Selection]
+				userWebSettingsSync.RUnlock()
+				dataTypes = append(dataTypes, TableTypeSelection{
+					TypeName:      selection.Name,
+					TypeSelection: getWorkplaceWebSelection(selectedTypes, selection.Name),
+				})
+			}
+			sort.Slice(dataTypes, func(i, j int) bool {
+				return dataTypes[i].TypeName < dataTypes[j].TypeName
+			})
+		}
+	case "downtimes":
+		{
+			downtimesByIdSync.RLock()
+			downtimesById := cachedDowntimesById
+			downtimesByIdSync.RUnlock()
+			for _, selection := range downtimesById {
+				userWebSettingsSync.RLock()
+				selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+data.Selection]
+				userWebSettingsSync.RUnlock()
+				dataTypes = append(dataTypes, TableTypeSelection{
+					TypeName:      selection.Name,
+					TypeSelection: getWorkplaceWebSelection(selectedTypes, selection.Name),
+				})
+			}
+			sort.Slice(dataTypes, func(i, j int) bool {
+				return dataTypes[i].TypeName < dataTypes[j].TypeName
+			})
+		}
+	case "faults":
+		{
+			faultsByIdSync.RLock()
+			faultsById := cachedFaultsById
+			faultsByIdSync.RUnlock()
+			for _, selection := range faultsById {
+				userWebSettingsSync.RLock()
+				selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+data.Selection]
+				userWebSettingsSync.RUnlock()
+				dataTypes = append(dataTypes, TableTypeSelection{
+					TypeName:      selection.Name,
+					TypeSelection: getWorkplaceWebSelection(selectedTypes, selection.Name),
+				})
+			}
+			sort.Slice(dataTypes, func(i, j int) bool {
+				return dataTypes[i].TypeName < dataTypes[j].TypeName
+			})
+		}
+	case "orders":
+		{
+			ordersByIdSync.RLock()
+			ordersById := cachedOrdersById
+			ordersByIdSync.RUnlock()
+			for _, selection := range ordersById {
+				userWebSettingsSync.RLock()
+				selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+data.Selection]
+				userWebSettingsSync.RUnlock()
+				dataTypes = append(dataTypes, TableTypeSelection{
+					TypeName:      selection.Name,
+					TypeSelection: getWorkplaceWebSelection(selectedTypes, selection.Name),
+				})
+			}
+			sort.Slice(dataTypes, func(i, j int) bool {
+				return dataTypes[i].TypeName < dataTypes[j].TypeName
+			})
+		}
+	case "packages":
+		{
+			packagesByIdSync.RLock()
+			packagesById := cachedPackagesById
+			packagesByIdSync.RUnlock()
+			for _, selection := range packagesById {
+				userWebSettingsSync.RLock()
+				selectedTypes := cachedUserWebSettings[email]["statistics-selected-types-"+data.Selection]
+				userWebSettingsSync.RUnlock()
+				dataTypes = append(dataTypes, TableTypeSelection{
+					TypeName:      selection.Name,
+					TypeSelection: getWorkplaceWebSelection(selectedTypes, selection.Name),
+				})
+			}
+			sort.Slice(dataTypes, func(i, j int) bool {
+				return dataTypes[i].TypeName < dataTypes[j].TypeName
+			})
+		}
+	}
+	var responseData StatisticsPageData
+	responseData.Types = dataTypes
+	tmpl, err := template.ParseFiles("./html/statistics-selection.html")
+	if err != nil {
+		logError("SETTINGS", "Problem parsing html file: "+err.Error())
+		writer.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(writer).Encode(responseData)
+	} else {
+		_ = tmpl.Execute(writer, responseData)
+		logInfo("SETTINGS", "Workplaces updated in "+time.Since(timer).String())
+	}
+	logInfo("STATISTICS", "Statistics types loaded in "+time.Since(timer).String())
 }

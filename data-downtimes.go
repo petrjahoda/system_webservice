@@ -26,13 +26,10 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 		return
 	}
 	var downtimeRecords []database.DowntimeRecord
-	var userRecords []database.UserRecord
 	if workplaceIds == "workplace_id in (')" {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&downtimeRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&userRecords)
 	} else {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&downtimeRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
 	}
 	var data TableOutput
 	userWebSettingsSync.RLock()
@@ -46,7 +43,7 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	locationSync.RUnlock()
 	addDowntimeTableHeaders(email, &data)
 	for _, record := range downtimeRecords {
-		addDowntimeTableRow(record, userRecords, &data, loc)
+		addDowntimeTableRow(record, &data, loc)
 	}
 	tmpl, err := template.ParseFiles("./html/data-content.html")
 	if err != nil {
@@ -62,7 +59,7 @@ func loadDowntimesTable(writer http.ResponseWriter, workplaceIds string, dateFro
 	}
 }
 
-func addDowntimeTableRow(downtimeRecord database.DowntimeRecord, userRecords []database.UserRecord, data *TableOutput, loc *time.Location) {
+func addDowntimeTableRow(downtimeRecord database.DowntimeRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
 	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name}
@@ -77,27 +74,7 @@ func addDowntimeTableRow(downtimeRecord database.DowntimeRecord, userRecords []d
 		orderEnd := TableCell{CellName: downtimeRecord.DateTimeEnd.Time.In(loc).Format("2006-01-02 15:04:05")}
 		tableRow.TableCell = append(tableRow.TableCell, orderEnd)
 	}
-	actualUserId := 0
-	for _, userRecord := range userRecords {
-		if userRecord.WorkplaceID == downtimeRecord.WorkplaceID {
-			if downtimeRecord.DateTimeEnd.Time.IsZero() && userRecord.DateTimeEnd.Time.IsZero() {
-				actualUserId = userRecord.UserID
-				break
-			} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeStart.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
-				actualUserId = userRecord.UserID
-				break
-			} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeEnd.Time) && userRecord.DateTimeEnd.Time.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
-				actualUserId = userRecord.UserID
-				break
-			} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeEnd.Time.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
-				actualUserId = userRecord.UserID
-				break
-			} else if userRecord.DateTimeStart.Before(downtimeRecord.DateTimeStart) && downtimeRecord.DateTimeEnd.Time.Before(userRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
-				actualUserId = userRecord.UserID
-				break
-			}
-		}
-	}
+	actualUserId := downtimeRecord.UserID.Int32
 	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
 	usersByIdSync.RUnlock()

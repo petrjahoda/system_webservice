@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func loadDowntimesStatistics(writer http.ResponseWriter, workplaceIds string, dateFrom time.Time, dateTo time.Time, email string) {
+func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
 	logInfo("STATISTICS-DOWNTIMES", "Loading downtimes statistics")
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
@@ -26,13 +26,37 @@ func loadDowntimesStatistics(writer http.ResponseWriter, workplaceIds string, da
 		return
 	}
 	var downtimeRecords []database.DowntimeRecord
-	var userRecords []database.UserRecord
+
+	userWebSettingsSync.RLock()
+	workplaceNames := cachedUserWebSettings[email]["statistics-selected-workplaces"]
+	downtimeNames := cachedUserWebSettings[email]["statistics-selected-types-downtimes"]
+	userNames := cachedUserWebSettings[email]["statistics-selected-users"]
+	userWebSettingsSync.RUnlock()
+	workplaceIds := getWorkplaceIds(workplaceNames)
+	downtimeIds := getDowntimeIds(downtimeNames)
+	userIds := getUserIds(userNames)
 	if workplaceIds == "" {
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&downtimeRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&userRecords)
+		if userNames == "" {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&userRecords)
+		} else {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Order("date_time_start desc").Find(&userRecords)
+		}
+		if downtimeNames == "" {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&downtimeRecords)
+		} else {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(downtimeIds).Order("date_time_start desc").Find(&downtimeRecords)
+		}
 	} else {
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&downtimeRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
+		if userNames == "" {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
+		} else {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(workplaceIds).Order("date_time_start desc").Find(&userRecords)
+		}
+		if downtimeNames == "" {
+			db.Debug().Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&downtimeRecords)
+		} else {
+			db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Where(downtimeIds).Order("date_time_start desc").Find(&downtimeRecords)
+		}
 	}
 	downtimeDataByDowntime := map[string]time.Duration{}
 	downtimeDataByUser := map[uint]time.Duration{}
@@ -51,16 +75,16 @@ func loadDowntimesStatistics(writer http.ResponseWriter, workplaceIds string, da
 				if downtimeRecord.DateTimeEnd.Time.IsZero() && userRecord.DateTimeEnd.Time.IsZero() {
 					downtimeDataByUser[uint(userRecord.UserID)] = downtimeDataByUser[uint(userRecord.UserID)] + time.Now().Sub(downtimeRecord.DateTimeStart)
 					break
-				} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeStart.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
+				} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeStart.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() && !userRecord.DateTimeEnd.Time.IsZero() {
 					downtimeDataByUser[uint(userRecord.UserID)] = downtimeDataByUser[uint(userRecord.UserID)] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
 					break
-				} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeEnd.Time) && userRecord.DateTimeEnd.Time.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
+				} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeEnd.Time) && userRecord.DateTimeEnd.Time.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() && !userRecord.DateTimeEnd.Time.IsZero() {
 					downtimeDataByUser[uint(userRecord.UserID)] = downtimeDataByUser[uint(userRecord.UserID)] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
 					break
-				} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeEnd.Time.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
+				} else if downtimeRecord.DateTimeStart.Before(userRecord.DateTimeStart) && userRecord.DateTimeEnd.Time.Before(downtimeRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() && !userRecord.DateTimeEnd.Time.IsZero() {
 					downtimeDataByUser[uint(userRecord.UserID)] = downtimeDataByUser[uint(userRecord.UserID)] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
 					break
-				} else if userRecord.DateTimeStart.Before(downtimeRecord.DateTimeStart) && downtimeRecord.DateTimeEnd.Time.Before(userRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() {
+				} else if userRecord.DateTimeStart.Before(downtimeRecord.DateTimeStart) && downtimeRecord.DateTimeEnd.Time.Before(userRecord.DateTimeEnd.Time) && !downtimeRecord.DateTimeEnd.Time.IsZero() && !userRecord.DateTimeEnd.Time.IsZero() {
 					downtimeDataByUser[uint(userRecord.UserID)] = downtimeDataByUser[uint(userRecord.UserID)] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
 					break
 				}
@@ -69,19 +93,19 @@ func loadDowntimesStatistics(writer http.ResponseWriter, workplaceIds string, da
 	}
 	var responseData StatisticsDataOutput
 	for downtimeName, duration := range downtimeDataByDowntime {
-		responseData.DurationChartData = append(responseData.DurationChartData, downtimeName)
-		responseData.DurationChartValue = append(responseData.DurationChartValue, duration.Seconds())
-		responseData.DurationChartText = append(responseData.DurationChartText, duration.Round(time.Second).String())
+		responseData.SelectionChartData = append(responseData.SelectionChartData, downtimeName)
+		responseData.SelectionChartValue = append(responseData.SelectionChartValue, duration.Seconds())
+		responseData.SelectionChartText = append(responseData.SelectionChartText, duration.Round(time.Second).String())
 	}
 	downtimeDataByWorkplace := map[string]time.Duration{}
 	for _, downtimeRecord := range downtimeRecords {
 		if downtimeRecord.DateTimeEnd.Time.IsZero() {
 			workplacesByIdSync.RLock()
-			downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.DowntimeID)].Name] = downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.DowntimeID)].Name] + time.Now().Sub(downtimeRecord.DateTimeStart)
+			downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name] = downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name] + time.Now().Sub(downtimeRecord.DateTimeStart)
 			workplacesByIdSync.RUnlock()
 		} else {
 			workplacesByIdSync.RLock()
-			downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.DowntimeID)].Name] = downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.DowntimeID)].Name] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
+			downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name] = downtimeDataByWorkplace[cachedWorkplacesById[uint(downtimeRecord.WorkplaceID)].Name] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
 			workplacesByIdSync.RUnlock()
 		}
 	}
@@ -91,14 +115,17 @@ func loadDowntimesStatistics(writer http.ResponseWriter, workplaceIds string, da
 		responseData.WorkplaceChartText = append(responseData.WorkplaceChartText, duration.Round(time.Second).String())
 	}
 
-	downtimeDataByStart := map[int]time.Duration{}
+	downtimeDataByStart := map[int]int{}
 	for _, record := range downtimeRecords {
-		downtimeDataByStart[record.DateTimeStart.Hour()] = downtimeDataByStart[record.DateTimeStart.Hour()] + 1
+		if record.DateTimeEnd.Valid {
+			downtimeDataByStart[int(record.DateTimeEnd.Time.Sub(record.DateTimeStart).Round(1*time.Hour).Hours())] = downtimeDataByStart[int(record.DateTimeEnd.Time.Sub(record.DateTimeStart).Round(1*time.Hour).Hours())] + 1
+		}
+
 	}
-	for hour, count := range downtimeDataByStart {
-		responseData.StartChartData = append(responseData.StartChartData, strconv.Itoa(hour))
-		responseData.StartChartValue = append(responseData.StartChartValue, float64(count))
-		responseData.StartChartText = append(responseData.StartChartText, strconv.Itoa(hour)+":00 - "+strconv.Itoa(hour+1)+":00")
+	for duration, count := range downtimeDataByStart {
+		responseData.TimeChartData = append(responseData.TimeChartData, strconv.Itoa(duration))
+		responseData.TimeChartValue = append(responseData.TimeChartValue, float64(count))
+		responseData.TimeChartText = append(responseData.TimeChartText, "+"+strconv.Itoa(duration)+"m: "+strconv.Itoa(count)+"x")
 	}
 	for userId, duration := range downtimeDataByUser {
 		usersByIdSync.RLock()

@@ -34,6 +34,8 @@ type DataPageOutput struct {
 	MenuSettings          string
 	SelectionMenu         []TableSelection
 	Workplaces            []TableWorkplaceSelection
+	Types                 []TableTypeSelection
+	Users                 []TableUserSelection
 	DataFilterPlaceholder string
 	DateLocale            string
 	UserEmail             string
@@ -51,6 +53,16 @@ type TableSelection struct {
 type TableWorkplaceSelection struct {
 	WorkplaceName      string
 	WorkplaceSelection string
+}
+
+type TableTypeSelection struct {
+	TypeName      string
+	TypeSelection string
+}
+
+type TableUserSelection struct {
+	UserName      string
+	UserSelection string
 }
 
 func data(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -297,4 +309,67 @@ func getWorkplaceIds(workplaceNames string) string {
 	workplaceIds = strings.TrimSuffix(workplaceIds, `,'`)
 	workplaceIds += ")"
 	return workplaceIds
+}
+
+func getUserIds(userNames string) string {
+	if len(userNames) == 0 {
+		return ""
+	}
+	userNamesAsArray := strings.Split(userNames, ";")
+	var userEmailsAsArray []string
+	for _, user := range userNamesAsArray {
+		email := strings.TrimSuffix(strings.Split(user, "[")[1], `]`)
+		userEmailsAsArray = append(userEmailsAsArray, email)
+	}
+	userNamesSql := `email in ('`
+	for _, user := range userEmailsAsArray {
+		userNamesSql += user + `','`
+	}
+	userNamesSql = strings.TrimSuffix(userNamesSql, `,'`)
+	userNamesSql += ")"
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("DATA", "Problem opening database: "+err.Error())
+		return ""
+	}
+	var users []database.User
+	db.Select("id").Where(userNamesSql).Find(&users)
+	userIds := `user_id in ('`
+	for _, user := range users {
+		userIds += strconv.Itoa(int(user.ID)) + `','`
+	}
+	userIds = strings.TrimSuffix(userIds, `,'`)
+	userIds += ")"
+	return userIds
+}
+
+func getDowntimeIds(downtimeNames string) string {
+	if len(downtimeNames) == 0 {
+		return ""
+	}
+	downtimeNamesAsArray := strings.Split(downtimeNames, ";")
+	downtimeNamesSql := `name in ('`
+	for _, user := range downtimeNamesAsArray {
+		downtimeNamesSql += user + `','`
+	}
+	downtimeNamesSql = strings.TrimSuffix(downtimeNamesSql, `,'`)
+	downtimeNamesSql += ")"
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
+	if err != nil {
+		logError("DATA", "Problem opening database: "+err.Error())
+		return ""
+	}
+	var downtimes []database.Downtime
+	db.Select("id").Where(downtimeNamesSql).Find(&downtimes)
+	downtimeIds := `downtime_id in ('`
+	for _, downtime := range downtimes {
+		downtimeIds += strconv.Itoa(int(downtime.ID)) + `','`
+	}
+	downtimeIds = strings.TrimSuffix(downtimeIds, `,'`)
+	downtimeIds += ")"
+	return downtimeIds
 }

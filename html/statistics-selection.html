@@ -1,0 +1,6 @@
+<select data-role="select" multiple data-clear-button="true"
+        data-filter-placeholder="{{.DataFilterPlaceholder}}">
+    {{range .Types}}
+    <option value="{{.TypeName}}" {{.TypeSelection}}>{{.TypeName}}</option>
+    {{end}}
+</select>

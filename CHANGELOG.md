@@ -14,6 +14,13 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.2.3.28] - 2021-06-28
+
+### Changed
+- data page: user for orders and downtimes downloaded from orderRecord and userRecord
+- workplaces page: user downloaded from orderRecord
+
+
 ## [2021.2.3.21] - 2021-06-21
 
 ### Added

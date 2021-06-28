@@ -27,17 +27,10 @@ func loadOrdersTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 		return
 	}
 	var orderRecords []database.OrderRecord
-	var userRecords []database.UserRecord
 	if workplaceIds == "workplace_id in (')" {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&orderRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Find(&userRecords)
 	} else {
 		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&orderRecords)
-		db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Find(&userRecords)
-	}
-	var userRecordsByRecordId = map[int]database.UserRecord{}
-	for _, record := range userRecords {
-		userRecordsByRecordId[record.OrderRecordID] = record
 	}
 	var data TableOutput
 	userWebSettingsSync.RLock()
@@ -51,7 +44,7 @@ func loadOrdersTable(writer http.ResponseWriter, workplaceIds string, dateFrom t
 	locationSync.RUnlock()
 	addOrderTableHeaders(email, &data)
 	for _, record := range orderRecords {
-		addOrderTableRow(record, userRecordsByRecordId, &data, loc)
+		addOrderTableRow(record, &data, loc)
 	}
 	tmpl, err := template.ParseFiles("./html/data-content.html")
 	if err != nil {
@@ -96,7 +89,7 @@ func addOrderTableHeaders(email string, data *TableOutput) {
 	data.TableHeader = append(data.TableHeader, noteName)
 }
 
-func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int]database.UserRecord, data *TableOutput, loc *time.Location) {
+func addOrderTableRow(record database.OrderRecord, data *TableOutput, loc *time.Location) {
 	var tableRow TableRow
 	workplacesByIdSync.RLock()
 	workplaceNameCell := TableCell{CellName: cachedWorkplacesById[uint(record.WorkplaceID)].Name}
@@ -119,7 +112,7 @@ func addOrderTableRow(record database.OrderRecord, userRecordsByRecordId map[int
 	workshiftName := TableCell{CellName: cachedWorkShiftsById[uint(record.WorkshiftID)].Name}
 	workShiftsByIdSync.RUnlock()
 	tableRow.TableCell = append(tableRow.TableCell, workshiftName)
-	actualUserId := userRecordsByRecordId[int(record.ID)].UserID
+	actualUserId := record.UserId.Int32
 	usersByIdSync.RLock()
 	userName := TableCell{CellName: cachedUsersById[uint(actualUserId)].FirstName + " " + cachedUsersById[uint(actualUserId)].SecondName}
 	usersByIdSync.RUnlock()
