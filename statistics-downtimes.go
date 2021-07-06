@@ -2,14 +2,18 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/petrjahoda/database"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"net/http"
-	"strconv"
+	"sort"
 	"time"
 )
+
+type tempData struct {
+	name     string
+	duration time.Duration
+}
 
 func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
@@ -27,7 +31,6 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 		return
 	}
 	var downtimeRecords []database.DowntimeRecord
-
 	userWebSettingsSync.RLock()
 	workplaceNames := cachedUserWebSettings[email]["statistics-selected-workplaces"]
 	downtimeNames := cachedUserWebSettings[email]["statistics-selected-types-downtimes"]
@@ -35,7 +38,6 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 	userWebSettingsSync.RUnlock()
 	workplaceIds := getWorkplaceIds(workplaceNames)
 	downtimeIds := getDowntimeIds(downtimeNames)
-
 	userIds := getUserIds(userNames)
 	if workplaceIds == "" {
 		if downtimeNames == "" {
@@ -66,24 +68,118 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 			}
 		}
 	}
-	downtimeDataByDowntime := map[string]time.Duration{}
-	for _, downtimeRecord := range downtimeRecords {
-		if downtimeRecord.DateTimeEnd.Time.IsZero() {
-			downtimesByIdSync.RLock()
-			downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] = downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] + time.Now().Sub(downtimeRecord.DateTimeStart)
-			downtimesByIdSync.RUnlock()
+
+	var responseData StatisticsDataOutput
+
+	downtimeDataByDowntimeSorted := processDataByDowntime(downtimeRecords)
+	for _, record := range downtimeDataByDowntimeSorted {
+		responseData.SelectionChartData = append(responseData.SelectionChartData, record.name)
+		responseData.SelectionChartValue = append(responseData.SelectionChartValue, record.duration.Seconds())
+		responseData.SelectionChartText = append(responseData.SelectionChartText, record.duration.Round(time.Second).String())
+	}
+
+	downtimeDataByWorkplaceSorted := processDataByWorkplace(downtimeRecords)
+	for _, data := range downtimeDataByWorkplaceSorted {
+		responseData.WorkplaceChartData = append(responseData.WorkplaceChartData, data.name)
+		responseData.WorkplaceChartValue = append(responseData.WorkplaceChartValue, data.duration.Seconds())
+		responseData.WorkplaceChartText = append(responseData.WorkplaceChartText, data.duration.Round(time.Second).String())
+	}
+
+	downtimeDataByStartSorted := processDataByDuration(downtimeRecords)
+	for _, data := range downtimeDataByStartSorted {
+		responseData.TimeChartData = append(responseData.TimeChartData, data.name)
+		responseData.TimeChartValue = append(responseData.TimeChartValue, data.duration.Seconds())
+		responseData.TimeChartText = append(responseData.TimeChartText, data.name+": "+data.duration.String())
+	}
+
+	downtimeDataByUserSorted := processDataByUser(downtimeRecords)
+	for _, data := range downtimeDataByUserSorted {
+		responseData.UsersChartData = append(responseData.UsersChartData, data.name)
+		responseData.UsersChartValue = append(responseData.UsersChartValue, data.duration.Seconds())
+		responseData.UsersChartText = append(responseData.UsersChartText, data.duration.Round(time.Second).String())
+	}
+
+	downtimeDataByStart := map[string]time.Duration{}
+	for _, record := range downtimeRecords {
+		if record.DateTimeStart.Day() == record.DateTimeEnd.Time.Day() {
+
+		} else if
+
+	}
+
+
+
+
+	writer.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(writer).Encode(responseData)
+	logInfo("STATISTICS-DOWNTIMES", "Downtime statistics loaded in "+time.Since(timer).String())
+}
+
+func processDataByUser(downtimeRecords []database.DowntimeRecord) []tempData {
+	downtimeDataByUser := map[string]time.Duration{}
+	for _, record := range downtimeRecords {
+		if record.DateTimeEnd.Time.IsZero() {
+			usersByIdSync.RLock()
+			downtimeDataByUser[cachedUsersById[uint(record.UserID.Int32)].FirstName+" "+cachedUsersById[uint(record.UserID.Int32)].SecondName] = downtimeDataByUser[cachedUsersById[uint(record.UserID.Int32)].FirstName+" "+cachedUsersById[uint(record.UserID.Int32)].SecondName] + time.Now().Sub(record.DateTimeStart)
+			usersByIdSync.RUnlock()
 		} else {
-			downtimesByIdSync.RLock()
-			downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] = downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
-			downtimesByIdSync.RUnlock()
+			usersByIdSync.RLock()
+			downtimeDataByUser[cachedUsersById[uint(record.UserID.Int32)].FirstName+" "+cachedUsersById[uint(record.UserID.Int32)].SecondName] = downtimeDataByUser[cachedUsersById[uint(record.UserID.Int32)].FirstName+" "+cachedUsersById[uint(record.UserID.Int32)].SecondName] + record.DateTimeEnd.Time.Sub(record.DateTimeStart)
+			usersByIdSync.RUnlock()
 		}
 	}
-	var responseData StatisticsDataOutput
-	for downtimeName, duration := range downtimeDataByDowntime {
-		responseData.SelectionChartData = append(responseData.SelectionChartData, downtimeName)
-		responseData.SelectionChartValue = append(responseData.SelectionChartValue, duration.Seconds())
-		responseData.SelectionChartText = append(responseData.SelectionChartText, duration.Round(time.Second).String())
+	var downtimeDataByUserSorted []tempData
+	for userName, duration := range downtimeDataByUser {
+		downtimeDataByUserSorted = append(downtimeDataByUserSorted, tempData{userName, duration})
 	}
+	sort.Slice(downtimeDataByUserSorted, func(i, j int) bool {
+		return downtimeDataByUserSorted[i].duration > downtimeDataByUserSorted[j].duration
+	})
+	return downtimeDataByUserSorted
+}
+
+func processDataByDuration(downtimeRecords []database.DowntimeRecord) []tempData {
+	downtimeDataByStart := map[string]time.Duration{}
+	for _, record := range downtimeRecords {
+		var duration time.Duration
+		if record.DateTimeEnd.Time.IsZero() {
+			duration = time.Now().Sub(record.DateTimeStart)
+		} else {
+			duration = record.DateTimeEnd.Time.Sub(record.DateTimeStart)
+		}
+		if duration <= 5*time.Minute {
+			downtimeDataByStart["0m<5m"] = downtimeDataByStart["0m<5m"] + duration
+		} else if duration > 5*time.Minute && duration <= 15*time.Minute {
+			downtimeDataByStart["5m<15m"] = downtimeDataByStart["5m<15m"] + duration
+		} else if duration > 15*time.Minute && duration <= 30*time.Minute {
+			downtimeDataByStart["15m<30m"] = downtimeDataByStart["15m<30m"] + duration
+		} else if duration > 30*time.Minute && duration <= 60*time.Minute {
+			downtimeDataByStart["30m<60m"] = downtimeDataByStart["30m<60m"] + duration
+		} else if duration > 1*time.Hour && duration <= 2*time.Hour {
+			downtimeDataByStart["1h<2h"] = downtimeDataByStart["1h<2h"] + duration
+		} else if duration > 2*time.Hour && duration <= 4*time.Hour {
+			downtimeDataByStart["2h<4h"] = downtimeDataByStart["2h<4h"] + duration
+		} else if duration > 4*time.Hour && duration <= 8*time.Hour {
+			downtimeDataByStart["4h<8h"] = downtimeDataByStart["4h<8h"] + duration
+		} else if duration > 8*time.Hour && duration <= 16*time.Hour {
+			downtimeDataByStart["8h<16h"] = downtimeDataByStart["8h<16h"] + duration
+		} else if duration > 16*time.Hour && duration <= 32*time.Hour {
+			downtimeDataByStart["16h<32h"] = downtimeDataByStart["16h<32h"] + duration
+		} else {
+			downtimeDataByStart["32h<++"] = downtimeDataByStart["32h<++"] + duration
+		}
+	}
+	var downtimeDataByStartSorted []tempData
+	for name, duration := range downtimeDataByStart {
+		downtimeDataByStartSorted = append(downtimeDataByStartSorted, tempData{name, duration})
+	}
+	sort.Slice(downtimeDataByStartSorted, func(i, j int) bool {
+		return downtimeDataByStartSorted[i].duration > downtimeDataByStartSorted[j].duration
+	})
+	return downtimeDataByStartSorted
+}
+
+func processDataByWorkplace(downtimeRecords []database.DowntimeRecord) []tempData {
 	downtimeDataByWorkplace := map[string]time.Duration{}
 	for _, downtimeRecord := range downtimeRecords {
 		if downtimeRecord.DateTimeEnd.Time.IsZero() {
@@ -96,47 +192,36 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 			workplacesByIdSync.RUnlock()
 		}
 	}
+
+	var downtimeDataByWorkplaceSorted []tempData
 	for workplaceName, duration := range downtimeDataByWorkplace {
-		responseData.WorkplaceChartData = append(responseData.WorkplaceChartData, workplaceName)
-		responseData.WorkplaceChartValue = append(responseData.WorkplaceChartValue, duration.Seconds())
-		responseData.WorkplaceChartText = append(responseData.WorkplaceChartText, duration.Round(time.Second).String())
+		downtimeDataByWorkplaceSorted = append(downtimeDataByWorkplaceSorted, tempData{workplaceName, duration})
 	}
+	sort.Slice(downtimeDataByWorkplaceSorted, func(i, j int) bool {
+		return downtimeDataByWorkplaceSorted[i].duration > downtimeDataByWorkplaceSorted[j].duration
+	})
+	return downtimeDataByWorkplaceSorted
+}
 
-	downtimeDataByStart := map[int]int{}
-	for _, record := range downtimeRecords {
-		if record.DateTimeEnd.Valid {
-			downtimeDataByStart[int(record.DateTimeEnd.Time.Sub(record.DateTimeStart).Round(1*time.Hour).Hours())] = downtimeDataByStart[int(record.DateTimeEnd.Time.Sub(record.DateTimeStart).Round(1*time.Hour).Hours())] + 1
-		}
-
-	}
-	for duration, count := range downtimeDataByStart {
-		responseData.TimeChartData = append(responseData.TimeChartData, strconv.Itoa(duration))
-		responseData.TimeChartValue = append(responseData.TimeChartValue, float64(count))
-		responseData.TimeChartText = append(responseData.TimeChartText, "+"+strconv.Itoa(duration)+"m: "+strconv.Itoa(count)+"x")
-	}
-	downtimeDataByUser := map[uint]time.Duration{}
-	for _, record := range downtimeRecords {
-		if record.DateTimeEnd.Time.IsZero() {
-			downtimeDataByUser[uint(record.UserID.Int32)] = downtimeDataByUser[uint(record.UserID.Int32)] + time.Now().Sub(record.DateTimeStart)
+func processDataByDowntime(downtimeRecords []database.DowntimeRecord) []tempData {
+	downtimeDataByDowntime := map[string]time.Duration{}
+	for _, downtimeRecord := range downtimeRecords {
+		if downtimeRecord.DateTimeEnd.Time.IsZero() {
+			downtimesByIdSync.RLock()
+			downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] = downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] + time.Now().Sub(downtimeRecord.DateTimeStart)
+			downtimesByIdSync.RUnlock()
 		} else {
-			downtimeDataByUser[uint(record.UserID.Int32)] = downtimeDataByUser[uint(record.UserID.Int32)] + record.DateTimeEnd.Time.Sub(record.DateTimeStart)
+			downtimesByIdSync.RLock()
+			downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] = downtimeDataByDowntime[cachedDowntimesById[uint(downtimeRecord.DowntimeID)].Name] + downtimeRecord.DateTimeEnd.Time.Sub(downtimeRecord.DateTimeStart)
+			downtimesByIdSync.RUnlock()
 		}
-
 	}
-	for userId, duration := range downtimeDataByUser {
-		fmt.Println(userId, duration)
-		usersByIdSync.RLock()
-		if userId == 0 {
-			responseData.UsersChartData = append(responseData.UsersChartData, "-")
-		} else {
-			responseData.UsersChartData = append(responseData.UsersChartData, cachedUsersById[userId].FirstName+" "+cachedUsersById[userId].SecondName)
-		}
-		usersByIdSync.RUnlock()
-		responseData.UsersChartValue = append(responseData.UsersChartValue, duration.Seconds())
-		responseData.UsersChartText = append(responseData.UsersChartText, duration.Round(time.Second).String())
-
+	var downtimeDataByDowntimeSorted []tempData
+	for downtimeName, duration := range downtimeDataByDowntime {
+		downtimeDataByDowntimeSorted = append(downtimeDataByDowntimeSorted, tempData{downtimeName, duration})
 	}
-	writer.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(writer).Encode(responseData)
-	logInfo("STATISTICS", "Downtime statistics loaded in "+time.Since(timer).String())
+	sort.Slice(downtimeDataByDowntimeSorted, func(i, j int) bool {
+		return downtimeDataByDowntimeSorted[i].duration > downtimeDataByDowntimeSorted[j].duration
+	})
+	return downtimeDataByDowntimeSorted
 }
