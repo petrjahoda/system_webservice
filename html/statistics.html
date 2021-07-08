@@ -13,9 +13,11 @@
     <link rel="stylesheet" href="../css/index.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="../js/menu.js" defer></script>
+    <script src="../js/echarts.min.js" defer></script>
     <script src="../js/metro.min.js" defer></script>
     <script src="../js/statistics.js" defer></script>
     <script src="../js/locales.js" defer></script>
+    <script src="../js/moment-with-locales.min.js" defer></script>
     <meta charset="UTF-8">
     <title>{{.Software}}: {{.Version}}</title>
 </head>
@@ -93,7 +95,7 @@
                            value="{{.DateTo}}">
                 </div>
                 <div style="min-width:100px;margin-left: 3px">
-                    <button id="statistics-ok-button" class="button primary"
+                    <button id="statistics-refresh-button" class="button primary"
                             style="min-width: 100px;max-width: 100px;height: 35px;margin-top: 2px"><span
                             class="mif-loop2"></span>
                     </button>
@@ -134,23 +136,28 @@
                     {{end}}
                 </select>
             </div>
-            <div class="row" id="content">
-                <div class="cell-3">
-                    <div id="duration-chart" style="display: flex;justify-content: center;">top 1</div>
-                </div>
-                <div class="cell-3">
-                    <div id="workplaces-chart" style="display: flex;justify-content: center;">top 2</div>
-                </div>
-                <div class="cell-3">
-                    <div id="users-chart" style="display: flex;justify-content: center;">top 3</div>
-                </div>
-                <div class="cell-3">
-                    <div id="start-chart" style="display: flex;justify-content: center;">top 4</div>
+            <div class="row" id="calendar-content">
+                <div class="cell-12">
+                    <div id="calendar-chart" style="display: flex;justify-content: center;margin-top: 20px;margin-bottom: 20px;"></div>
                 </div>
             </div>
-            <div class="row" id="lower-content">
+            <div class="row" id="upper-content" style="margin-left: 20px;margin-right: 20px">
+                <div class="cell-3">
+                    <div id="first-upper-chart" style="display: flex;justify-content: center;"></div>
+                </div>
+                <div class="cell-3">
+                    <div id="seconds-upper-chart" style="display: flex;justify-content: center;"></div>
+                </div>
+                <div class="cell-3">
+                    <div id="third-upper-chart" style="display: flex;justify-content: center;"></div>
+                </div>
+                <div class="cell-3">
+                    <div id="fourth-upper-chart" style="display: flex;justify-content: center;"></div>
+                </div>
+            </div>
+            <div class="row" id="middle-content">
                 <div class="cell-12">
-                    <div id="days-chart" style="display: flex;justify-content: center;">lower</div>
+                    <div id="middle-chart" style="display: flex;justify-content: center;"></div>
                 </div>
             </div>
         </div>

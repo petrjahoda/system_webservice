@@ -49,22 +49,29 @@ type StatisticsTypeOutput struct {
 }
 
 type StatisticsDataOutput struct {
-	Result              string
-	Compacted           string
-	SelectionChartData  []string
-	SelectionChartValue []float64
-	SelectionChartText  []string
-	WorkplaceChartData  []string
-	WorkplaceChartValue []float64
-	WorkplaceChartText  []string
-	UsersChartData      []string
-	UsersChartValue     []float64
-	UsersChartText      []string
-	TimeChartData       []string
-	TimeChartValue      []float64
-	TimeChartText       []string
-	DaysChartData       []string
-	DaysChartValue      []float64
+	Result                 string
+	Compacted              string
+	SelectionChartData     []string
+	SelectionChartValue    []float64
+	SelectionChartText     []string
+	WorkplaceChartData     []string
+	WorkplaceChartValue    []float64
+	WorkplaceChartText     []string
+	UsersChartData         []string
+	UsersChartValue        []float64
+	UsersChartText         []string
+	TimeChartData          []string
+	TimeChartValue         []float64
+	TimeChartText          []string
+	DaysChartData          []string
+	DaysChartValue         []float64
+	DaysChartText          []string
+	Locale                 string
+	CalendarChartLocale    string
+	FirstUpperChartLocale  string
+	SecondUpperChartLocale string
+	ThirdUpperChartLocale  string
+	FourthUpperChartLocale string
 }
 
 func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {
@@ -91,62 +98,62 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	data.DateTo = cachedUserWebSettings[email]["statistics-selected-to"]
 	selectedType := cachedUserWebSettings[email]["statistics-selected-type"]
 	usersByEmailSync.RUnlock()
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "overview"),
-		SelectionValue: "overview",
-		Selection:      getSelected(selectedType, "overview"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "alarms"),
-		SelectionValue: "alarms",
-		Selection:      getSelected(selectedType, "alarms"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "breakdowns"),
-		SelectionValue: "breakdowns",
-		Selection:      getSelected(selectedType, "breakdowns"),
-	})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "overview"),
+	//	SelectionValue: "overview",
+	//	Selection:      getSelected(selectedType, "overview"),
+	//})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "alarms"),
+	//	SelectionValue: "alarms",
+	//	Selection:      getSelected(selectedType, "alarms"),
+	//})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "breakdowns"),
+	//	SelectionValue: "breakdowns",
+	//	Selection:      getSelected(selectedType, "breakdowns"),
+	//})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "downtimes"),
 		SelectionValue: "downtimes",
 		Selection:      getSelected(selectedType, "downtimes"),
 	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "faults"),
-		SelectionValue: "faults",
-		Selection:      getSelected(selectedType, "faults"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "orders"),
-		SelectionValue: "orders",
-		Selection:      getSelected(selectedType, "orders"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "packages"),
-		SelectionValue: "packages",
-		Selection:      getSelected(selectedType, "packages"),
-	})
-	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-		SelectionName:  getLocale(email, "parts"),
-		SelectionValue: "parts",
-		Selection:      getSelected(selectedType, "parts"),
-	})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "faults"),
+	//	SelectionValue: "faults",
+	//	Selection:      getSelected(selectedType, "faults"),
+	//})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "orders"),
+	//	SelectionValue: "orders",
+	//	Selection:      getSelected(selectedType, "orders"),
+	//})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "packages"),
+	//	SelectionValue: "packages",
+	//	Selection:      getSelected(selectedType, "packages"),
+	//})
+	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+	//	SelectionName:  getLocale(email, "parts"),
+	//	SelectionValue: "parts",
+	//	Selection:      getSelected(selectedType, "parts"),
+	//})
 	usersByEmailSync.RLock()
 	userRoleId := cachedUsersByEmail[email].UserRoleID
 	usersByEmailSync.RUnlock()
 
 	if userRoleId == 1 {
 		logInfo("STATISTICS", "Adding data menu for administrator")
-		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-			SelectionName:  getLocale(email, "users"),
-			SelectionValue: "web-users",
-			Selection:      getSelected(selectedType, "web-users"),
-		})
-		data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-			SelectionName:  getLocale(email, "system-statistics"),
-			SelectionValue: "system-statistics",
-			Selection:      getSelected(selectedType, "system-statistics"),
-		})
+		//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+		//	SelectionName:  getLocale(email, "users"),
+		//	SelectionValue: "web-users",
+		//	Selection:      getSelected(selectedType, "web-users"),
+		//})
+		//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+		//	SelectionName:  getLocale(email, "system-statistics"),
+		//	SelectionValue: "system-statistics",
+		//	Selection:      getSelected(selectedType, "system-statistics"),
+		//})
 	}
 	data.DataFilterPlaceholder = getLocale(email, "data-table-search-title")
 
@@ -236,6 +243,9 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 		return
 	}
 	logInfo("DATA", "Loading statistics for "+data.Data+" for "+strconv.Itoa(len(data.Workplaces))+" workplaces")
+	if len(email) == 0 {
+		email = data.Email
+	}
 	logInfo("DATA", "Loading statistics for "+email)
 	locationSync.RLock()
 	loc, err := time.LoadLocation(cachedLocation)

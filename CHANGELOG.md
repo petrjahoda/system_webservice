@@ -14,6 +14,15 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 * ```Fixed``` for any bug fixes.
 * ```Security``` in case of vulnerabilities.
 
+## [2021.3.1.8] - 2021-07-08
+
+### Changed
+- downloading data for downtime statistics finished in the go backend
+
+### Added
+- downtime statistics charts
+- downtime statistics locales
+
 ## [2021.3.1.6] - 2021-07-06
 
 ### Changed

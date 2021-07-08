@@ -19,6 +19,7 @@ type DataPageInput struct {
 	Workplaces []string
 	From       string
 	To         string
+	Email      string
 }
 type DataPageOutput struct {
 	Version               string

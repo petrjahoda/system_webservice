@@ -30,47 +30,8 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 		logInfo("STATISTICS-DOWNTIMES", "Loading downtime statistics ended")
 		return
 	}
-	var downtimeRecords []database.DowntimeRecord
-	userWebSettingsSync.RLock()
-	workplaceNames := cachedUserWebSettings[email]["statistics-selected-workplaces"]
-	downtimeNames := cachedUserWebSettings[email]["statistics-selected-types-downtimes"]
-	userNames := cachedUserWebSettings[email]["statistics-selected-users"]
-	userWebSettingsSync.RUnlock()
-	workplaceIds := getWorkplaceIds(workplaceNames)
-	downtimeIds := getDowntimeIds(downtimeNames)
-	userIds := getUserIds(userNames)
-	if workplaceIds == "" {
-		if downtimeNames == "" {
-			if userNames == "" {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start desc").Find(&downtimeRecords)
-			} else {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Order("date_time_start desc").Find(&downtimeRecords)
-			}
-		} else {
-			if userNames == "" {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(downtimeIds).Order("date_time_start desc").Find(&downtimeRecords)
-			} else {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(downtimeIds).Order("date_time_start desc").Find(&downtimeRecords)
-			}
-		}
-	} else {
-		if downtimeNames == "" {
-			if userNames == "" {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start desc").Find(&downtimeRecords)
-			} else {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(workplaceIds).Order("date_time_start desc").Find(&downtimeRecords)
-			}
-		} else {
-			if userNames == "" {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Where(downtimeIds).Order("date_time_start desc").Find(&downtimeRecords)
-			} else {
-				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(workplaceIds).Where(downtimeIds).Order("date_time_start desc").Find(&downtimeRecords)
-			}
-		}
-	}
-
+	downtimeRecords := downloadDowntimeRecords(email, db, dateTo, dateFrom)
 	var responseData StatisticsDataOutput
-
 	downtimeDataByDowntimeSorted := processDataByDowntime(downtimeRecords)
 	for _, record := range downtimeDataByDowntimeSorted {
 		responseData.SelectionChartData = append(responseData.SelectionChartData, record.name)
@@ -85,8 +46,8 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 		responseData.WorkplaceChartText = append(responseData.WorkplaceChartText, data.duration.Round(time.Second).String())
 	}
 
-	downtimeDataByStartSorted := processDataByDuration(downtimeRecords)
-	for _, data := range downtimeDataByStartSorted {
+	downtimeDataByDurationSorted := processDataByDuration(downtimeRecords)
+	for _, data := range downtimeDataByDurationSorted {
 		responseData.TimeChartData = append(responseData.TimeChartData, data.name)
 		responseData.TimeChartValue = append(responseData.TimeChartValue, data.duration.Seconds())
 		responseData.TimeChartText = append(responseData.TimeChartText, data.name+": "+data.duration.String())
@@ -99,20 +60,106 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 		responseData.UsersChartText = append(responseData.UsersChartText, data.duration.Round(time.Second).String())
 	}
 
-	downtimeDataByStart := map[string]time.Duration{}
-	for _, record := range downtimeRecords {
-		if record.DateTimeStart.Day() == record.DateTimeEnd.Time.Day() {
-
-		} else if
-
+	downtimeDataByStartSorted := processDataByDate(err, downtimeRecords, dateFrom, dateTo)
+	for _, data := range downtimeDataByStartSorted {
+		responseData.DaysChartData = append(responseData.DaysChartData, data.name)
+		responseData.DaysChartValue = append(responseData.DaysChartValue, data.duration.Seconds())
+		responseData.DaysChartText = append(responseData.DaysChartText, data.duration.Round(time.Second).String())
 	}
-
-
-
-
+	usersByEmailSync.RLock()
+	responseData.Locale = cachedUsersByEmail[email].Locale
+	usersByEmailSync.RUnlock()
+	responseData.CalendarChartLocale = getLocale(email, "statistics-downtimes-calendar")
+	responseData.FirstUpperChartLocale = getLocale(email, "statistics-workplaces")
+	responseData.SecondUpperChartLocale = getLocale(email, "statistics-selection-downtimes")
+	responseData.ThirdUpperChartLocale = getLocale(email, "statistics-users")
+	responseData.FourthUpperChartLocale = getLocale(email, "statistics-duration")
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(responseData)
 	logInfo("STATISTICS-DOWNTIMES", "Downtime statistics loaded in "+time.Since(timer).String())
+}
+
+func downloadDowntimeRecords(email string, db *gorm.DB, dateTo time.Time, dateFrom time.Time) []database.DowntimeRecord {
+	var downtimeRecords []database.DowntimeRecord
+	userWebSettingsSync.RLock()
+	workplaceNames := cachedUserWebSettings[email]["statistics-selected-workplaces"]
+	downtimeNames := cachedUserWebSettings[email]["statistics-selected-types-downtimes"]
+	userNames := cachedUserWebSettings[email]["statistics-selected-users"]
+	userWebSettingsSync.RUnlock()
+	workplaceIds := getWorkplaceIds(workplaceNames)
+	downtimeIds := getDowntimeIds(downtimeNames)
+	userIds := getUserIds(userNames)
+	if workplaceIds == "" {
+		if downtimeNames == "" {
+			if userNames == "" {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Or("date_time_start <= ? and date_time_end is null", dateTo).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Order("date_time_start asc").Find(&downtimeRecords)
+			} else {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Order("date_time_start asc").Find(&downtimeRecords)
+			}
+		} else {
+			if userNames == "" {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(downtimeIds).Order("date_time_start asc").Find(&downtimeRecords)
+			} else {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(downtimeIds).Order("date_time_start asc").Find(&downtimeRecords)
+			}
+		}
+	} else {
+		if downtimeNames == "" {
+			if userNames == "" {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Order("date_time_start asc").Find(&downtimeRecords)
+			} else {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(workplaceIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(workplaceIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(workplaceIds).Order("date_time_start asc").Find(&downtimeRecords)
+			}
+		} else {
+			if userNames == "" {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(workplaceIds).Where(downtimeIds).Order("date_time_start asc").Find(&downtimeRecords)
+			} else {
+				db.Where("date_time_start <= ? and date_time_end >= ?", dateTo, dateFrom).Where(userIds).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end is null", dateTo).Where(userIds).Where(workplaceIds).Where(downtimeIds).Or("date_time_start <= ? and date_time_end >= ?", dateFrom, dateTo).Where(userIds).Where(workplaceIds).Where(downtimeIds).Order("date_time_start asc").Find(&downtimeRecords)
+			}
+		}
+	}
+	return downtimeRecords
+}
+
+func processDataByDate(err error, downtimeRecords []database.DowntimeRecord, dateFrom time.Time, dateTo time.Time) []tempData {
+	loc, err := time.LoadLocation(cachedLocation)
+	downtimeDataByStart := map[string]time.Duration{}
+	for _, record := range downtimeRecords {
+		if record.DateTimeStart.YearDay() == record.DateTimeEnd.Time.YearDay() {
+			downtimeDataByStart[record.DateTimeStart.In(loc).Format("2006-01-02")] = downtimeDataByStart[record.DateTimeStart.In(loc).Format("2006-01-02")] + record.DateTimeEnd.Time.Sub(record.DateTimeStart)
+		} else if record.DateTimeEnd.Time.IsZero() {
+			record.DateTimeEnd.Time = time.Now()
+			tempDate := record.DateTimeStart
+			for tempDate.YearDay() != record.DateTimeEnd.Time.YearDay() {
+				tempDateNoon := time.Date(tempDate.Year(), tempDate.Month(), tempDate.Day()+1, 0, 0, 0, 0, loc)
+				downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] = downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] + tempDateNoon.In(loc).Sub(tempDate.In(loc))
+				tempDate = time.Date(tempDate.Year(), tempDate.Month(), tempDate.Day()+1, 0, 0, 0, 0, loc)
+			}
+			downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] = downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] + time.Now().In(loc).Sub(tempDate.In(loc))
+
+		} else {
+			tempDate := record.DateTimeStart
+			for tempDate.YearDay() != record.DateTimeEnd.Time.YearDay() {
+				tempDateNoon := time.Date(tempDate.Year(), tempDate.Month(), tempDate.Day()+1, 0, 0, 0, 0, loc)
+				downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] = downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] + tempDateNoon.In(loc).Sub(tempDate.In(loc))
+				tempDate = time.Date(tempDate.Year(), tempDate.Month(), tempDate.Day()+1, 0, 0, 0, 0, loc)
+			}
+			downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] = downtimeDataByStart[tempDate.In(loc).Format("2006-01-02")] + record.DateTimeEnd.Time.In(loc).Sub(tempDate.In(loc))
+		}
+
+	}
+	for dateFrom.In(loc).YearDay() != dateTo.In(loc).YearDay() {
+		downtimeDataByStart[dateFrom.In(loc).Format("2006-01-02")] = downtimeDataByStart[dateFrom.In(loc).Format("2006-01-02")] + 0*time.Second
+		dateFrom = dateFrom.Add(24 * time.Hour)
+	}
+	var downtimeDataByStartSorted []tempData
+	for date, duration := range downtimeDataByStart {
+		downtimeDataByStartSorted = append(downtimeDataByStartSorted, tempData{date, duration})
+	}
+	sort.Slice(downtimeDataByStartSorted, func(i, j int) bool {
+		return downtimeDataByStartSorted[i].name < downtimeDataByStartSorted[j].name
+	})
+	return downtimeDataByStartSorted
 }
 
 func processDataByUser(downtimeRecords []database.DowntimeRecord) []tempData {
@@ -133,7 +180,7 @@ func processDataByUser(downtimeRecords []database.DowntimeRecord) []tempData {
 		downtimeDataByUserSorted = append(downtimeDataByUserSorted, tempData{userName, duration})
 	}
 	sort.Slice(downtimeDataByUserSorted, func(i, j int) bool {
-		return downtimeDataByUserSorted[i].duration > downtimeDataByUserSorted[j].duration
+		return downtimeDataByUserSorted[i].duration < downtimeDataByUserSorted[j].duration
 	})
 	return downtimeDataByUserSorted
 }
@@ -174,7 +221,7 @@ func processDataByDuration(downtimeRecords []database.DowntimeRecord) []tempData
 		downtimeDataByStartSorted = append(downtimeDataByStartSorted, tempData{name, duration})
 	}
 	sort.Slice(downtimeDataByStartSorted, func(i, j int) bool {
-		return downtimeDataByStartSorted[i].duration > downtimeDataByStartSorted[j].duration
+		return downtimeDataByStartSorted[i].duration < downtimeDataByStartSorted[j].duration
 	})
 	return downtimeDataByStartSorted
 }
@@ -198,7 +245,7 @@ func processDataByWorkplace(downtimeRecords []database.DowntimeRecord) []tempDat
 		downtimeDataByWorkplaceSorted = append(downtimeDataByWorkplaceSorted, tempData{workplaceName, duration})
 	}
 	sort.Slice(downtimeDataByWorkplaceSorted, func(i, j int) bool {
-		return downtimeDataByWorkplaceSorted[i].duration > downtimeDataByWorkplaceSorted[j].duration
+		return downtimeDataByWorkplaceSorted[i].duration < downtimeDataByWorkplaceSorted[j].duration
 	})
 	return downtimeDataByWorkplaceSorted
 }
@@ -221,7 +268,7 @@ func processDataByDowntime(downtimeRecords []database.DowntimeRecord) []tempData
 		downtimeDataByDowntimeSorted = append(downtimeDataByDowntimeSorted, tempData{downtimeName, duration})
 	}
 	sort.Slice(downtimeDataByDowntimeSorted, func(i, j int) bool {
-		return downtimeDataByDowntimeSorted[i].duration > downtimeDataByDowntimeSorted[j].duration
+		return downtimeDataByDowntimeSorted[i].duration < downtimeDataByDowntimeSorted[j].duration
 	})
 	return downtimeDataByDowntimeSorted
 }
