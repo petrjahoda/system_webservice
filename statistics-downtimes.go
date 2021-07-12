@@ -50,7 +50,7 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 	for _, data := range downtimeDataByDurationSorted {
 		responseData.TimeChartData = append(responseData.TimeChartData, data.name)
 		responseData.TimeChartValue = append(responseData.TimeChartValue, data.duration.Seconds())
-		responseData.TimeChartText = append(responseData.TimeChartText, data.name+": "+data.duration.String())
+		responseData.TimeChartText = append(responseData.TimeChartText, data.duration.Round(time.Second).String())
 	}
 
 	downtimeDataByUserSorted := processDataByUser(downtimeRecords)
@@ -74,6 +74,9 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 	responseData.SecondUpperChartLocale = getLocale(email, "statistics-selection-downtimes")
 	responseData.ThirdUpperChartLocale = getLocale(email, "statistics-users")
 	responseData.FourthUpperChartLocale = getLocale(email, "statistics-duration")
+	statesByIdSync.RLock()
+	responseData.Color = cachedStatesById[downtime].Color
+	statesByIdSync.RUnlock()
 	writer.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(writer).Encode(responseData)
 	logInfo("STATISTICS-DOWNTIMES", "Downtime statistics loaded in "+time.Since(timer).String())

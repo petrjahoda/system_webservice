@@ -72,6 +72,7 @@ type StatisticsDataOutput struct {
 	SecondUpperChartLocale string
 	ThirdUpperChartLocale  string
 	FourthUpperChartLocale string
+	Color                  string
 }
 
 func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.Params) {

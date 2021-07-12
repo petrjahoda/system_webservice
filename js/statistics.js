@@ -150,6 +150,7 @@ function drawCalendarChart(data) {
             }
         },
         series: [{
+            color: data["Color"],
             data: data["DaysChartValue"],
             type: 'bar',
             symbol: 'none',
@@ -257,7 +258,7 @@ function drawFourthUpperChart(data) {
         },
         series: [
             {
-                // color: data["TerminalDowntimeColor"],
+                color: data["Color"],
                 barWidth: 25,
                 type: 'bar',
                 silent: true,
@@ -335,7 +336,7 @@ function drawThirdUpperChart(data) {
         },
         series: [
             {
-                // color: data["TerminalDowntimeColor"],
+                color: data["Color"],
                 barWidth: 25,
                 type: 'bar',
                 silent: true,
@@ -413,7 +414,7 @@ function drawSecondUpperChart(data) {
         },
         series: [
             {
-                // color: data["TerminalDowntimeColor"],
+                color: data["Color"],
                 barWidth: 25,
                 type: 'bar',
                 silent: true,
@@ -491,7 +492,7 @@ function drawFirstUpperChart(data) {
         },
         series: [
             {
-                // color: data["TerminalDowntimeColor"],
+                color: data["Color"],
                 barWidth: 25,
                 type: 'bar',
                 silent: true,
