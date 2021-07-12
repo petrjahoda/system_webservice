@@ -10,11 +10,6 @@ import (
 	"time"
 )
 
-type tempData struct {
-	name     string
-	duration time.Duration
-}
-
 func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dateTo time.Time, email string) {
 	timer := time.Now()
 	logInfo("STATISTICS-DOWNTIMES", "Loading downtimes statistics")
@@ -32,35 +27,35 @@ func loadDowntimesStatistics(writer http.ResponseWriter, dateFrom time.Time, dat
 	}
 	downtimeRecords := downloadDowntimeRecords(email, db, dateTo, dateFrom)
 	var responseData StatisticsDataOutput
-	downtimeDataByDowntimeSorted := processDataByDowntime(downtimeRecords)
+	downtimeDataByDowntimeSorted := processDowntimeDataByDowntime(downtimeRecords)
 	for _, record := range downtimeDataByDowntimeSorted {
 		responseData.SelectionChartData = append(responseData.SelectionChartData, record.name)
 		responseData.SelectionChartValue = append(responseData.SelectionChartValue, record.duration.Seconds())
 		responseData.SelectionChartText = append(responseData.SelectionChartText, record.duration.Round(time.Second).String())
 	}
 
-	downtimeDataByWorkplaceSorted := processDataByWorkplace(downtimeRecords)
+	downtimeDataByWorkplaceSorted := processDowntimeDataByWorkplace(downtimeRecords)
 	for _, data := range downtimeDataByWorkplaceSorted {
 		responseData.WorkplaceChartData = append(responseData.WorkplaceChartData, data.name)
 		responseData.WorkplaceChartValue = append(responseData.WorkplaceChartValue, data.duration.Seconds())
 		responseData.WorkplaceChartText = append(responseData.WorkplaceChartText, data.duration.Round(time.Second).String())
 	}
 
-	downtimeDataByDurationSorted := processDataByDuration(downtimeRecords)
+	downtimeDataByDurationSorted := processDowntimeDataByDuration(downtimeRecords)
 	for _, data := range downtimeDataByDurationSorted {
 		responseData.TimeChartData = append(responseData.TimeChartData, data.name)
 		responseData.TimeChartValue = append(responseData.TimeChartValue, data.duration.Seconds())
 		responseData.TimeChartText = append(responseData.TimeChartText, data.duration.Round(time.Second).String())
 	}
 
-	downtimeDataByUserSorted := processDataByUser(downtimeRecords)
+	downtimeDataByUserSorted := processDowntimeDataByUser(downtimeRecords)
 	for _, data := range downtimeDataByUserSorted {
 		responseData.UsersChartData = append(responseData.UsersChartData, data.name)
 		responseData.UsersChartValue = append(responseData.UsersChartValue, data.duration.Seconds())
 		responseData.UsersChartText = append(responseData.UsersChartText, data.duration.Round(time.Second).String())
 	}
 
-	downtimeDataByStartSorted := processDataByDate(err, downtimeRecords, dateFrom, dateTo)
+	downtimeDataByStartSorted := processDowntimeDataByDate(err, downtimeRecords, dateFrom, dateTo)
 	for _, data := range downtimeDataByStartSorted {
 		responseData.DaysChartData = append(responseData.DaysChartData, data.name)
 		responseData.DaysChartValue = append(responseData.DaysChartValue, data.duration.Seconds())
@@ -124,7 +119,7 @@ func downloadDowntimeRecords(email string, db *gorm.DB, dateTo time.Time, dateFr
 	return downtimeRecords
 }
 
-func processDataByDate(err error, downtimeRecords []database.DowntimeRecord, dateFrom time.Time, dateTo time.Time) []tempData {
+func processDowntimeDataByDate(err error, downtimeRecords []database.DowntimeRecord, dateFrom time.Time, dateTo time.Time) []tempData {
 	loc, err := time.LoadLocation(cachedLocation)
 	downtimeDataByStart := map[string]time.Duration{}
 	for _, record := range downtimeRecords {
@@ -165,7 +160,7 @@ func processDataByDate(err error, downtimeRecords []database.DowntimeRecord, dat
 	return downtimeDataByStartSorted
 }
 
-func processDataByUser(downtimeRecords []database.DowntimeRecord) []tempData {
+func processDowntimeDataByUser(downtimeRecords []database.DowntimeRecord) []tempData {
 	downtimeDataByUser := map[string]time.Duration{}
 	for _, record := range downtimeRecords {
 		if record.DateTimeEnd.Time.IsZero() {
@@ -188,7 +183,7 @@ func processDataByUser(downtimeRecords []database.DowntimeRecord) []tempData {
 	return downtimeDataByUserSorted
 }
 
-func processDataByDuration(downtimeRecords []database.DowntimeRecord) []tempData {
+func processDowntimeDataByDuration(downtimeRecords []database.DowntimeRecord) []tempData {
 	downtimeDataByStart := map[string]time.Duration{}
 	for _, record := range downtimeRecords {
 		var duration time.Duration
@@ -229,7 +224,7 @@ func processDataByDuration(downtimeRecords []database.DowntimeRecord) []tempData
 	return downtimeDataByStartSorted
 }
 
-func processDataByWorkplace(downtimeRecords []database.DowntimeRecord) []tempData {
+func processDowntimeDataByWorkplace(downtimeRecords []database.DowntimeRecord) []tempData {
 	downtimeDataByWorkplace := map[string]time.Duration{}
 	for _, downtimeRecord := range downtimeRecords {
 		if downtimeRecord.DateTimeEnd.Time.IsZero() {
@@ -253,7 +248,7 @@ func processDataByWorkplace(downtimeRecords []database.DowntimeRecord) []tempDat
 	return downtimeDataByWorkplaceSorted
 }
 
-func processDataByDowntime(downtimeRecords []database.DowntimeRecord) []tempData {
+func processDowntimeDataByDowntime(downtimeRecords []database.DowntimeRecord) []tempData {
 	downtimeDataByDowntime := map[string]time.Duration{}
 	for _, downtimeRecord := range downtimeRecords {
 		if downtimeRecord.DateTimeEnd.Time.IsZero() {

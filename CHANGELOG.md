@@ -20,6 +20,11 @@ to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) rules.
 - proper color for downtime statistics
 - proper text formatting for downtime statistics
 
+### Added
+- downloading data for breakdown statistics finished in the go backend
+- breakdown statistics charts
+- breakdown statistics locales
+
 ## [2021.3.1.8] - 2021-07-08
 
 ### Changed

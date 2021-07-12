@@ -33,6 +33,11 @@ type StatisticsPageData struct {
 	UserName              string
 }
 
+type tempData struct {
+	name     string
+	duration time.Duration
+}
+
 type StatisticsOutput struct {
 	Result    string
 	Compacted string
@@ -109,11 +114,11 @@ func statistics(writer http.ResponseWriter, request *http.Request, _ httprouter.
 	//	SelectionValue: "alarms",
 	//	Selection:      getSelected(selectedType, "alarms"),
 	//})
-	//data.SelectionMenu = append(data.SelectionMenu, TableSelection{
-	//	SelectionName:  getLocale(email, "breakdowns"),
-	//	SelectionValue: "breakdowns",
-	//	Selection:      getSelected(selectedType, "breakdowns"),
-	//})
+	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
+		SelectionName:  getLocale(email, "breakdowns"),
+		SelectionValue: "breakdowns",
+		Selection:      getSelected(selectedType, "breakdowns"),
+	})
 	data.SelectionMenu = append(data.SelectionMenu, TableSelection{
 		SelectionName:  getLocale(email, "downtimes"),
 		SelectionValue: "downtimes",
@@ -289,7 +294,7 @@ func loadStatisticsData(writer http.ResponseWriter, request *http.Request, param
 	case "alarms":
 		//loadAlarmsStatistics(writer, workplaceIds, dateFrom, dateTo, email)
 	case "breakdowns":
-		//loadBreakdownStatistics(writer, workplaceIds, dateFrom, dateTo, email)
+		loadBreakdownStatistics(writer, dateFrom, dateTo, email)
 	case "downtimes":
 		loadDowntimesStatistics(writer, dateFrom, dateTo, email)
 	case "faults":
